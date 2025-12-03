@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import breadImg from "@/assets/product-bread.jpg";
-import cakeImg from "@/assets/product-cake.jpg";
-import croissantImg from "@/assets/product-croissant.jpg";
-import pastryImg from "@/assets/product-pastry.jpg";
+import { Link } from "react-router-dom";
+import { allProducts } from "@/data/products";
 
-const menuItems = [
+const menuItems = allProducts.slice(0, 20);
+
+const _menuItemsLegacy = [
   { id: 1, name: "Artisan Sourdough", price: 4.50, image: breadImg, category: "Breads" },
   { id: 2, name: "Butter Croissant", price: 2.80, image: croissantImg, category: "Pastries" },
   { id: 3, name: "Pastel de Nata", price: 1.50, image: pastryImg, category: "Confections" },
