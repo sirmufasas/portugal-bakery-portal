@@ -9,14 +9,6 @@ import { allProducts } from "@/data/products";
 
 const menuItems = allProducts.slice(0, 20);
 
-const _menuItemsLegacy = [
-  { id: 1, name: "Artisan Sourdough", price: 4.50, image: breadImg, category: "Breads" },
-  { id: 2, name: "Butter Croissant", price: 2.80, image: croissantImg, category: "Pastries" },
-  { id: 3, name: "Pastel de Nata", price: 1.50, image: pastryImg, category: "Confections" },
-  { id: 4, name: "Chocolate Cake", price: 28.00, image: cakeImg, category: "Cakes" },
-  { id: 5, name: "Portuguese Broa", price: 3.80, image: breadImg, category: "Breads" },
-  { id: 6, name: "Pain au Chocolat", price: 3.20, image: croissantImg, category: "Pastries" },
-];
 
 interface CartItem {
   id: number;
