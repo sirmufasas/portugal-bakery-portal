@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ShoppingBag, Shield, Package } from "lucide-react";
+import { Menu, X, ShoppingBag, Shield, Package, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -39,7 +46,6 @@ export function Navbar() {
           <Link to="/" className="flex items-center gap-2">
             <div className="relative">
               <svg viewBox="0 0 40 40" className="w-10 h-10 text-primary">
-                {/* Croissant shape */}
                 <path
                   d="M20 5 C10 5 5 15 5 20 C5 25 10 30 15 32 L20 28 L25 32 C30 30 35 25 35 20 C35 15 30 5 20 5"
                   fill="currentColor"
@@ -85,32 +91,47 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Desktop Actions */}
+          {/* Desktop Actions - Simplified */}
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
-            <Link to="/track-order">
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                <Package className="h-4 w-4" />
-                Track Order
-              </Button>
-            </Link>
-            <Link to="/admin">
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                <Shield className="h-4 w-4" />
-                Admin
-              </Button>
-            </Link>
+            
             <Link to="/order">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="default" size="sm" className="gap-2">
                 <ShoppingBag className="h-4 w-4" />
                 Order Now
               </Button>
             </Link>
-            <Link to="/login">
-              <Button variant="default" size="sm">
-                Sign In
-              </Button>
-            </Link>
+
+            {/* Account Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  <User className="h-4 w-4" />
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg z-50">
+                <DropdownMenuItem asChild>
+                  <Link to="/login" className="flex items-center gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/track-order" className="flex items-center gap-2 cursor-pointer">
+                    <Package className="h-4 w-4" />
+                    Track Order
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
+                    <Shield className="h-4 w-4" />
+                    Admin Dashboard
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile Actions */}
@@ -192,13 +213,13 @@ export function Navbar() {
             
             <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-border">
               <Link to="/order" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full gap-2 h-12 text-base">
+                <Button variant="default" className="w-full gap-2 h-12 text-base">
                   <ShoppingBag className="h-5 w-5" />
                   Order Now
                 </Button>
               </Link>
               <Link to="/login" onClick={() => setIsOpen(false)}>
-                <Button variant="default" className="w-full h-12 text-base">
+                <Button variant="outline" className="w-full h-12 text-base">
                   Sign In
                 </Button>
               </Link>
