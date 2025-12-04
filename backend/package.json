@@ -1,0 +1,23 @@
+{
+  "name": "portugal-bakery-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Portugal Bakery",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "resend": "^2.0.0",
+    "stripe": "^14.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

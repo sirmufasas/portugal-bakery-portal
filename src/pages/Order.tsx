@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, Copy } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 import { allProducts } from "@/data/products";
+import { PaymentSection, PaymentDetails } from "@/components/order/PaymentSection";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const menuItems = allProducts.slice(0, 20);
-
 
 interface CartItem {
   id: number;
@@ -18,12 +19,17 @@ interface CartItem {
   quantity: number;
 }
 
+type OrderStep = "menu" | "checkout" | "payment" | "confirmed";
+
 const Order = () => {
   const { toast } = useToast();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [instructions, setInstructions] = useState("");
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderStep, setOrderStep] = useState<OrderStep>("menu");
   const [orderId, setOrderId] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const addToCart = (item: typeof menuItems[0]) => {
     setCart((prev) => {
@@ -59,7 +65,7 @@ const Order = () => {
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handlePlaceOrder = () => {
+  const handleProceedToCheckout = () => {
     if (cart.length === 0) {
       toast({
         title: "Cart is empty",
@@ -68,16 +74,40 @@ const Order = () => {
       });
       return;
     }
+    setOrderStep("checkout");
+  };
+
+  const handleProceedToPayment = () => {
+    if (!customerEmail.trim() || !customerName.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter your name and email.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setOrderStep("payment");
+  };
+
+  const handlePaymentComplete = async (paymentDetails: PaymentDetails) => {
+    setIsProcessing(true);
+    
+    // Simulate payment processing (replace with actual API call to your Render backend)
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
     setOrderId(newOrderId);
-    setOrderPlaced(true);
+    setOrderStep("confirmed");
+    setIsProcessing(false);
+    
     toast({
-      title: "Order placed!",
+      title: "Payment successful!",
       description: `Your order ID is ${newOrderId}`,
     });
   };
 
-  if (orderPlaced) {
+  // Confirmed order view
+  if (orderStep === "confirmed") {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -89,8 +119,11 @@ const Order = () => {
             <h1 className="text-3xl font-heading font-bold text-foreground mb-4">
               Order Confirmed!
             </h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-2">
               Thank you for your order. We'll start preparing it right away.
+            </p>
+            <p className="text-muted-foreground mb-6">
+              A confirmation email has been sent to <strong>{customerEmail}</strong>
             </p>
             <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
               <p className="text-sm text-muted-foreground mb-2">Order ID</p>
@@ -114,9 +147,11 @@ const Order = () => {
               variant="default"
               size="lg"
               onClick={() => {
-                setOrderPlaced(false);
+                setOrderStep("menu");
                 setCart([]);
                 setInstructions("");
+                setCustomerEmail("");
+                setCustomerName("");
               }}
             >
               Place Another Order
@@ -128,11 +163,158 @@ const Order = () => {
     );
   }
 
+  // Checkout step - collect customer details
+  if (orderStep === "checkout") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-20">
+          <section className="py-12 md:py-16 bg-gradient-warm">
+            <div className="container mx-auto px-4">
+              <div className="max-w-2xl mx-auto text-center">
+                <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">
+                  Checkout
+                </span>
+                <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4">
+                  Your Details
+                </h1>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-12 bg-background">
+            <div className="container mx-auto px-4">
+              <div className="max-w-lg mx-auto">
+                <Button
+                  variant="ghost"
+                  onClick={() => setOrderStep("menu")}
+                  className="mb-6"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Menu
+                </Button>
+
+                <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
+                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">
+                    Contact Information
+                  </h2>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="customerName">Full Name</Label>
+                      <Input
+                        id="customerName"
+                        placeholder="John Doe"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="customerEmail">Email Address</Label>
+                      <Input
+                        id="customerEmail"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        We'll send your order confirmation and updates here
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
+                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">
+                    Order Summary
+                  </h2>
+                  <div className="space-y-3 mb-4">
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {item.name} x{item.quantity}
+                        </span>
+                        <span className="font-medium">
+                          €{(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-border pt-3">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total</span>
+                      <span className="text-primary">€{total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleProceedToPayment}
+                >
+                  Continue to Payment
+                </Button>
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Payment step
+  if (orderStep === "payment") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-20">
+          <section className="py-12 md:py-16 bg-gradient-warm">
+            <div className="container mx-auto px-4">
+              <div className="max-w-2xl mx-auto text-center">
+                <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">
+                  Secure Payment
+                </span>
+                <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4">
+                  Complete Payment
+                </h1>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-12 bg-background">
+            <div className="container mx-auto px-4">
+              <div className="max-w-lg mx-auto">
+                <Button
+                  variant="ghost"
+                  onClick={() => setOrderStep("checkout")}
+                  className="mb-6"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Details
+                </Button>
+
+                <PaymentSection
+                  total={total}
+                  onPaymentComplete={handlePaymentComplete}
+                  isProcessing={isProcessing}
+                />
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Menu selection step (default)
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-20">
-        {/* Header */}
         <section className="py-12 md:py-16 bg-gradient-warm">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center">
@@ -266,9 +448,9 @@ const Order = () => {
                         variant="default"
                         size="lg"
                         className="w-full"
-                        onClick={handlePlaceOrder}
+                        onClick={handleProceedToCheckout}
                       >
-                        Place Order
+                        Proceed to Checkout
                       </Button>
                     </>
                   )}
