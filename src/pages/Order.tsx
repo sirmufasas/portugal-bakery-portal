@@ -353,7 +353,7 @@ const Order = () => {
                       <div className="flex-1">
                         <p className="text-xs text-muted-foreground">{item.category}</p>
                         <h3 className="font-semibold text-foreground">{item.name}</h3>
-                        <p className="text-primary font-bold">€{item.price.toFixed(2)}</p>
+                        <p className="text-primary font-bold">R{item.price.toFixed(2)}</p>
                       </div>
                       <Button
                         size="sm"
@@ -394,7 +394,7 @@ const Order = () => {
                                 {item.name}
                               </p>
                               <p className="text-sm text-primary">
-                                €{(item.price * item.quantity).toFixed(2)}
+                                R{(item.price * item.quantity).toFixed(2)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -440,7 +440,7 @@ const Order = () => {
                       <div className="border-t border-border pt-4 mb-4">
                         <div className="flex justify-between text-lg font-bold">
                           <span>Total</span>
-                          <span className="text-primary">€{total.toFixed(2)}</span>
+                          <span className="text-primary">R{total.toFixed(2)}</span>
                         </div>
                       </div>
 
