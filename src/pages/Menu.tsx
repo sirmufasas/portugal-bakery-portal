@@ -13,25 +13,25 @@ const categories = ["All", "Breads", "Pastries", "Cakes", "Confections"];
 
 const allProducts = [
   // Breads
-  { id: 1, name: "Artisan Sourdough", category: "Breads", price: "€4.50", image: breadImg, description: "Traditional sourdough with a perfect golden crust" },
-  { id: 2, name: "Portuguese Broa", category: "Breads", price: "€3.80", image: breadImg, description: "Traditional cornbread with rustic texture" },
-  { id: 3, name: "Whole Wheat Loaf", category: "Breads", price: "€4.00", image: breadImg, description: "Healthy and hearty whole grain bread" },
-  { id: 4, name: "Focaccia", category: "Breads", price: "€5.50", image: breadImg, description: "Italian-style with herbs and olive oil" },
+  { id: 1, name: "Artisan Sourdough", category: "Breads", price: "R4.50", image: breadImg, description: "Traditional sourdough with a perfect golden crust" },
+  { id: 2, name: "Portuguese Broa", category: "Breads", price: "R3.80", image: breadImg, description: "Traditional cornbread with rustic texture" },
+  { id: 3, name: "Whole Wheat Loaf", category: "Breads", price: "R4.00", image: breadImg, description: "Healthy and hearty whole grain bread" },
+  { id: 4, name: "Focaccia", category: "Breads", price: "R5.50", image: breadImg, description: "Italian-style with herbs and olive oil" },
   // Pastries
-  { id: 5, name: "Butter Croissant", category: "Pastries", price: "€2.80", image: croissantImg, description: "Flaky, buttery layers of French perfection" },
-  { id: 6, name: "Pain au Chocolat", category: "Pastries", price: "€3.20", image: croissantImg, description: "Chocolate-filled croissant pastry" },
-  { id: 7, name: "Almond Croissant", category: "Pastries", price: "€3.50", image: croissantImg, description: "Filled with almond cream and topped with slices" },
-  { id: 8, name: "Danish Pastry", category: "Pastries", price: "€3.00", image: croissantImg, description: "Sweet pastry with fruit or cream" },
+  { id: 5, name: "Butter Croissant", category: "Pastries", price: "R2.80", image: croissantImg, description: "Flaky, buttery layers of French perfection" },
+  { id: 6, name: "Pain au Chocolat", category: "Pastries", price: "R3.20", image: croissantImg, description: "Chocolate-filled croissant pastry" },
+  { id: 7, name: "Almond Croissant", category: "Pastries", price: "R3.50", image: croissantImg, description: "Filled with almond cream and topped with slices" },
+  { id: 8, name: "Danish Pastry", category: "Pastries", price: "R3.00", image: croissantImg, description: "Sweet pastry with fruit or cream" },
   // Cakes
-  { id: 9, name: "Chocolate Ganache Cake", category: "Cakes", price: "€28.00", image: cakeImg, description: "Rich chocolate layers topped with fresh berries" },
-  { id: 10, name: "Bolo de Bolacha", category: "Cakes", price: "€24.00", image: cakeImg, description: "Traditional Portuguese biscuit cake" },
-  { id: 11, name: "Red Velvet Cake", category: "Cakes", price: "€30.00", image: cakeImg, description: "Classic red velvet with cream cheese frosting" },
-  { id: 12, name: "Lemon Drizzle Cake", category: "Cakes", price: "€22.00", image: cakeImg, description: "Light and tangy with lemon glaze" },
+  { id: 9, name: "Chocolate Ganache Cake", category: "Cakes", price: "R28.00", image: cakeImg, description: "Rich chocolate layers topped with fresh berries" },
+  { id: 10, name: "Bolo de Bolacha", category: "Cakes", price: "R24.00", image: cakeImg, description: "Traditional Portuguese biscuit cake" },
+  { id: 11, name: "Red Velvet Cake", category: "Cakes", price: "R30.00", image: cakeImg, description: "Classic red velvet with cream cheese frosting" },
+  { id: 12, name: "Lemon Drizzle Cake", category: "Cakes", price: "R22.00", image: cakeImg, description: "Light and tangy with lemon glaze" },
   // Confections
-  { id: 13, name: "Pastel de Nata", category: "Confections", price: "€1.50", image: pastryImg, description: "Iconic Portuguese custard tarts" },
-  { id: 14, name: "Queijada de Sintra", category: "Confections", price: "€1.80", image: pastryImg, description: "Traditional cheese pastry from Sintra" },
-  { id: 15, name: "Travesseiro", category: "Confections", price: "€2.20", image: pastryImg, description: "Puff pastry with egg and almond cream" },
-  { id: 16, name: "Bola de Berlim", category: "Confections", price: "€1.60", image: pastryImg, description: "Portuguese doughnut with custard" },
+  { id: 13, name: "Pastel de Nata", category: "Confections", price: "R1.50", image: pastryImg, description: "Iconic Portuguese custard tarts" },
+  { id: 14, name: "Queijada de Sintra", category: "Confections", price: "R1.80", image: pastryImg, description: "Traditional cheese pastry from Sintra" },
+  { id: 15, name: "Travesseiro", category: "Confections", price: "R2.20", image: pastryImg, description: "Puff pastry with egg and almond cream" },
+  { id: 16, name: "Bola de Berlim", category: "Confections", price: "R1.60", image: pastryImg, description: "Portuguese doughnut with custard" },
 ];
 
 const Menu = () => {
