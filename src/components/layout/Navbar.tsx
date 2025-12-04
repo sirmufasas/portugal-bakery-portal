@@ -28,40 +28,24 @@ export function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="relative">
-              <svg viewBox="0 0 40 40" className="w-10 h-10 text-primary">
-                <path
-                  d="M20 5 C10 5 5 15 5 20 C5 25 10 30 15 32 L20 28 L25 32 C30 30 35 25 35 20 C35 15 30 5 20 5"
-                  fill="currentColor"
-                  opacity="0.9"
-                />
-                <path
-                  d="M12 15 Q20 10 28 15 Q25 20 20 18 Q15 20 12 15"
-                  fill="hsl(var(--background))"
-                  opacity="0.3"
-                />
-                <path
-                  d="M10 22 Q20 18 30 22 Q27 27 20 25 Q13 27 10 22"
-                  fill="hsl(var(--background))"
-                  opacity="0.2"
-                />
-              </svg>
+            <div className="relative w-10 h-10">
+              <img
+                src="/favicon.ico"
+                alt="Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-xl md:text-2xl font-heading font-bold text-primary leading-none">
@@ -81,9 +65,7 @@ export function Navbar() {
                 to={link.path}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname === link.path
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  location.pathname === link.path ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 {link.name}
@@ -91,16 +73,16 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Desktop Actions - Simplified */}
+          {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
-            
-            <Link to="/order">
+
+            {/* <Link to="/order">
               <Button variant="default" size="sm" className="gap-2">
                 <ShoppingBag className="h-4 w-4" />
                 Order Now
               </Button>
-            </Link>
+            </Link> */}
 
             {/* Account Dropdown */}
             <DropdownMenu>
@@ -110,7 +92,10 @@ export function Navbar() {
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg z-50">
+              <DropdownMenuContent
+                align="end"
+                className="w-48 bg-white text-black border border-border shadow-lg z-50"
+              >
                 <DropdownMenuItem asChild>
                   <Link to="/login" className="flex items-center gap-2 cursor-pointer">
                     <User className="h-4 w-4" />
@@ -142,11 +127,7 @@ export function Navbar() {
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle menu"
             >
-              {isOpen ? (
-                <X className="h-6 w-6 text-foreground" />
-              ) : (
-                <Menu className="h-6 w-6 text-foreground" />
-              )}
+              {isOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
             </button>
           </div>
         </div>
@@ -154,14 +135,16 @@ export function Navbar() {
         {/* Mobile Navigation Overlay */}
         <div
           className={cn(
-            "fixed inset-0 top-16 bg-background z-40 md:hidden transition-all duration-300 ease-in-out",
+            "fixed inset-0 top-16 bg-white z-40 md:hidden transition-all duration-300 ease-in-out",
             isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
           )}
         >
-          <div className={cn(
-            "flex flex-col h-full p-6 transition-transform duration-300 ease-in-out",
-            isOpen ? "translate-y-0" : "-translate-y-4"
-          )}>
+          <div
+            className={cn(
+              "flex flex-col h-full p-6 transition-transform duration-300 ease-in-out",
+              isOpen ? "translate-y-0" : "-translate-y-4"
+            )}
+          >
             <div className="flex flex-col gap-2">
               {navLinks.map((link, index) => (
                 <Link
@@ -169,15 +152,15 @@ export function Navbar() {
                   to={link.path}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted",
+                    "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted/20",
                     location.pathname === link.path
-                      ? "text-primary bg-primary/10"
+                      ? "text-primary bg-primary/20"
                       : "text-foreground"
                   )}
-                  style={{ 
-                    transitionDelay: isOpen ? `${index * 50}ms` : '0ms',
+                  style={{
+                    transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
                     opacity: isOpen ? 1 : 0,
-                    transform: isOpen ? 'translateX(0)' : 'translateX(-10px)'
+                    transform: isOpen ? "translateX(0)" : "translateX(-10px)",
                   }}
                 >
                   {link.name}
@@ -187,9 +170,9 @@ export function Navbar() {
                 to="/track-order"
                 onClick={() => setIsOpen(false)}
                 className={cn(
-                  "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted flex items-center gap-2",
+                  "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted/20 flex items-center gap-2",
                   location.pathname === "/track-order"
-                    ? "text-primary bg-primary/10"
+                    ? "text-primary bg-primary/20"
                     : "text-foreground"
                 )}
               >
@@ -200,9 +183,9 @@ export function Navbar() {
                 to="/admin"
                 onClick={() => setIsOpen(false)}
                 className={cn(
-                  "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted flex items-center gap-2",
+                  "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted/20 flex items-center gap-2",
                   location.pathname === "/admin"
-                    ? "text-primary bg-primary/10"
+                    ? "text-primary bg-primary/20"
                     : "text-foreground"
                 )}
               >
@@ -210,14 +193,14 @@ export function Navbar() {
                 Admin Dashboard
               </Link>
             </div>
-            
+
             <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-border">
-              <Link to="/order" onClick={() => setIsOpen(false)}>
+              {/* <Link to="/order" onClick={() => setIsOpen(false)}>
                 <Button variant="default" className="w-full gap-2 h-12 text-base">
                   <ShoppingBag className="h-5 w-5" />
                   Order Now
                 </Button>
-              </Link>
+              </Link> */}
               <Link to="/login" onClick={() => setIsOpen(false)}>
                 <Button variant="outline" className="w-full h-12 text-base">
                   Sign In

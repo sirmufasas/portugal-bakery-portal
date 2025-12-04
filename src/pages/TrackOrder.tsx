@@ -200,7 +200,7 @@ const TrackOrder = () => {
                     </ul>
                     <div className="mt-4 pt-4 border-t border-border flex justify-between">
                       <span className="font-semibold">Total</span>
-                      <span className="font-bold text-primary">€{foundOrder.total.toFixed(2)}</span>
+                      <span className="font-bold text-primary">R{foundOrder.total.toFixed(2)}</span>
                     </div>
                   </div>
 

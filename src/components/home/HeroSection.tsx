@@ -11,33 +11,41 @@ export function HeroSection() {
         <img
           src={heroImage}
           alt="Fresh baked goods at Portugal Bakery"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 via-espresso/70 to-transparent" />
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10 pt-20">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl text-center sm:text-left">
           <span className="inline-block text-amber font-medium text-sm tracking-wider uppercase mb-4 animate-fade-in">
             Since 1985
           </span>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-cream leading-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-cream leading-tight mb-6 animate-fade-in-up"
+            style={{ animationDelay: "0.1s" }}
+          >
             Freshly Baked
             <span className="block text-amber">Every Morning</span>
           </h1>
-          <p className="text-cream/80 text-lg md:text-xl leading-relaxed mb-8 max-w-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            Experience the warmth of traditional Portuguese baking. 
-            Artisan breads, pastries, and confections made with love and the finest ingredients.
+          <p
+            className="text-cream/80 text-lg md:text-xl leading-relaxed mb-8 max-w-lg animate-fade-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
+            Experience the warmth of traditional Portuguese baking. Artisan breads, pastries, and confections made with love and the finest ingredients.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+          <div
+            className="flex flex-col sm:flex-row gap-4 animate-fade-in-up"
+            style={{ animationDelay: "0.3s" }}
+          >
             <Link to="/menu">
-              <Button variant="hero" size="xl" className="w-full sm:w-auto">
+              <Button variant="hero" size="xl" className="w-full sm:w-auto flex items-center justify-center gap-2">
                 Explore Our Menu
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/order">
+            <Link to="/menu">
               <Button variant="heroOutline" size="xl" className="w-full sm:w-auto">
                 Order Online
               </Button>
@@ -46,8 +54,8 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Decorative Element */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10" />
+      {/* Decorative Bottom Gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
     </section>
   );
 }

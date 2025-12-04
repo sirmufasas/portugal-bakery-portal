@@ -11,6 +11,7 @@ export interface Product {
   price: number;
   image: string;
   description: string;
+   quantity?: number;
 }
 
 const getImageByCategory = (category: string) => {

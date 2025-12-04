@@ -32,7 +32,7 @@ const Signup = () => {
       return;
     }
     setIsLoading(true);
-    // Simulate signup - will be connected to backend later
+    // Simulate signup - connect to backend later
     setTimeout(() => {
       setIsLoading(false);
       toast({
@@ -44,99 +44,104 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
       <main className="pt-20 min-h-screen flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md animate-fade-in-up">
-          <div className="bg-card rounded-2xl p-8 shadow-elevated">
+          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-elevated transition-colors duration-300">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-heading font-bold text-foreground mb-2">
+              <h1 className="text-3xl font-heading font-bold text-foreground dark:text-foreground mb-2">
                 Create Account
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground dark:text-muted-foreground">
                 Join us and start ordering fresh baked goods
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                   Full Name *
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                     placeholder="Your name"
                   />
                 </div>
               </div>
 
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                   Email Address *
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
 
+              {/* Phone */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                   Phone Number
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                     placeholder="+351 123 456 789"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                   Password *
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                   Must be at least 8 characters
                 </p>
               </div>
 
+              {/* Submit */}
               <Button
                 type="submit"
                 variant="default"
@@ -148,7 +153,7 @@ const Signup = () => {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground mt-6">
+            <p className="text-center text-sm text-muted-foreground dark:text-muted-foreground mt-6">
               Already have an account?{" "}
               <Link to="/login" className="text-primary font-medium hover:underline">
                 Sign in

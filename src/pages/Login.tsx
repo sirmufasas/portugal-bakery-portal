@@ -36,70 +36,74 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
       <main className="pt-20 min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-md animate-fade-in-up">
-          <div className="bg-card rounded-2xl p-8 shadow-elevated">
+          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-elevated transition-colors duration-300">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-heading font-bold text-foreground mb-2">
+              <h1 className="text-3xl font-heading font-bold text-foreground dark:text-foreground mb-2">
                 Welcome Back
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground dark:text-muted-foreground">
                 Sign in to your account to continue
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
 
+              {/* Remember/Forgot */}
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="rounded border-border" />
-                  <span className="text-muted-foreground">Remember me</span>
+                  <input type="checkbox" className="rounded border-border dark:bg-background" />
+                  <span className="text-muted-foreground dark:text-muted-foreground">Remember me</span>
                 </label>
                 <a href="#" className="text-primary hover:underline">
                   Forgot password?
                 </a>
               </div>
 
+              {/* Submit */}
               <Button
                 type="submit"
                 variant="default"
@@ -111,7 +115,7 @@ const Login = () => {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground mt-6">
+            <p className="text-center text-sm text-muted-foreground dark:text-muted-foreground mt-6">
               Don't have an account?{" "}
               <Link to="/signup" className="text-primary font-medium hover:underline">
                 Create one

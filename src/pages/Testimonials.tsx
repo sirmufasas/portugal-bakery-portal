@@ -88,20 +88,20 @@ const Testimonials = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
       <main className="pt-20">
         {/* Header */}
-        <section className="py-16 md:py-24 bg-gradient-warm">
+        <section className="py-16 md:py-24 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center">
               <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">
                 Reviews
               </span>
-              <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4 animate-fade-in-up">
+              <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground dark:text-foreground mb-4 animate-fade-in-up">
                 What Our Customers Say
               </h1>
-              <p className="text-muted-foreground text-lg animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <p className="text-muted-foreground dark:text-muted-foreground text-lg animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                 Real stories from our wonderful community of bread and pastry lovers.
               </p>
             </div>
@@ -109,13 +109,13 @@ const Testimonials = () => {
         </section>
 
         {/* Testimonials Grid */}
-        <section className="py-12 md:py-16 bg-background">
+        <section className="py-12 md:py-16 bg-neutral-50 dark:bg-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {allTestimonials.map((testimonial, index) => (
                 <div
                   key={testimonial.id}
-                  className="relative bg-card rounded-2xl p-6 md:p-8 shadow-soft hover:shadow-elevated transition-all duration-300 animate-fade-in-up"
+                  className="relative bg-white dark:bg-card rounded-2xl p-6 md:p-8 shadow-soft hover:shadow-elevated transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <Quote className="absolute top-6 right-6 h-8 w-8 text-primary/20" />
@@ -128,14 +128,14 @@ const Testimonials = () => {
                         className={`h-4 w-4 ${
                           i < testimonial.rating
                             ? "fill-gold text-gold"
-                            : "text-muted"
+                            : "text-muted dark:text-muted"
                         }`}
                       />
                     ))}
                   </div>
 
                   {/* Quote */}
-                  <p className="text-foreground/80 leading-relaxed mb-6">
+                  <p className="text-foreground/80 dark:text-foreground/80 leading-relaxed mb-6">
                     "{testimonial.text}"
                   </p>
 
@@ -146,11 +146,11 @@ const Testimonials = () => {
                         {testimonial.avatar}
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">{testimonial.name}</p>
-                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        <p className="font-semibold text-foreground dark:text-foreground">{testimonial.name}</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">{testimonial.role}</p>
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">{testimonial.date}</span>
+                    <span className="text-xs text-muted-foreground dark:text-muted-foreground">{testimonial.date}</span>
                   </div>
                 </div>
               ))}
@@ -159,36 +159,36 @@ const Testimonials = () => {
         </section>
 
         {/* Write Review Section */}
-        <section className="py-12 md:py-16 bg-gradient-warm">
+        <section className="py-12 md:py-16 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-8">
                 <MessageSquare className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground mb-2">
+                <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground dark:text-foreground mb-2">
                   Share Your Experience
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground dark:text-muted-foreground">
                   We'd love to hear about your visit to Portugal Bakery!
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-6 md:p-8 shadow-soft">
+              <form onSubmit={handleSubmit} className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 shadow-soft transition-colors duration-300">
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                       Your Name
                     </label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
                       placeholder="Enter your name"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                       Rating
                     </label>
                     <div className="flex gap-2">
@@ -203,7 +203,7 @@ const Testimonials = () => {
                             className={`h-8 w-8 transition-colors ${
                               star <= rating
                                 ? "fill-gold text-gold"
-                                : "text-muted hover:text-gold"
+                                : "text-muted dark:text-muted hover:text-gold"
                             }`}
                           />
                         </button>
@@ -212,14 +212,14 @@ const Testimonials = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
                       Your Review
                     </label>
                     <textarea
                       value={review}
                       onChange={(e) => setReview(e.target.value)}
                       rows={4}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      className="w-full px-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-colors duration-300"
                       placeholder="Tell us about your experience..."
                     />
                   </div>

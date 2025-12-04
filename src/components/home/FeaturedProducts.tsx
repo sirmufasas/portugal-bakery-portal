@@ -50,10 +50,10 @@ export function FeaturedProducts() {
           <span className="text-primary font-medium text-sm tracking-wider uppercase mb-3 block">
             Our Specialties
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-foreground dark:text-foreground-dark mb-4">
             Featured Products
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground dark:text-muted-foreground-dark text-lg">
             Discover our most beloved creations, baked fresh daily using time-honored recipes
           </p>
         </div>
@@ -63,7 +63,7 @@ export function FeaturedProducts() {
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 animate-fade-in-up"
+              className="group bg-card dark:bg-card-dark rounded-2xl overflow-hidden shadow-soft dark:shadow-soft-dark hover:shadow-elevated dark:hover:shadow-elevated-dark transition-all duration-500 animate-fade-in-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="relative aspect-square overflow-hidden">
@@ -79,17 +79,17 @@ export function FeaturedProducts() {
                 </div>
               </div>
               <div className="p-5">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">
+                <h3 className="font-heading font-semibold text-lg text-foreground dark:text-foreground-dark mb-1 group-hover:text-primary transition-colors">
                   {product.name}
                 </h3>
-                <p className="text-muted-foreground text-sm mb-3">
+                <p className="text-muted-foreground dark:text-muted-foreground-dark text-sm mb-3">
                   {product.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-primary font-bold text-lg">
+                  <span className="text-primary dark:text-primary-dark font-bold text-lg">
                     {product.price}
                   </span>
-                  <Link to="/order">
+                  <Link to="/menu">
                     <Button size="sm" variant="outline">
                       Order
                     </Button>
