@@ -31,7 +31,7 @@ export function CTASection() {
                 Order Online
               </Button>
             </Link>
-            <a href="tel:+351123456789">
+            <a href="tel:0114362396">
               <Button
                 variant="heroOutline"
                 size="xl"

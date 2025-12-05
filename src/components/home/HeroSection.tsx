@@ -39,14 +39,20 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row gap-4 animate-fade-in-up"
             style={{ animationDelay: "0.3s" }}
           >
-            <Link to="/menu">
-              <Button variant="hero" size="xl" className="w-full sm:w-auto flex items-center justify-center gap-2">
+            {/* Make Link take full width */}
+            <Link to="/menu" className="w-full sm:w-auto">
+              <Button variant="hero" size="xl" className="w-full flex items-center justify-center gap-2">
                 Explore Our Menu
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/menu">
-              <Button variant="heroOutline" size="xl" className="w-full sm:w-auto">
+
+            <Link to="/menu" className="w-full sm:w-auto">
+              <Button
+                variant="heroOutline"
+                size="xl"
+                className="w-full border border-amber text-amber hover:bg-amber hover:text-cream dark:border-amber/70 dark:text-amber/70 dark:hover:bg-amber/80 dark:hover:text-cream"
+              >
                 Order Online
               </Button>
             </Link>

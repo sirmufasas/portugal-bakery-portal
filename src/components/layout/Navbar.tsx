@@ -47,12 +47,12 @@ export function Navbar() {
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 border-b border-border transition-colors duration-300",
-        // ❗ FIX APPLIED — REMOVED ALL BLUR + TRANSPARENCY
-        "bg-background"
+        "bg-background" // Fully theme-aware
       )}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
+          
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="relative w-10 h-10">
@@ -100,10 +100,13 @@ export function Navbar() {
 
               <DropdownMenuContent
                 align="end"
-                className="w-48 text-black border border-border shadow-lg z-50 bg-white"
+                className={cn(
+                  "w-48 border border-border shadow-lg z-50",
+                  "bg-background text-foreground" // Theme Fixed
+                )}
               >
-                <DropdownMenuItem asChild>
-                  <Link to="/login" className="flex items-center gap-2 cursor-pointer">
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/login" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
                     Sign In
                   </Link>
@@ -111,15 +114,15 @@ export function Navbar() {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem asChild>
-                  <Link to="/track-order" className="flex items-center gap-2 cursor-pointer">
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/track-order" className="flex items-center gap-2">
                     <Package className="h-4 w-4" />
                     Track Order
                   </Link>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem asChild>
-                  <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/admin" className="flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     Admin Dashboard
                   </Link>
@@ -144,8 +147,9 @@ export function Navbar() {
         {/* Mobile Navigation Overlay */}
         <div
           className={cn(
-            "fixed inset-0 top-16 bg-white z-40 md:hidden transition-all duration-300 ease-in-out",
-            isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
+            "fixed inset-0 top-16 z-40 md:hidden transition-all duration-300 ease-in-out border-t border-border",
+            isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none",
+            "bg-background text-foreground" // Theme Fixed
           )}
         >
           <div
@@ -161,7 +165,7 @@ export function Navbar() {
                   to={link.path}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted/20",
+                    "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted/30",
                     location.pathname === link.path
                       ? "text-primary bg-primary/20"
                       : "text-foreground"
@@ -169,7 +173,7 @@ export function Navbar() {
                   style={{
                     transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
                     opacity: isOpen ? 1 : 0,
-                    transform: isOpen ? "translateX(0)" : "translateX(-10px)",
+                    transform: isOpen ? "translateX(0)" : "translateX(-10px)"
                   }}
                 >
                   {link.name}
@@ -179,7 +183,7 @@ export function Navbar() {
               <Link
                 to="/track-order"
                 onClick={() => setIsOpen(false)}
-                className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/20 flex items-center gap-2"
+                className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 flex items-center gap-2"
               >
                 <Package className="h-5 w-5" />
                 Track Order
@@ -188,7 +192,7 @@ export function Navbar() {
               <Link
                 to="/admin"
                 onClick={() => setIsOpen(false)}
-                className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/20 flex items-center gap-2"
+                className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 flex items-center gap-2"
               >
                 <Shield className="h-5 w-5" />
                 Admin Dashboard

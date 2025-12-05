@@ -1,5 +1,5 @@
 // src/pages/Order.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,53 @@ const Order = () => {
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // ✅ CRITICAL: Force close Yoco popup on any step change
+  const forceCloseYoco = () => {
+    // Remove ALL iframes
+    const iframes = document.querySelectorAll("iframe");
+    iframes.forEach((iframe) => {
+      const src = iframe.getAttribute("src") || "";
+      if (src.includes("yoco") || src.includes("pay.yoco") || src.includes("checkout")) {
+        iframe.remove();
+      }
+    });
+
+    // Remove ALL high z-index overlays
+    const allDivs = document.querySelectorAll("div");
+    allDivs.forEach((div) => {
+      const style = window.getComputedStyle(div);
+      const zIndex = parseInt(style.zIndex);
+      if (zIndex > 99999) {
+        div.remove();
+      }
+    });
+
+    // Remove Yoco elements
+    const yocoElements = document.querySelectorAll(
+      "[id*='yoco'], [class*='yoco'], [id*='Yoco'], [class*='Yoco'], [id*='checkout']"
+    );
+    yocoElements.forEach((el) => el.remove());
+
+    // Reset body styles
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.documentElement.style.overflow = "";
+  };
+
+  // ✅ Close popup whenever orderStep changes
+  useEffect(() => {
+    if (orderStep !== "payment") {
+      forceCloseYoco();
+    }
+  }, [orderStep]);
+
+  // ✅ Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      forceCloseYoco();
+    };
+  }, []);
+
   const handleAddToCart = (item: typeof menuItems[0]) => {
     addToCart(item);
     toast({ title: "Added to cart", description: `${item.name} has been added to your order.` });
@@ -33,6 +80,7 @@ const Order = () => {
   const handleProceedToCheckout = () => {
     if (!cart.length)
       return toast({ title: "Cart is empty", description: "Please add items.", variant: "destructive" });
+    forceCloseYoco(); // Close before navigating
     setOrderStep("checkout");
   };
 
@@ -42,8 +90,19 @@ const Order = () => {
     setOrderStep("payment");
   };
 
+  const handleBackToCheckout = () => {
+    forceCloseYoco(); // Force close before going back
+    setOrderStep("checkout");
+  };
+
+  const handleBackToMenu = () => {
+    forceCloseYoco(); // Force close before going back
+    setOrderStep("menu");
+  };
+
   const handlePaymentComplete = async (paymentID: string) => {
     setIsProcessing(true);
+    forceCloseYoco(); // Close popup after payment
     await new Promise(resolve => setTimeout(resolve, 1000));
     const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
     setOrderId(newOrderId);
@@ -89,6 +148,7 @@ const Order = () => {
               variant="default"
               size="lg"
               onClick={() => {
+                forceCloseYoco();
                 setOrderStep("menu");
                 clearCart();
                 setInstructions("");
@@ -120,7 +180,7 @@ const Order = () => {
           <section className="py-12 bg-background">
             <div className="container mx-auto px-4">
               <div className="max-w-lg mx-auto">
-                <Button variant="ghost" onClick={() => setOrderStep("menu")} className="mb-6">
+                <Button variant="ghost" onClick={handleBackToMenu} className="mb-6">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Menu
                 </Button>
@@ -200,7 +260,7 @@ const Order = () => {
           <div className="w-full max-w-lg mb-12">
             <Button
               variant="ghost"
-              onClick={() => setOrderStep("checkout")}
+              onClick={handleBackToCheckout}
               className="mb-6"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

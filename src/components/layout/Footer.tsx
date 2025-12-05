@@ -10,7 +10,7 @@ export function Footer() {
           <div>
             <h3 className="text-2xl font-heading font-bold mb-4">Portugal Bakery</h3>
             <p className="text-cream/70 text-sm leading-relaxed mb-6">
-              Crafting artisan breads and pastries with love since 1985. 
+              Crafting artisan breads and pastries with love since 1985.
               Every bite tells a story of tradition and passion.
             </p>
             <div className="flex gap-4">
@@ -56,7 +56,7 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <span className="text-cream/70 text-sm">
-                  123 Bakery Street, Lisbon, Portugal
+                  Portugal Bakery, Johannesburg
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -74,20 +74,34 @@ export function Footer() {
           <div>
             <h4 className="text-lg font-heading font-semibold mb-4">Opening Hours</h4>
             <ul className="space-y-3">
+
+              {/* Monday - Friday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="text-cream/90 font-medium">Monday - Friday</p>
-                  <p className="text-cream/70">7:00 AM - 8:00 PM</p>
+                  <p className="text-cream/70">6:45 AM - 4:00 PM</p>
                 </div>
               </li>
+
+              {/* Saturday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="text-cream/90 font-medium">Saturday - Sunday</p>
-                  <p className="text-cream/70">8:00 AM - 6:00 PM</p>
+                  <p className="text-cream/90 font-medium">Saturday</p>
+                  <p className="text-cream/70">7:00 AM - 2:00 PM</p>
                 </div>
               </li>
+
+              {/* Sunday */}
+              <li className="flex items-start gap-3">
+                <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-cream/90 font-medium">Sunday</p>
+                  <p className="text-cream/70">Closed</p>
+                </div>
+              </li>
+
             </ul>
           </div>
         </div>

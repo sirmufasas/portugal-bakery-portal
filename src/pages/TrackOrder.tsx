@@ -76,25 +76,24 @@ const TrackOrder = () => {
     });
   };
 
-  const getStatusIndex = (status: string) => {
-    return statusSteps.findIndex(s => s.key === status);
-  };
+  const getStatusIndex = (status: string) => statusSteps.findIndex(s => s.key === status);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-background-dark transition-colors duration-300">
       <Navbar />
       <main className="pt-20">
+
         {/* Header */}
-        <section className="py-12 md:py-16 bg-gradient-warm">
+        <section className="py-12 md:py-16 bg-[#FFF8E7] dark:bg-[#5C4632] transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center">
-              <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">
+              <span className="text-primary dark:text-primary-dark font-medium text-sm tracking-wider uppercase mb-4 block">
                 Track Your Order
               </span>
-              <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4">
+              <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground dark:text-foreground-dark mb-4">
                 Order Status
               </h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground dark:text-muted-foreground-dark text-lg">
                 Enter your order ID to track your order and communicate with us.
               </p>
             </div>
@@ -102,7 +101,7 @@ const TrackOrder = () => {
         </section>
 
         {/* Search Section */}
-        <section className="py-8 bg-background">
+        <section className="py-8 bg-background dark:bg-background-dark transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto">
               <div className="flex gap-2">
@@ -111,7 +110,7 @@ const TrackOrder = () => {
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="flex-1"
+                  className="flex-1 dark:bg-card-dark dark:text-foreground-dark dark:border-border-dark"
                 />
                 <Button onClick={handleSearch}>
                   <Search className="h-4 w-4 mr-2" />
@@ -124,20 +123,21 @@ const TrackOrder = () => {
 
         {/* Order Details */}
         {foundOrder && (
-          <section className="py-8 bg-background">
+          <section className="py-8 bg-background dark:bg-background-dark">
             <div className="container mx-auto px-4">
               <div className="max-w-3xl mx-auto">
-                <div className="bg-card rounded-2xl shadow-soft overflow-hidden">
+                <div className="bg-card dark:bg-card-dark rounded-2xl shadow-soft overflow-hidden">
+
                   {/* Order Header */}
-                  <div className="p-6 border-b border-border">
+                  <div className="p-6 border-b border-border dark:border-border-dark">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Order ID</p>
-                        <p className="text-2xl font-bold text-primary">{foundOrder.id}</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Order ID</p>
+                        <p className="text-2xl font-bold text-primary dark:text-primary-dark">{foundOrder.id}</p>
                       </div>
                       <div className="text-left sm:text-right">
-                        <p className="text-sm text-muted-foreground">Estimated Ready</p>
-                        <p className="font-semibold text-foreground">
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Estimated Ready</p>
+                        <p className="font-semibold text-foreground dark:text-foreground-dark">
                           {foundOrder.estimatedReady.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -145,20 +145,20 @@ const TrackOrder = () => {
                   </div>
 
                   {/* Progress Steps */}
-                  <div className="p-6 border-b border-border">
+                  <div className="p-6 border-b border-border dark:border-border-dark">
                     <div className="flex items-center justify-between">
                       {statusSteps.map((step, index) => {
                         const currentIndex = getStatusIndex(foundOrder.status);
                         const isCompleted = index <= currentIndex;
                         const isCurrent = index === currentIndex;
-                        
+
                         return (
                           <div key={step.key} className="flex-1 flex flex-col items-center relative">
                             {index > 0 && (
                               <div
                                 className={cn(
                                   "absolute top-5 -left-1/2 w-full h-1 -z-10",
-                                  index <= currentIndex ? "bg-primary" : "bg-muted"
+                                  index <= currentIndex ? "bg-primary dark:bg-primary-dark" : "bg-muted dark:bg-muted-dark"
                                 )}
                               />
                             )}
@@ -166,8 +166,8 @@ const TrackOrder = () => {
                               className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center transition-all",
                                 isCompleted
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-muted-foreground",
+                                  ? "bg-primary text-primary-foreground dark:text-primary-foreground-dark"
+                                  : "bg-muted text-muted-foreground dark:bg-muted-dark dark:text-muted-foreground-dark",
                                 isCurrent && "ring-4 ring-primary/30 animate-pulse"
                               )}
                             >
@@ -176,7 +176,7 @@ const TrackOrder = () => {
                             <p
                               className={cn(
                                 "text-xs mt-2 text-center",
-                                isCompleted ? "text-primary font-medium" : "text-muted-foreground"
+                                isCompleted ? "text-primary dark:text-primary-dark font-medium" : "text-muted-foreground dark:text-muted-foreground-dark"
                               )}
                             >
                               {step.label}
@@ -188,29 +188,29 @@ const TrackOrder = () => {
                   </div>
 
                   {/* Order Items */}
-                  <div className="p-6 border-b border-border">
-                    <h3 className="font-semibold text-foreground mb-3">Order Items</h3>
+                  <div className="p-6 border-b border-border dark:border-border-dark">
+                    <h3 className="font-semibold text-foreground dark:text-foreground-dark mb-3">Order Items</h3>
                     <ul className="space-y-2">
                       {foundOrder.items.map((item, index) => (
-                        <li key={index} className="text-muted-foreground flex items-center gap-2">
-                          <span className="w-2 h-2 bg-primary rounded-full" />
+                        <li key={index} className="text-muted-foreground dark:text-muted-foreground-dark flex items-center gap-2">
+                          <span className="w-2 h-2 bg-primary dark:bg-primary-dark rounded-full" />
                           {item}
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-4 pt-4 border-t border-border flex justify-between">
+                    <div className="mt-4 pt-4 border-t border-border dark:border-border-dark flex justify-between">
                       <span className="font-semibold">Total</span>
-                      <span className="font-bold text-primary">R{foundOrder.total.toFixed(2)}</span>
+                      <span className="font-bold text-primary dark:text-primary-dark">R{foundOrder.total.toFixed(2)}</span>
                     </div>
                   </div>
 
                   {/* Messages */}
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <MessageSquare className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-foreground">Messages</h3>
+                      <MessageSquare className="h-5 w-5 text-primary dark:text-primary-dark" />
+                      <h3 className="font-semibold text-foreground dark:text-foreground-dark">Messages</h3>
                     </div>
-                    
+
                     <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
                       {messages.map((msg) => (
                         <div
@@ -218,14 +218,16 @@ const TrackOrder = () => {
                           className={cn(
                             "p-3 rounded-lg max-w-[80%]",
                             msg.sender === "user"
-                              ? "bg-primary text-primary-foreground ml-auto"
-                              : "bg-muted text-foreground"
+                              ? "bg-primary text-primary-foreground dark:text-primary-foreground-dark ml-auto"
+                              : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
                           )}
                         >
                           <p className="text-sm">{msg.text}</p>
                           <p className={cn(
                             "text-xs mt-1",
-                            msg.sender === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                            msg.sender === "user"
+                              ? "text-primary-foreground/70 dark:text-primary-foreground-dark/70"
+                              : "text-muted-foreground dark:text-muted-foreground-dark"
                           )}>
                             {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
@@ -239,6 +241,7 @@ const TrackOrder = () => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                        className="dark:bg-background-dark dark:text-foreground-dark"
                       />
                       <Button onClick={handleSendMessage}>
                         <Send className="h-4 w-4" />
@@ -253,14 +256,14 @@ const TrackOrder = () => {
 
         {/* Help Section */}
         {!foundOrder && (
-          <section className="py-16 bg-background">
+          <section className="py-16 bg-background dark:bg-background-dark">
             <div className="container mx-auto px-4">
               <div className="max-w-2xl mx-auto text-center">
-                <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
+                <Clock className="h-16 w-16 text-muted-foreground dark:text-muted-foreground-dark mx-auto mb-4" />
+                <h2 className="text-2xl font-heading font-bold text-foreground dark:text-foreground-dark mb-2">
                   Need Help?
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground dark:text-muted-foreground-dark">
                   You can find your order ID in the confirmation email we sent you, or in the confirmation screen after placing your order.
                 </p>
               </div>

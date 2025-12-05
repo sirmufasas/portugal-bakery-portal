@@ -122,11 +122,16 @@ const About = () => {
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground dark:text-foreground mb-4">Find Our Bakery</h2>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="rounded-2xl overflow-hidden shadow-elevated h-[400px] lg:h-[500px]">
+              <div className="rounded-2xl overflow-hidden shadow-elevated h-[400px] lg:h-[775px]">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57257.96631214229!2d27.98293222167968!3d-26.24143999999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e950f02e6b43967%3A0xf5bc4c7e2ff0bd5a!2sPortugal%20Bakery%20%26%20Confectionary!5e0!3m2!1sen!2sza!4v1764687358269!5m2!1sen!2sza"
-                  width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade" title="Portugal Bakery Location"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Portugal Bakery Location"
                 />
               </div>
 
@@ -166,8 +171,8 @@ const About = () => {
                     <a href="https://maps.app.goo.gl/BYKLVXfZ3LfyHZAt5" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground dark:text-muted-foreground hover:text-primary transition-colors">
                       <MapPin className="h-5 w-5 text-primary flex-shrink-0" /><span>Portugal Bakery, Johannesburg</span>
                     </a>
-                    <a href="tel:+27000000000" className="flex items-center gap-3 text-muted-foreground dark:text-muted-foreground hover:text-primary transition-colors">
-                      <Phone className="h-5 w-5 text-primary flex-shrink-0" /><span>+27 (0) 00 000 0000</span>
+                    <a href="tel:0114362396" className="flex items-center gap-3 text-muted-foreground dark:text-muted-foreground hover:text-primary transition-colors">
+                      <Phone className="h-5 w-5 text-primary flex-shrink-0" /><span>0114362396</span>
                     </a>
                     <a href="mailto:info@portugalbakery.co.za" className="flex items-center gap-3 text-muted-foreground dark:text-muted-foreground hover:text-primary transition-colors">
                       <Mail className="h-5 w-5 text-primary flex-shrink-0" /><span>info@portugalbakery.co.za</span>
