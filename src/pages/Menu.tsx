@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Trash2, ShoppingBag, X, AlertTriangle, Scale, Flame } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, ShoppingBag, X, AlertTriangle, Scale, Flame, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { allProducts, categories } from "@/data/products";
@@ -14,11 +14,23 @@ const Menu = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [showCart, setShowCart] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { cart, addToCart, updateQuantity, removeItem, total, totalItems } = useCart();
 
-  const filteredProducts = activeCategory === "All"
+  // Filter by category
+  let filteredProducts = activeCategory === "All"
     ? allProducts
     : allProducts.filter(p => p.category === activeCategory);
+
+  // Filter by search query
+  if (searchQuery.trim()) {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    filteredProducts = filteredProducts.filter(p =>
+      p.name.trim().toLowerCase().includes(normalizedQuery) ||
+      p.description.trim().toLowerCase().includes(normalizedQuery) ||
+      p.category.trim().toLowerCase().includes(normalizedQuery)
+    );
+  }
 
   const handleAddToCart = (product) => {
     addToCart(product);
@@ -30,6 +42,31 @@ const Menu = () => {
 
   const handleProductClick = (product) => {
     setSelectedProduct(product);
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Show toast if search yields no results after typing stops
+    if (value.trim()) {
+      setTimeout(() => {
+        const normalizedQuery = value.trim().toLowerCase();
+        const results = allProducts.filter(p =>
+          p.name.trim().toLowerCase().includes(normalizedQuery) ||
+          p.description.trim().toLowerCase().includes(normalizedQuery) ||
+          p.category.trim().toLowerCase().includes(normalizedQuery)
+        );
+        
+        if (results.length === 0) {
+          toast({
+            title: "Product not available",
+            description: `No products found matching "${value.trim()}". Try a different search term.`,
+            variant: "destructive",
+          });
+        }
+      }, 500);
+    }
   };
 
   return (
@@ -275,6 +312,29 @@ const Menu = () => {
         {/* Category Filter */}
         <section className="py-6 bg-neutral-50 dark:bg-background border-b border-border sticky top-16 md:top-20 z-40 transition-colors duration-300">
           <div className="container mx-auto px-4">
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search products by name, description, or category..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="w-full pl-10 pr-4 py-3 rounded-full border border-border bg-white dark:bg-card text-foreground dark:text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 shadow-sm"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Category Filters */}
             <div className="flex flex-wrap justify-center gap-2">
               {categories.map((category) => (
                 <button
@@ -304,57 +364,91 @@ const Menu = () => {
           <div className="container mx-auto px-4">
             <div className="mb-6 text-center">
               <p className="text-muted-foreground dark:text-muted-foreground">
-                Showing {filteredProducts.length} products • Click on any product for details
+                {searchQuery ? (
+                  <>
+                    Showing {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''} for "{searchQuery}"
+                  </>
+                ) : (
+                  <>
+                    Showing {filteredProducts.length} products • Click on any product for details
+                  </>
+                )}
               </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              {filteredProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="group bg-white dark:bg-card rounded-xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 animate-fade-in-up cursor-pointer"
-                  style={{ animationDelay: `${(index % 10) * 0.03}s` }}
-                  onClick={() => handleProductClick(product)}
-                >
-                  <div className="relative aspect-square overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-2 left-2">
-                      <span className="bg-primary/90 text-primary-foreground text-[10px] font-medium px-2 py-1 rounded-full">
-                        {product.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-3 md:p-4">
-                    <h3 className="font-heading font-semibold text-sm md:text-base text-foreground dark:text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-xs mb-2 line-clamp-2 hidden sm:block">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary font-bold text-sm md:text-base">
-                        R{product.price.toFixed(2)}
-                      </span>
-                      <Button 
-                        size="sm" 
-                        variant="default" 
-                        className="text-xs px-3 py-1 h-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(product);
-                        }}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  </div>
+            
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
-              ))}
-            </div>
+                <h3 className="text-xl font-semibold text-foreground dark:text-foreground mb-2">
+                  No products found
+                </h3>
+                <p className="text-muted-foreground dark:text-muted-foreground mb-6 max-w-md mx-auto">
+                  {searchQuery 
+                    ? `We couldn't find any products matching "${searchQuery}". Try adjusting your search or browse our categories.`
+                    : "No products available in this category."
+                  }
+                </p>
+                {searchQuery && (
+                  <Button
+                    onClick={() => setSearchQuery("")}
+                    variant="outline"
+                  >
+                    Clear Search
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {filteredProducts.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="group bg-white dark:bg-card rounded-xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 animate-fade-in-up cursor-pointer"
+                    style={{ animationDelay: `${(index % 10) * 0.03}s` }}
+                    onClick={() => handleProductClick(product)}
+                  >
+                    <div className="relative aspect-square overflow-hidden">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <span className="bg-primary/90 text-primary-foreground text-[10px] font-medium px-2 py-1 rounded-full">
+                          {product.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 md:p-4">
+                      <h3 className="font-heading font-semibold text-sm md:text-base text-foreground dark:text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                        {product.name}
+                      </h3>
+                      <p className="text-muted-foreground dark:text-muted-foreground text-xs mb-2 line-clamp-2 hidden sm:block">
+                        {product.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-primary font-bold text-sm md:text-base">
+                          R{product.price.toFixed(2)}
+                        </span>
+                        <Button 
+                          size="sm" 
+                          variant="default" 
+                          className="text-xs px-3 py-1 h-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
