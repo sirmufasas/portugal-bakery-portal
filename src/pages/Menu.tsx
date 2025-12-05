@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, ShoppingBag, X, AlertTriangle, Scale, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { allProducts, categories } from "@/data/products";
@@ -13,18 +13,23 @@ const Menu = () => {
   const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState("All");
   const [showCart, setShowCart] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const { cart, addToCart, updateQuantity, removeItem, total, totalItems } = useCart();
 
   const filteredProducts = activeCategory === "All"
     ? allProducts
     : allProducts.filter(p => p.category === activeCategory);
 
-  const handleAddToCart = (product: typeof allProducts[0]) => {
+  const handleAddToCart = (product) => {
     addToCart(product);
     toast({ 
       title: "Added to cart", 
       description: `${product.name} has been added to your cart.` 
     });
+  };
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
   };
 
   return (
@@ -41,6 +46,139 @@ const Menu = () => {
           <span className="font-bold">{totalItems}</span>
           <span className="hidden sm:inline ml-2">R{total.toFixed(2)}</span>
         </button>
+      )}
+
+      {/* Product Details Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
+          <div
+            className="bg-white dark:bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-card border-b border-border p-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-heading font-bold text-foreground">{selectedProduct.name}</h2>
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Image and Basic Info Side by Side */}
+              <div className="flex flex-col sm:flex-row gap-6 mb-6">
+                {/* Small Square Image */}
+                <div className="flex-shrink-0">
+                  <div className="relative w-40 h-40 rounded-xl overflow-hidden shadow-md">
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-primary/90 text-primary-foreground text-xs font-medium px-2 py-1 rounded-full">
+                        {selectedProduct.category}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description & Price */}
+                <div className="flex-1">
+                  <p className="text-muted-foreground mb-4">{selectedProduct.description}</p>
+                  <div className="flex items-center gap-4 mb-3">
+                    <span className="text-3xl font-bold text-primary">R{selectedProduct.price.toFixed(2)}</span>
+                    {selectedProduct.weight && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Scale className="h-4 w-4" />
+                        <span className="text-sm">{selectedProduct.weight}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Nutritional Info */}
+              {selectedProduct.nutritionalInfo && (
+                <div className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <h3 className="font-semibold text-foreground">Nutritional Information</h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-foreground">{selectedProduct.nutritionalInfo.calories}</div>
+                      <div className="text-xs text-muted-foreground">Calories</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-foreground">{selectedProduct.nutritionalInfo.protein}</div>
+                      <div className="text-xs text-muted-foreground">Protein</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-foreground">{selectedProduct.nutritionalInfo.carbs}</div>
+                      <div className="text-xs text-muted-foreground">Carbs</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-foreground">{selectedProduct.nutritionalInfo.fat}</div>
+                      <div className="text-xs text-muted-foreground">Fat</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ingredients */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-foreground mb-3">Ingredients</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProduct.ingredients?.map((ingredient, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-foreground text-sm rounded-full"
+                    >
+                      {ingredient}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Allergens */}
+              {selectedProduct.allergens && selectedProduct.allergens.length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <h3 className="font-semibold text-red-900 dark:text-red-100">Allergen Information</h3>
+                  </div>
+                  <p className="text-sm text-red-800 dark:text-red-200 mb-2">Contains:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.allergens.map((allergen, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100 text-sm font-medium rounded-full"
+                      >
+                        {allergen}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add to Cart Button */}
+              <Button
+                onClick={() => {
+                  handleAddToCart(selectedProduct);
+                  setSelectedProduct(null);
+                }}
+                className="w-full"
+                size="lg"
+              >
+                Add to Cart - R{selectedProduct.price.toFixed(2)}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Cart Sidebar */}
@@ -166,15 +304,16 @@ const Menu = () => {
           <div className="container mx-auto px-4">
             <div className="mb-6 text-center">
               <p className="text-muted-foreground dark:text-muted-foreground">
-                Showing {filteredProducts.length} products
+                Showing {filteredProducts.length} products • Click on any product for details
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
               {filteredProducts.map((product, index) => (
                 <div
                   key={product.id}
-                  className="group bg-white dark:bg-card rounded-xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 animate-fade-in-up"
+                  className="group bg-white dark:bg-card rounded-xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 animate-fade-in-up cursor-pointer"
                   style={{ animationDelay: `${(index % 10) * 0.03}s` }}
+                  onClick={() => handleProductClick(product)}
                 >
                   <div className="relative aspect-square overflow-hidden">
                     <img
@@ -204,9 +343,12 @@ const Menu = () => {
                         size="sm" 
                         variant="default" 
                         className="text-xs px-3 py-1 h-7"
-                        onClick={() => handleAddToCart(product)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
                       >
-                        Add to Cart
+                        Add
                       </Button>
                     </div>
                   </div>

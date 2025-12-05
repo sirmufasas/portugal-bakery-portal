@@ -21,7 +21,8 @@ import {
   Send,
   Eye,
   Trash2,
-  ChefHat
+  ChefHat,
+  AlertCircle
 } from "lucide-react";
 
 // Mock data for orders
@@ -34,7 +35,7 @@ const mockOrders = [
     total: "R7.50",
     status: "pending",
     date: "2024-01-15 09:30",
-    instructions: "Please make the custard tarts extra crispy",
+    specialInstructions: "Please make the custard tarts extra crispy and remove any cinnamon from the sourdough",
   },
   {
     id: "PB-002",
@@ -44,7 +45,7 @@ const mockOrders = [
     total: "R39.20",
     status: "baking",
     date: "2024-01-15 10:15",
-    instructions: "Birthday cake - need by 3pm",
+    specialInstructions: "Birthday cake - need by 3pm. Add extra chocolate and no nuts please!",
   },
   {
     id: "PB-003",
@@ -54,7 +55,17 @@ const mockOrders = [
     total: "R18.00",
     status: "ready",
     date: "2024-01-15 08:00",
-    instructions: "",
+    specialInstructions: "",
+  },
+  {
+    id: "PB-004",
+    customer: "Pedro Oliveira",
+    email: "pedro@email.com",
+    items: ["3x Chocolate Croissant", "2x Almond Croissant"],
+    total: "R16.60",
+    status: "pending",
+    date: "2024-01-15 11:00",
+    specialInstructions: "Allergy alert: No almonds in the almond croissants, please substitute with vanilla cream",
   },
 ];
 
@@ -262,7 +273,7 @@ export default function Admin() {
                 {orders.map((order) => (
                   <Card key={order.id} className="bg-card overflow-hidden">
                     <CardContent className="p-0">
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between p-4 md:p-6 gap-4">
+                      <div className="flex flex-col lg:flex-row lg:items-start justify-between p-4 md:p-6 gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-2">
                             <span className="font-mono font-bold text-primary">{order.id}</span>
@@ -278,15 +289,27 @@ export default function Admin() {
                         
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground mb-1">Items:</p>
-                          <ul className="text-sm text-muted-foreground">
+                          <ul className="text-sm text-muted-foreground mb-3">
                             {order.items.map((item, i) => (
                               <li key={i}>• {item}</li>
                             ))}
                           </ul>
-                          {order.instructions && (
-                            <p className="text-sm text-accent mt-2 italic">
-                              Note: {order.instructions}
-                            </p>
+                          
+                          {/* Special Instructions Display */}
+                          {order.specialInstructions && (
+                            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                                    Special Instructions:
+                                  </p>
+                                  <p className="text-sm text-amber-800 dark:text-amber-200 break-words">
+                                    {order.specialInstructions}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </div>
 

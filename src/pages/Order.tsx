@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { allProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { YocoPayment } from "@/components/order/YocoPayment";
 import { useCart } from "@/contexts/CartContext";
 
@@ -18,7 +19,7 @@ type OrderStep = "menu" | "checkout" | "payment" | "confirmed";
 const Order = () => {
   const { toast } = useToast();
   const { cart, addToCart, updateQuantity, removeItem, clearCart, total } = useCart();
-  const [instructions, setInstructions] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
   const [orderStep, setOrderStep] = useState<OrderStep>("menu");
   const [orderId, setOrderId] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -151,7 +152,7 @@ const Order = () => {
                 forceCloseYoco();
                 setOrderStep("menu");
                 clearCart();
-                setInstructions("");
+                setSpecialInstructions("");
                 setCustomerEmail("");
                 setCustomerName("");
               }}
@@ -225,6 +226,14 @@ const Order = () => {
                       </div>
                     ))}
                   </div>
+                  {specialInstructions && (
+                    <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                      <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                        Special Instructions:
+                      </p>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">{specialInstructions}</p>
+                    </div>
+                  )}
                   <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span className="text-primary">R{total.toFixed(2)}</span>
@@ -303,44 +312,70 @@ const Order = () => {
 
         <section className="py-12 bg-background">
           <div className="container mx-auto px-4">
-            <div className="max-w-lg mx-auto bg-card rounded-2xl p-6 shadow-soft">
-              <h2 className="text-xl font-heading font-bold text-foreground mb-4">Your Cart</h2>
-              {cart.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Your cart is empty. Add items to get started!
-                </p>
-              ) : (
-                <>
-                  <div className="space-y-3 mb-4">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex gap-3 items-center">
-                        <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{item.name} x{item.quantity}</p>
-                          <div className="flex gap-2 mt-1">
-                            <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, -1)}>
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, 1)}>
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => removeItem(item.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+            <div className="max-w-lg mx-auto space-y-6">
+              {/* Cart Section */}
+              <div className="bg-card rounded-2xl p-6 shadow-soft">
+                <h2 className="text-xl font-heading font-bold text-foreground mb-4">Your Cart</h2>
+                {cart.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Your cart is empty. Add items to get started!
+                  </p>
+                ) : (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      {cart.map(item => (
+                        <div key={item.id} className="flex gap-3 items-center">
+                          <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{item.name} x{item.quantity}</p>
+                            <div className="flex gap-2 mt-1">
+                              <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, -1)}>
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, 1)}>
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => removeItem(item.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
+                          <span className="font-medium">R{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">R{(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-border pt-3 flex justify-between text-lg font-bold mb-4">
-                    <span>Total</span>
-                    <span className="text-primary">R{total.toFixed(2)}</span>
-                  </div>
-                  <Button variant="default" size="lg" className="w-full" onClick={handleProceedToCheckout}>
-                    Proceed to Checkout
-                  </Button>
-                </>
+                      ))}
+                    </div>
+                    <div className="border-t border-border pt-3 flex justify-between text-lg font-bold mb-4">
+                      <span>Total</span>
+                      <span className="text-primary">R{total.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Special Instructions Section */}
+              {cart.length > 0 && (
+                <div className="bg-card rounded-2xl p-6 shadow-soft">
+                  <h2 className="text-xl font-heading font-bold text-foreground mb-2">Special Instructions</h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Tell us about any ingredient preferences, allergies, or special requests
+                  </p>
+                  <Textarea
+                    placeholder="Example: No nuts please, extra chocolate, remove raisins, add extra butter, etc."
+                    value={specialInstructions}
+                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                    className="min-h-[120px] bg-background text-foreground resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    💡 We'll do our best to accommodate your requests
+                  </p>
+                </div>
+              )}
+
+              {/* Checkout Button */}
+              {cart.length > 0 && (
+                <Button variant="default" size="lg" className="w-full" onClick={handleProceedToCheckout}>
+                  Proceed to Checkout
+                </Button>
               )}
             </div>
           </div>

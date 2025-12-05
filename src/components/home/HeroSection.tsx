@@ -51,7 +51,8 @@ export function HeroSection() {
               <Button
                 variant="heroOutline"
                 size="xl"
-                className="w-full border border-amber text-amber hover:bg-amber hover:text-cream dark:border-amber/70 dark:text-amber/70 dark:hover:bg-amber/80 dark:hover:text-cream"
+                className="w-full border border-amber text-white hover:bg-amber hover:text-cream 
+dark:border-amber/70 dark:text-white dark:hover:bg-amber/80 dark:hover:text-cream"
               >
                 Order Online
               </Button>
