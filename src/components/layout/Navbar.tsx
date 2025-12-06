@@ -22,6 +22,7 @@ const navLinks = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [openContact, setOpenContact] = useState(false); // New: Contact Modal
   const location = useLocation();
 
   useEffect(() => {
@@ -37,22 +38,21 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    document.body.style.overflow = isOpen || openContact ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
+  }, [isOpen, openContact]);
 
   return (
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 border-b border-border transition-colors duration-300",
-        "bg-background" // Fully theme-aware
+        "bg-background"
       )}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="relative w-10 h-10">
@@ -76,9 +76,7 @@ export function Navbar() {
                 to={link.path}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname === link.path
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  location.pathname === link.path ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 {link.name}
@@ -100,10 +98,7 @@ export function Navbar() {
 
               <DropdownMenuContent
                 align="end"
-                className={cn(
-                  "w-48 border border-border shadow-lg z-50",
-                  "bg-background text-foreground" // Theme Fixed
-                )}
+                className={cn("w-48 border border-border shadow-lg z-50", "bg-background text-foreground")}
               >
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/login" className="flex items-center gap-2">
@@ -127,6 +122,17 @@ export function Navbar() {
                     Admin Dashboard
                   </Link>
                 </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* Contact Developer */}
+                <DropdownMenuItem
+                  className="cursor-pointer flex items-center gap-2"
+                  onClick={() => setOpenContact(true)}
+                >
+                  <User className="h-4 w-4" />
+                  Contact Developer
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -135,11 +141,7 @@ export function Navbar() {
           <div className="flex md:hidden items-center gap-2">
             <ThemeToggle />
             <button className="p-2" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
-              {isOpen ? (
-                <X className="h-6 w-6 text-foreground" />
-              ) : (
-                <Menu className="h-6 w-6 text-foreground" />
-              )}
+              {isOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
             </button>
           </div>
         </div>
@@ -149,7 +151,7 @@ export function Navbar() {
           className={cn(
             "fixed inset-0 top-16 z-40 md:hidden transition-all duration-300 ease-in-out border-t border-border",
             isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none",
-            "bg-background text-foreground" // Theme Fixed
+            "bg-background text-foreground"
           )}
         >
           <div
@@ -166,14 +168,12 @@ export function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className={cn(
                     "text-lg font-medium transition-all duration-200 py-3 px-4 rounded-lg hover:bg-muted/30",
-                    location.pathname === link.path
-                      ? "text-primary bg-primary/20"
-                      : "text-foreground"
+                    location.pathname === link.path ? "text-primary bg-primary/20" : "text-foreground"
                   )}
                   style={{
                     transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
                     opacity: isOpen ? 1 : 0,
-                    transform: isOpen ? "translateX(0)" : "translateX(-10px)"
+                    transform: isOpen ? "translateX(0)" : "translateX(-10px)",
                   }}
                 >
                   {link.name}
@@ -197,6 +197,18 @@ export function Navbar() {
                 <Shield className="h-5 w-5" />
                 Admin Dashboard
               </Link>
+
+              {/* Contact Developer for Mobile */}
+              <button
+                onClick={() => {
+                  setOpenContact(true);
+                  setIsOpen(false);
+                }}
+                className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 flex items-center gap-2"
+              >
+                <User className="h-5 w-5" />
+                Contact Developer
+              </button>
             </div>
 
             <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-border">
@@ -208,6 +220,43 @@ export function Navbar() {
             </div>
           </div>
         </div>
+
+        {/* Contact Developer Modal */}
+        {openContact && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setOpenContact(false)}
+          >
+            <div
+              className="bg-cream text-espresso rounded-xl shadow-2xl w-full max-w-xs p-6 flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold mb-4">Contact Developer</h2>
+              <a
+                href="https://www.instagram.com/sir.mufasa_/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center px-6 py-2 mb-3 bg-amber rounded-lg hover:bg-amber/80 transition-colors font-semibold"
+              >
+                Instagram
+              </a>
+              <a
+                href="https://wa.me/27763670861"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center px-6 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+              >
+                WhatsApp
+              </a>
+              <button
+                onClick={() => setOpenContact(false)}
+                className="mt-4 text-sm text-espresso/70 hover:text-espresso transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
