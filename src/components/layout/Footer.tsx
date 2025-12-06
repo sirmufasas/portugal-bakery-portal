@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter } from "lucide-react";
+import LionImage from "@/assets/lion.png"; // Import the image
 
 export function Footer() {
+  const [openMenu, setOpenMenu] = useState(false);
+
   return (
-    <footer className="bg-espresso text-cream">
+    <footer className="bg-espresso text-cream relative">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
@@ -74,7 +78,6 @@ export function Footer() {
           <div>
             <h4 className="text-lg font-heading font-semibold mb-4">Opening Hours</h4>
             <ul className="space-y-3">
-
               {/* Monday - Friday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
@@ -83,7 +86,6 @@ export function Footer() {
                   <p className="text-cream/70">6:45 AM - 4:00 PM</p>
                 </div>
               </li>
-
               {/* Saturday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
@@ -92,7 +94,6 @@ export function Footer() {
                   <p className="text-cream/70">6:45 AM - 2:00 PM</p>
                 </div>
               </li>
-
               {/* Sunday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
@@ -101,15 +102,45 @@ export function Footer() {
                   <p className="text-cream/70">Closed</p>
                 </div>
               </li>
-
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-cream/10 mt-12 pt-8 text-center">
+        <div className="border-t border-cream/10 mt-12 pt-8 text-center relative">
           <p className="text-cream/50 text-sm">
             © {new Date().getFullYear()} Portugal Bakery & Confectionary. All rights reserved.
           </p>
+
+          {/* Lion image bottom right with menu */}
+          <div className="absolute top-5 right-0">
+            <img
+              src={LionImage}
+              alt="Lion"
+              className="w-20 h-20 object-contain opacity-80 cursor-pointer"
+              onClick={() => setOpenMenu(!openMenu)}
+            />
+
+            {openMenu && (
+              <div className="mt-2 w-40 bg-cream text-espresso rounded shadow-lg flex flex-col">
+                <a
+                  href="https://www.instagram.com/sir.mufasa_/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 hover:bg-amber/20"
+                >
+                  Instagram
+                </a>
+                <a
+                  href="https://wa.me/27763670861"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 hover:bg-amber/20"
+                >
+                  WhatsApp
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </footer>
