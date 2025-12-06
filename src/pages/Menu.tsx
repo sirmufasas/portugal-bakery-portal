@@ -1,3 +1,4 @@
+// src/pages/Menu.tsx - Updated to use ProductsContext
 import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -5,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Plus, Minus, Trash2, ShoppingBag, X, AlertTriangle, Scale, Flame, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { allProducts, categories } from "@/data/products";
+import { categories } from "@/data/products";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
+import { useProducts } from "@/contexts/ProductsContext"; // NEW IMPORT
 
 const Menu = () => {
   const { toast } = useToast();
@@ -16,6 +18,7 @@ const Menu = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { cart, addToCart, updateQuantity, removeItem, total, totalItems } = useCart();
+  const { products: allProducts } = useProducts(); // USE PRODUCTS FROM CONTEXT
 
   // Filter by category
   let filteredProducts = activeCategory === "All"
@@ -48,7 +51,6 @@ const Menu = () => {
     const value = e.target.value;
     setSearchQuery(value);
     
-    // Show toast if search yields no results after typing stops
     if (value.trim()) {
       setTimeout(() => {
         const normalizedQuery = value.trim().toLowerCase();
@@ -105,9 +107,8 @@ const Menu = () => {
 
             {/* Content */}
             <div className="p-6">
-              {/* Image and Basic Info Side by Side */}
+              {/* Image and Basic Info */}
               <div className="flex flex-col sm:flex-row gap-6 mb-6">
-                {/* Small Square Image */}
                 <div className="flex-shrink-0">
                   <div className="relative w-40 h-40 rounded-xl overflow-hidden shadow-md">
                     <img
@@ -123,7 +124,6 @@ const Menu = () => {
                   </div>
                 </div>
 
-                {/* Description & Price */}
                 <div className="flex-1">
                   <p className="text-muted-foreground mb-4">{selectedProduct.description}</p>
                   <div className="flex items-center gap-4 mb-3">
@@ -202,7 +202,6 @@ const Menu = () => {
                 </div>
               )}
 
-              {/* Add to Cart Button */}
               <Button
                 onClick={() => {
                   handleAddToCart(selectedProduct);
