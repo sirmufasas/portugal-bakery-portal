@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter } from "lucide-react";
-import LionImage from "@/assets/lion.png"; // Import the image
+import LionImage from "@/assets/lion.png";
 
 export function Footer() {
   const [openMenu, setOpenMenu] = useState(false);
@@ -78,7 +78,6 @@ export function Footer() {
           <div>
             <h4 className="text-lg font-heading font-semibold mb-4">Opening Hours</h4>
             <ul className="space-y-3">
-              {/* Monday - Friday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -86,7 +85,6 @@ export function Footer() {
                   <p className="text-cream/70">6:45 AM - 4:00 PM</p>
                 </div>
               </li>
-              {/* Saturday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -94,7 +92,6 @@ export function Footer() {
                   <p className="text-cream/70">6:45 AM - 2:00 PM</p>
                 </div>
               </li>
-              {/* Sunday */}
               <li className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -111,37 +108,53 @@ export function Footer() {
             © {new Date().getFullYear()} Portugal Bakery & Confectionary. All rights reserved.
           </p>
 
-          {/* Lion image bottom right with menu */}
+          {/* Lion image bottom right */}
           <div className="absolute top-5 right-0">
             <img
               src={LionImage}
               alt="Lion"
               className="w-20 h-20 object-contain opacity-80 cursor-pointer"
-              onClick={() => setOpenMenu(!openMenu)}
+              onClick={() => setOpenMenu(true)}
             />
-
-            {openMenu && (
-              <div className="mt-2 w-40 bg-cream text-espresso rounded shadow-lg flex flex-col">
-                <a
-                  href="https://www.instagram.com/sir.mufasa_/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 hover:bg-amber/20"
-                >
-                  Instagram
-                </a>
-                <a
-                  href="https://wa.me/27763670861"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 hover:bg-amber/20"
-                >
-                  WhatsApp
-                </a>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Popup Modal */}
+        {openMenu && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setOpenMenu(false)} // Close if clicked outside
+          >
+            <div
+              className="bg-cream text-espresso rounded-xl shadow-2xl w-72 p-6 flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+            >
+              <h2 className="text-xl font-bold mb-4">Contact Me</h2>
+              <a
+                href="https://www.instagram.com/sir.mufasa_/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center px-6 py-2 mb-3 bg-amber rounded-lg hover:bg-amber/80 transition-colors font-semibold"
+              >
+                Instagram
+              </a>
+              <a
+                href="https://wa.me/27763670861"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center px-6 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+              >
+                WhatsApp
+              </a>
+              <button
+                onClick={() => setOpenMenu(false)}
+                className="mt-4 text-sm text-espresso/70 hover:text-espresso transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </footer>
   );
