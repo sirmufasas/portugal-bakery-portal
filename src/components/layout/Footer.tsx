@@ -109,11 +109,13 @@ export function Footer() {
           </p>
 
           {/* Lion image bottom right */}
-          <div className="absolute top-5 right-0">
+          <div className="absolute top-3 right-0">
             <img
               src={LionImage}
               alt="Lion"
-              className="w-20 h-20 object-contain opacity-80 cursor-pointer"
+              className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain cursor-pointer
+               transition-transform duration-300 hover:scale-110
+               shadow-[0_0_10px_3px_rgba(255,255,255,0.6)] rounded-full"
               onClick={() => setOpenMenu(true)}
             />
           </div>
@@ -122,12 +124,12 @@ export function Footer() {
         {/* Popup Modal */}
         {openMenu && (
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => setOpenMenu(false)} // Close if clicked outside
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setOpenMenu(false)}
           >
             <div
-              className="bg-cream text-espresso rounded-xl shadow-2xl w-72 p-6 flex flex-col items-center"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+              className="bg-cream text-espresso rounded-xl shadow-2xl w-full max-w-xs p-6 flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-bold mb-4">Contact Me</h2>
               <a
