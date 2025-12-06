@@ -75,7 +75,7 @@ export function Footer() {
           </div>
 
           {/* Hours */}
-          <div>
+          <div className="relative">
             <h4 className="text-lg font-heading font-semibold mb-4">Opening Hours</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
@@ -100,25 +100,44 @@ export function Footer() {
                 </div>
               </li>
             </ul>
+
+            {/* Lion mobile version */}
+            <img
+              src={LionImage}
+              alt="Lion"
+              className="
+                absolute top-1/2 -translate-y-1/2 right-0
+                w-16 h-16 object-contain cursor-pointer 
+                transition-transform duration-300 hover:scale-110
+                shadow-[0_0_10px_3px_rgba(255,255,255,0.6)]
+                rounded-full
+                md:hidden
+              "
+              onClick={() => setOpenMenu(true)}
+            />
           </div>
         </div>
 
+        {/* Lion desktop version */}
+        <div className="hidden md:block absolute top-5 right-1">
+          <img
+            src={LionImage}
+            alt="Lion"
+            className="
+              w-20 h-20 lg:w-24 lg:h-24 object-contain cursor-pointer
+              transition-transform duration-300 hover:scale-110
+              shadow-[0_0_10px_3px_rgba(255,255,255,0.6)]
+              rounded-full
+            "
+            onClick={() => setOpenMenu(true)}
+          />
+        </div>
+
+        {/* Footer bottom */}
         <div className="border-t border-cream/10 mt-12 pt-8 text-center relative">
           <p className="text-cream/50 text-sm">
             © {new Date().getFullYear()} Portugal Bakery & Confectionary. All rights reserved.
           </p>
-
-          {/* Lion image bottom right */}
-          <div className="absolute top-3 right-0">
-            <img
-              src={LionImage}
-              alt="Lion"
-              className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain cursor-pointer
-               transition-transform duration-300 hover:scale-110
-               shadow-[0_0_10px_3px_rgba(255,255,255,0.6)] rounded-full"
-              onClick={() => setOpenMenu(true)}
-            />
-          </div>
         </div>
 
         {/* Popup Modal */}
@@ -131,7 +150,7 @@ export function Footer() {
               className="bg-cream text-espresso rounded-xl shadow-2xl w-full max-w-xs p-6 flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-bold mb-4">Contact Me</h2>
+              <h2 className="text-xl font-bold mb-4">Contact Developer</h2>
               <a
                 href="https://www.instagram.com/sir.mufasa_/"
                 target="_blank"
