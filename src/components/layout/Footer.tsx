@@ -89,7 +89,7 @@ export function Footer() {
                 <Clock className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="text-cream/90 font-medium">Saturday</p>
-                  <p className="text-cream/70">7:00 AM - 2:00 PM</p>
+                  <p className="text-cream/70">6:45 AM - 2:00 PM</p>
                 </div>
               </li>
 

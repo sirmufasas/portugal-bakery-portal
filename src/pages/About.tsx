@@ -14,7 +14,7 @@ const values = [
 const businessHours = {
   monday: { open: "06:45", close: "16:00" }, tuesday: { open: "06:45", close: "16:00" },
   wednesday: { open: "06:45", close: "16:00" }, thursday: { open: "06:45", close: "16:00" },
-  friday: { open: "06:45", close: "16:00" }, saturday: { open: "07:00", close: "14:00" },
+  friday: { open: "06:45", close: "16:00" }, saturday: { open: "06:45", close: "14:00" },
   sunday: { closed: true },
 };
 const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
