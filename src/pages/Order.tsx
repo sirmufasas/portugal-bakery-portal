@@ -74,7 +74,13 @@ const Order = () => {
   }, []);
 
   const handleAddToCart = (item: typeof menuItems[0]) => {
-    addToCart(item);
+    // map Product -> Omit<CartItem, "quantity"> (Cart expects imageUrl)
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      imageUrl: item.image,
+    });
     toast({ title: "Added to cart", description: `${item.name} has been added to your order.` });
   };
 
@@ -325,7 +331,7 @@ const Order = () => {
                     <div className="space-y-3 mb-4">
                       {cart.map(item => (
                         <div key={item.id} className="flex gap-3 items-center">
-                          <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
+                          <img src={item.imageUrl} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
                           <div className="flex-1">
                             <p className="text-sm font-medium">{item.name} x{item.quantity}</p>
                             <div className="flex gap-2 mt-1">

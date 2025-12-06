@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductsContext";
 import { categories } from "@/data/products";
+import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
+
 import {
   Package,
   MessageSquare,
@@ -311,6 +313,7 @@ const handleImageUpload = async (e, isEdit = false) => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <FloatingCartButton />
       <main className="pt-20 md:pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* Header */}

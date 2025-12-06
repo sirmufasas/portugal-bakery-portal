@@ -3,6 +3,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Heart, Award, Users, Clock, MapPin, Phone, Mail } from "lucide-react";
 import man from "@/assets/man.jpg";
+import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
+
 
 const values = [
   { icon: Heart, title: "Made with Love", description: "Every product is crafted with passion and care, using recipes passed down through generations." },
@@ -48,6 +50,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
+      <FloatingCartButton />
       <main className="pt-20">
 
         {/* Hero Section */}

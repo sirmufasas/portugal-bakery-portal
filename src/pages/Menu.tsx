@@ -1,24 +1,24 @@
-// src/pages/Menu.tsx - Updated to use ProductsContext
-import { useState } from "react";
+// src/pages/Menu.tsx - Updated to use FloatingCartButton component
+import React, { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { FloatingCartButton } from "@/components/cart/FloatingCartButton"; // NEW IMPORT
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Trash2, ShoppingBag, X, AlertTriangle, Scale, Flame, Search } from "lucide-react";
+import { ShoppingBag, X, AlertTriangle, Scale, Flame, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { categories } from "@/data/products";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
-import { useProducts } from "@/contexts/ProductsContext"; // NEW IMPORT
+import { useProducts } from "@/contexts/ProductsContext";
 
 const Menu = () => {
   const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [showCart, setShowCart] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { cart, addToCart, updateQuantity, removeItem, total, totalItems } = useCart();
-  const { products: allProducts } = useProducts(); // USE PRODUCTS FROM CONTEXT
+  const { addToCart, totalItems } = useCart();
+  const { products: allProducts } = useProducts();
 
   // Filter by category
   let filteredProducts = activeCategory === "All"
@@ -35,13 +35,15 @@ const Menu = () => {
     );
   }
 
-  const handleAddToCart = (product) => {
-    addToCart(product);
-    toast({ 
-      title: "Added to cart", 
-      description: `${product.name} has been added to your cart.` 
-    });
-  };
+ const handleAddToCart = (product) => {
+  addToCart(product);
+  toast({ 
+    title: "Added to cart", 
+    description: `${product.name} has been added to your cart.`,
+    duration: 2000, // Toast disappears after 2 seconds
+  });
+};
+
 
   const handleProductClick = (product) => {
     setSelectedProduct(product);
@@ -75,17 +77,8 @@ const Menu = () => {
     <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
       
-      {/* Floating Cart Button */}
-      {cart.length > 0 && (
-        <button
-          onClick={() => setShowCart(!showCart)}
-          className="fixed bottom-6 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
-        >
-          <ShoppingCart className="h-6 w-6" />
-          <span className="font-bold">{totalItems}</span>
-          <span className="hidden sm:inline ml-2">R{total.toFixed(2)}</span>
-        </button>
-      )}
+      {/* Floating Cart Button - Now a reusable component */}
+      <FloatingCartButton />
 
       {/* Product Details Modal */}
       {selectedProduct && (
@@ -213,66 +206,6 @@ const Menu = () => {
                 Add to Cart - R{selectedProduct.price.toFixed(2)}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cart Sidebar */}
-      {showCart && (
-        <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setShowCart(false)}>
-          <div
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-card shadow-2xl p-6 overflow-y-auto transition-colors duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-heading font-bold text-foreground dark:text-foreground">Your Cart</h2>
-              <Button variant="ghost" onClick={() => setShowCart(false)}>Close</Button>
-            </div>
-
-            {cart.length === 0 ? (
-              <p className="text-muted-foreground dark:text-muted-foreground text-center py-8">Your cart is empty</p>
-            ) : (
-              <>
-                <div className="space-y-4 mb-6">
-                  {cart.map(item => (
-                    <div key={item.id} className="flex gap-4 bg-neutral-50 dark:bg-card rounded-lg p-3 transition-colors duration-300">
-                      <img src={item.image} alt={item.name} className="w-20 h-20 rounded-lg object-cover" />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground dark:text-foreground text-sm">{item.name}</h3>
-                        <p className="text-primary font-bold text-sm">R{item.price.toFixed(2)}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => updateQuantity(item.id, -1)}>
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="flex items-center justify-center w-8 text-sm font-medium">{item.quantity}</span>
-                          <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => updateQuantity(item.id, 1)}>
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 ml-auto" onClick={() => removeItem(item.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-foreground dark:text-foreground">R{(item.price * item.quantity).toFixed(2)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t border-border pt-4 mb-4">
-                  <div className="flex justify-between text-lg font-bold mb-4">
-                    <span>Total</span>
-                    <span className="text-primary">R{total.toFixed(2)}</span>
-                  </div>
-                  <Link to="/order">
-                    <Button variant="default" size="lg" className="w-full">
-                      Proceed to Checkout
-                    </Button>
-                  </Link>
-                </div>
-              </>
-            )}
           </div>
         </div>
       )}

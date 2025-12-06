@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 
 interface Message {
   id: string;
@@ -81,6 +82,7 @@ const TrackOrder = () => {
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark transition-colors duration-300">
       <Navbar />
+       <FloatingCartButton />
       <main className="pt-20">
 
         {/* Header */}

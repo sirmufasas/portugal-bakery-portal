@@ -4,6 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Star, Quote, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
+
 
 const allTestimonials = [
   {
@@ -90,6 +92,7 @@ const Testimonials = () => {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
+       <FloatingCartButton />
       <main className="pt-20">
         {/* Header */}
         <section className="py-16 md:py-24 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
