@@ -1,5 +1,20 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useState } from "react";
 
-createRoot(document.getElementById("root")!).render(<App />);
+const Root = () => {
+  const [appKey, setAppKey] = useState(0);
+
+  // Expose global reset function
+  window.resetApp = () => setAppKey(prev => prev + 1);
+
+  return (
+    <AuthProvider>
+      <App key={appKey} />
+    </AuthProvider>
+  );
+};
+
+createRoot(document.getElementById("root")!).render(<Root />);

@@ -4,26 +4,32 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password) {
+
+    // Check for missing fields
+    const { firstName, lastName, email, password } = formData;
+    if (!firstName || !lastName || !email || !password) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -31,16 +37,40 @@ const Signup = () => {
       });
       return;
     }
+
     setIsLoading(true);
-    // Simulate signup - connect to backend later
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.token || !data.user) {
+        throw new Error(data.error || "Registration failed. Please try again.");
+      }
+
+      // Use AuthContext login method
+      login(data.user, data.token);
+
       toast({
         title: "Account created!",
-        description: "Welcome to Portugal Bakery.",
+        description: `Welcome, ${data.user.firstName}!`,
       });
+
       navigate("/");
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,20 +89,38 @@ const Signup = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Name */}
+              {/* First Name */}
               <div>
                 <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
-                  Full Name *
+                  First Name *
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="firstName"
+                    value={formData.firstName}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
-                    placeholder="Your name"
+                    placeholder="First name"
+                  />
+                </div>
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
+                  Last Name *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
+                    placeholder="Last name"
                   />
                 </div>
               </div>
@@ -108,7 +156,7 @@ const Signup = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
-                    placeholder="+351 123 456 789"
+                    placeholder="+27 123 456 789"
                   />
                 </div>
               </div>
@@ -137,7 +185,7 @@ const Signup = () => {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
-                  Must be at least 8 characters
+                  Must be at least 6 characters
                 </p>
               </div>
 

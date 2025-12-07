@@ -1,8 +1,8 @@
-// src/pages/Menu.tsx - Updated to use FloatingCartButton component
+// src/pages/Menu.tsx - Updated to fix image property issue
 import React, { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { FloatingCartButton } from "@/components/cart/FloatingCartButton"; // NEW IMPORT
+import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, X, AlertTriangle, Scale, Flame, Search } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -11,6 +11,9 @@ import { categories } from "@/data/products";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { useProducts } from "@/contexts/ProductsContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+
 
 const Menu = () => {
   const { toast } = useToast();
@@ -19,6 +22,9 @@ const Menu = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { addToCart, totalItems } = useCart();
   const { products: allProducts } = useProducts();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
 
   // Filter by category
   let filteredProducts = activeCategory === "All"
@@ -35,14 +41,41 @@ const Menu = () => {
     );
   }
 
- const handleAddToCart = (product) => {
-  addToCart(product);
-  toast({ 
-    title: "Added to cart", 
-    description: `${product.name} has been added to your cart.`,
-    duration: 2000, // Toast disappears after 2 seconds
-  });
-};
+  // ✅ FIXED: Now converts 'image' to 'imageUrl' before adding to cart
+  const handleAddToCart = (product) => {
+    // CRITICAL: Check authentication first
+    if (!user?._id) {
+      toast({
+        title: "Please log in",
+        description: (
+          <div className="flex flex-col gap-2">
+            <p>You must be logged in to add items to your cart.</p>
+            <Button
+              onClick={() => navigate("/login")}
+              className="bg-primary text-white rounded px-3 py-1"
+            >
+              Go to Login
+            </Button>
+          </div>
+        ),
+        duration: 5000,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert 'image' to 'imageUrl' to match cart structure
+    addToCart({
+      ...product,
+      imageUrl: product.image
+    });
+    
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+      duration: 2000,
+    });
+  };
 
 
   const handleProductClick = (product) => {
@@ -52,7 +85,7 @@ const Menu = () => {
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (value.trim()) {
       setTimeout(() => {
         const normalizedQuery = value.trim().toLowerCase();
@@ -61,7 +94,7 @@ const Menu = () => {
           p.description.trim().toLowerCase().includes(normalizedQuery) ||
           p.category.trim().toLowerCase().includes(normalizedQuery)
         );
-        
+
         if (results.length === 0) {
           toast({
             title: "Product not available",
@@ -76,8 +109,8 @@ const Menu = () => {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
-      
-      {/* Floating Cart Button - Now a reusable component */}
+
+      {/* Floating Cart Button */}
       <FloatingCartButton />
 
       {/* Product Details Modal */}
@@ -196,15 +229,17 @@ const Menu = () => {
               )}
 
               <Button
-                onClick={() => {
+                size="sm"
+                variant="default"
+                className="text-xs px-3 py-1 h-7"
+                onClick={(e) => {
+                  e.stopPropagation();
                   handleAddToCart(selectedProduct);
-                  setSelectedProduct(null);
                 }}
-                className="w-full"
-                size="lg"
               >
-                Add to Cart - R{selectedProduct.price.toFixed(2)}
+                Add
               </Button>
+
             </div>
           </div>
         </div>
@@ -307,7 +342,7 @@ const Menu = () => {
                 )}
               </p>
             </div>
-            
+
             {filteredProducts.length === 0 ? (
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
@@ -317,7 +352,7 @@ const Menu = () => {
                   No products found
                 </h3>
                 <p className="text-muted-foreground dark:text-muted-foreground mb-6 max-w-md mx-auto">
-                  {searchQuery 
+                  {searchQuery
                     ? `We couldn't find any products matching "${searchQuery}". Try adjusting your search or browse our categories.`
                     : "No products available in this category."
                   }
@@ -364,9 +399,9 @@ const Menu = () => {
                         <span className="text-primary font-bold text-sm md:text-base">
                           R{product.price.toFixed(2)}
                         </span>
-                        <Button 
-                          size="sm" 
-                          variant="default" 
+                        <Button
+                          size="sm"
+                          variant="default"
                           className="text-xs px-3 py-1 h-7"
                           onClick={(e) => {
                             e.stopPropagation();

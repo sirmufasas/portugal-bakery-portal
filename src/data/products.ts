@@ -4,7 +4,10 @@ import cakeImg from "@/assets/product-cake.jpg";
 import croissantImg from "@/assets/product-croissant.jpg";
 import pastryImg from "@/assets/product-pastry.jpg";
 
+// src/data/products.ts (or wherever your Product interface is)
+
 export interface Product {
+  _id?: string;  // MongoDB's ObjectId as string (optional, added by backend)
   id: number;
   name: string;
   category: string;
@@ -21,6 +24,8 @@ export interface Product {
     carbs: string;
     fat: string;
   };
+  createdAt?: Date;  // Optional: Added by backend
+  updatedAt?: Date;  // Optional: Added by backend
 }
 
 const getImageByCategory = (category: string) => {

@@ -1,4 +1,5 @@
-// src/pages/Order.tsx
+// Add this to the top of Order.tsx component
+
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -11,12 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { YocoPayment } from "@/components/order/YocoPayment";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = allProducts.slice(0, 20);
 
 type OrderStep = "menu" | "checkout" | "payment" | "confirmed";
 
 const Order = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { cart, addToCart, updateQuantity, removeItem, clearCart, total } = useCart();
   const [specialInstructions, setSpecialInstructions] = useState("");
@@ -25,6 +30,23 @@ const Order = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // ✅ CRITICAL: Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to place an order.",
+        variant: "destructive",
+      });
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate, toast]);
+
+  // ✅ Don't render anything if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // ✅ CRITICAL: Force close Yoco popup on any step change
   const forceCloseYoco = () => {
@@ -73,16 +95,50 @@ const Order = () => {
     };
   }, []);
 
-  const handleAddToCart = (item: typeof menuItems[0]) => {
-    // map Product -> Omit<CartItem, "quantity"> (Cart expects imageUrl)
+  const handleAddToCart = (product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  }) => {
+    if (!user?._id) {
+      toast({
+        title: "Please log in",
+        description: (
+          <div className="flex flex-col gap-2">
+            <p>You must be logged in to add items to your cart.</p>
+            <Button
+              onClick={() => navigate("/login")}
+              className="bg-primary text-white rounded px-3 py-1"
+            >
+              Go to Login
+            </Button>
+          </div>
+        ),
+        duration: 5000,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add to cart without 'quantity' since the type forbids it
     addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      imageUrl: item.image,
+      id: Number(product.id), // convert string to number
+      name: product.name,
+      price: product.price,
+      imageUrl: product.image,
     });
-    toast({ title: "Added to cart", description: `${item.name} has been added to your order.` });
+
+
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+      duration: 2000,
+    });
   };
+
+
+
 
   const handleProceedToCheckout = () => {
     if (!cart.length)
@@ -109,14 +165,54 @@ const Order = () => {
 
   const handlePaymentComplete = async (paymentID: string) => {
     setIsProcessing(true);
-    forceCloseYoco(); // Close popup after payment
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
-    setOrderId(newOrderId);
-    setOrderStep("confirmed");
-    setIsProcessing(false);
-    toast({ title: "Payment successful!", description: `Your order ID is ${newOrderId}` });
+    forceCloseYoco();
+
+    try {
+      // Generate order ID
+      const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
+
+      // Send order to backend
+      // Read auth token from localStorage (if any) and conditionally include Authorization header
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          orderId: newOrderId,
+          customerName,
+          customerEmail,
+          items: cart,
+          total,
+          specialInstructions,
+          paymentID,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save order");
+
+      setOrderId(newOrderId);
+      setOrderStep("confirmed");
+      clearCart(); // clear local cart after order is saved
+      toast({ title: "Payment successful!", description: `Your order ID is ${newOrderId}` });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Order failed",
+        description: "Could not save your order. Try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
 
   // --- Render Steps ---
   if (orderStep === "confirmed") {

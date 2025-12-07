@@ -1,4 +1,4 @@
-// src/pages/Admin.tsx - Updated to use ProductsContext
+// src/pages/Admin.tsx - Complete fixed version with image upload
 import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -13,6 +13,25 @@ import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductsContext";
 import { categories } from "@/data/products";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
+import { uploadImage } from "@/utils/uploadImage";
+
+type Product = {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  image: string;
+  description: string;
+  ingredients: string[];
+  weight: string;
+  allergens: string[];
+  nutritionalInfo?: {
+    calories: number;
+    protein: string;
+    carbs: string;
+    fat: string;
+  };
+};
 
 import {
   Package,
@@ -34,7 +53,6 @@ import {
   Image as ImageIcon,
   Search
 } from "lucide-react";
- import { uploadImage } from "@/utils/uploadImage";
 
 // Mock orders data
 const mockOrders = [
@@ -115,7 +133,7 @@ const statusIcons = {
 
 export default function Admin() {
   const { toast } = useToast();
-  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { products = [], addProduct, updateProduct, deleteProduct } = useProducts();
   const [orders, setOrders] = useState(mockOrders);
   const [messages] = useState(mockMessages);
   const [testimonials, setTestimonials] = useState(mockTestimonials);
@@ -125,14 +143,15 @@ export default function Admin() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
-  const filteredProducts = searchQuery.trim()
+  const filteredProducts = Array.isArray(products) && searchQuery.trim()
     ? products.filter(p =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    : products;
+    : (Array.isArray(products) ? products : []);
 
   const [newProductForm, setNewProductForm] = useState({
     name: "",
@@ -144,6 +163,14 @@ export default function Admin() {
     weight: "",
     allergens: "",
   });
+
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === "pending").length,
+    readyOrders: orders.filter(o => o.status === "ready").length,
+    pendingReviews: testimonials.filter(t => t.status === "pending").length,
+    totalProducts: Array.isArray(products) ? products.length : 0,
+  };
 
   const updateOrderStatus = (orderId, newStatus) => {
     setOrders(orders.map(order =>
@@ -176,37 +203,53 @@ export default function Admin() {
     setNewMessage("");
   };
 
-const handleImageUpload = async (e, isEdit = false) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    isEdit: boolean,
+    productId?: number
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  // Preview (optional)
-  const previewUrl = URL.createObjectURL(file);
-  setImagePreview(previewUrl);
+    setIsUploading(true);
 
-  try {
-    // Upload to Cloudinary
-    const imageUrl = await uploadImage(file);
+    try {
+      // Upload to Cloudinary
+      const imageUrl = await uploadImage(file);
+      console.log("📸 Cloudinary response:", imageUrl);
 
-    if (isEdit && editingProduct) {
-      setEditingProduct(prev => ({
-        ...prev,
-        image: imageUrl
-      }));
-    } else {
-      setNewProductForm(prev => ({
-        ...prev,
-        image: imageUrl
-      }));
+      if (isEdit && productId != null) {
+        // Update editing state immediately for preview
+        setEditingProduct(prev => ({ ...prev, image: imageUrl }));
+        setImagePreview(imageUrl);
+
+        toast({
+          title: "Image Uploaded",
+          description: "Don't forget to click 'Save Changes' to persist the new image"
+        });
+      } else {
+        // Adding new product
+        setNewProductForm(prev => ({ ...prev, image: imageUrl }));
+        setImagePreview(imageUrl);
+
+        toast({
+          title: "Image Uploaded",
+          description: "Image ready to be used for the new product"
+        });
+      }
+    } catch (err) {
+      console.error("Image upload error:", err);
+      toast({
+        title: "Image upload failed",
+        description: err?.message || "Failed to upload image",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
     }
+  };
 
-  } catch (err) {
-    console.error("Upload error:", err);
-    alert("Image upload failed. Please try again.");
-  }
-};
-
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProductForm.name || !newProductForm.price) {
       toast({
         title: "Error",
@@ -233,23 +276,35 @@ const handleImageUpload = async (e, isEdit = false) => {
       },
     };
 
-    addProduct(productData);
-    setShowAddProduct(false);
-    setNewProductForm({
-      name: "",
-      category: "Pastries",
-      price: "",
-      image: "",
-      description: "",
-      ingredients: "",
-      weight: "",
-      allergens: "",
-    });
-    setImagePreview(null);
-    toast({
-      title: "Product Added",
-      description: `${productData.name} has been added to the menu and will appear immediately`,
-    });
+    console.log("➕ Adding new product:", productData);
+    console.log("📸 Image URL:", productData.image);
+
+    try {
+      await addProduct(productData);
+      setShowAddProduct(false);
+      setNewProductForm({
+        name: "",
+        category: "Pastries",
+        price: "",
+        image: "",
+        description: "",
+        ingredients: "",
+        weight: "",
+        allergens: "",
+      });
+      setImagePreview(null);
+
+      toast({
+        title: "Product Added",
+        description: `${productData.name} has been added to the menu`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditProduct = (product) => {
@@ -261,53 +316,114 @@ const handleImageUpload = async (e, isEdit = false) => {
     setImagePreview(product.image);
   };
 
-  const handleSaveEdit = () => {
-    if (!editingProduct.name || !editingProduct.price) {
-      toast({
-        title: "Error",
-        description: "Please fill in product name and price",
-        variant: "destructive",
-      });
-      return;
-    }
+  // In your Admin.tsx - Updated handleSaveEdit with detailed logging
+const handleSaveEdit = async () => {
+  if (!editingProduct.name || !editingProduct.price) {
+    toast({
+      title: "Error",
+      description: "Please fill in product name and price",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    const updatedData = {
-      name: editingProduct.name,
-      category: editingProduct.category,
-      price: parseFloat(editingProduct.price),
-      image: editingProduct.image,
-      description: editingProduct.description,
-      ingredients: editingProduct.ingredients.split(",").map(i => i.trim()).filter(Boolean),
-      weight: editingProduct.weight,
-      allergens: editingProduct.allergens.split(",").map(a => a.trim()).filter(Boolean),
-    };
+  console.log("🔍 Raw editingProduct state:", editingProduct);
 
-    updateProduct(editingProduct.id, updatedData);
+  // Ensure price is a number
+  const price = parseFloat(editingProduct.price);
+  console.log("💰 Parsed price:", price, "Type:", typeof price);
+
+  // Ensure ingredients/allergens are arrays of trimmed strings
+  const ingredients = typeof editingProduct.ingredients === 'string'
+    ? editingProduct.ingredients.split(",").map(i => i.trim()).filter(Boolean)
+    : editingProduct.ingredients;
+
+  const allergens = typeof editingProduct.allergens === 'string'
+    ? editingProduct.allergens.split(",").map(a => a.trim()).filter(Boolean)
+    : editingProduct.allergens;
+
+  console.log("🥖 Parsed ingredients:", ingredients);
+  console.log("⚠️ Parsed allergens:", allergens);
+
+  const updatedData = {
+    name: editingProduct.name,
+    category: editingProduct.category,
+    price,
+    image: editingProduct.image,
+    description: editingProduct.description,
+    ingredients,
+    weight: editingProduct.weight,
+    allergens,
+  };
+
+  console.log("💾 Final update payload:", updatedData);
+  console.log("💾 Payload size:", JSON.stringify(updatedData).length, "bytes");
+
+  // Validate the data before sending
+  if (isNaN(price) || price <= 0) {
+    console.error("❌ Invalid price:", editingProduct.price);
+    toast({
+      title: "Error",
+      description: "Price must be a valid positive number",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  if (!Array.isArray(ingredients) || !Array.isArray(allergens)) {
+    console.error("❌ Invalid arrays - ingredients:", ingredients, "allergens:", allergens);
+    toast({
+      title: "Error",
+      description: "Invalid ingredients or allergens format",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    // Make sure ID is a number
+    const productId = Number(editingProduct.id);
+    console.log("🆔 Product ID being updated:", productId, typeof productId);
+
+    await updateProduct(productId, updatedData);
+
     setEditingProduct(null);
     setImagePreview(null);
+
     toast({
       title: "Product Updated",
-      description: `${updatedData.name} has been updated on the menu`,
+      description: `${updatedData.name} has been updated successfully`,
     });
-  };
+  } catch (err) {
+    console.error("❌ Update failed:", err);
 
-  const handleDeleteProduct = (id) => {
+    toast({
+      title: "Error",
+      description: err?.message || "Failed to update product",
+      variant: "destructive",
+    });
+  }
+};
+
+  const handleDeleteProduct = async (id) => {
     const product = products.find(p => p.id === id);
-    if (confirm(`Are you sure you want to delete "${product.name}"? This will remove it from the menu.`)) {
-      deleteProduct(id);
-      toast({
-        title: "Product Deleted",
-        description: `${product.name} has been removed from the menu`,
-      });
-    }
-  };
+    if (!product) return;
 
-  const stats = {
-    totalOrders: orders.length,
-    pendingOrders: orders.filter(o => o.status === "pending").length,
-    readyOrders: orders.filter(o => o.status === "ready").length,
-    pendingReviews: testimonials.filter(t => t.status === "pending").length,
-    totalProducts: products.length,
+    if (confirm(`Are you sure you want to delete "${product.name}"? This will remove it from the menu.`)) {
+      try {
+        await deleteProduct(id);
+        toast({
+          title: "Product Deleted",
+          description: `${product.name} has been removed from the menu`,
+        });
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to delete product",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   return (
@@ -485,24 +601,23 @@ const handleImageUpload = async (e, isEdit = false) => {
 
             {/* Products Tab */}
             <TabsContent value="products" className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground">Product Management</h2>
-                  <p className="text-sm text-muted-foreground">Add, edit, or remove products from your menu</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">Product Management</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Add, edit, or remove products from your menu</p>
                 </div>
-                <Button onClick={() => setShowAddProduct(true)} className="gap-2">
+                <Button onClick={() => setShowAddProduct(true)} className="gap-2 w-full sm:w-auto">
                   <Plus className="h-4 w-4" />
                   Add Product
                 </Button>
               </div>
 
-              {/* ADD THIS SEARCH BAR HERE */}
-              <div className="max-w-2xl mx-auto mb-6">
+              <div className="w-full mb-6">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                     type="text"
-                    placeholder="Search products by name, description, or category..."
+                    placeholder="Search products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-10"
@@ -517,96 +632,130 @@ const handleImageUpload = async (e, isEdit = false) => {
                   )}
                 </div>
                 {searchQuery && (
-                  <p className="text-sm text-muted-foreground mt-2 text-center">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
                     Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} matching "{searchQuery}"
                   </p>
                 )}
               </div>
 
-              {/* Add Product Form */}
               {showAddProduct && (
                 <Card className="mb-6 border-2 border-primary">
                   <CardHeader>
                     <div className="flex justify-between items-center">
-                      <CardTitle>Add New Product</CardTitle>
-                      <Button variant="ghost" size="icon" onClick={() => {
-                        setShowAddProduct(false);
-                        setImagePreview(null);
-                        setNewProductForm({
-                          name: "",
-                          category: "Pastries",
-                          price: "",
-                          image: "",
-                          description: "",
-                          ingredients: "",
-                          weight: "",
-                          allergens: "",
-                        });
-                      }}>
+                      <CardTitle className="text-lg sm:text-xl">Add New Product</CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setShowAddProduct(false);
+                          setImagePreview(null);
+                          setNewProductForm({
+                            name: "",
+                            category: "Pastries",
+                            price: "",
+                            image: "",
+                            description: "",
+                            ingredients: "",
+                            weight: "",
+                            allergens: "",
+                          });
+                        }}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-4">
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Product Name *</label>
+                          <label className="text-xs sm:text-sm font-medium mb-2 block">Product Name *</label>
                           <Input
                             value={newProductForm.name}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, name: e.target.value })}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, name: e.target.value })
+                            }
                             placeholder="e.g. Chocolate Croissant"
+                            className="text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Category *</label>
-                          <Select value={newProductForm.category} onValueChange={(v) => setNewProductForm({ ...newProductForm, category: v })}>
-                            <SelectTrigger>
+                          <label className="text-xs sm:text-sm font-medium mb-2 block">Category *</label>
+                          <Select
+                            value={newProductForm.category}
+                            onValueChange={(v) => setNewProductForm({ ...newProductForm, category: v })}
+                          >
+                            <SelectTrigger className="text-sm">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {categories.map(cat => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              {categories.filter(c => c !== 'All').map((cat) => (
+                                <SelectItem key={cat} value={cat}>
+                                  {cat}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Price (R) *</label>
+                          <label className="text-xs sm:text-sm font-medium mb-2 block">Price (R) *</label>
                           <Input
                             type="number"
                             step="0.01"
                             value={newProductForm.price}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, price: e.target.value })}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, price: e.target.value })
+                            }
                             placeholder="0.00"
+                            className="text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Weight</label>
+                          <label className="text-xs sm:text-sm font-medium mb-2 block">Weight</label>
                           <Input
                             value={newProductForm.weight}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, weight: e.target.value })}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, weight: e.target.value })
+                            }
                             placeholder="e.g. 85g"
+                            className="text-sm"
                           />
                         </div>
                       </div>
+
                       <div className="space-y-4">
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Product Image</label>
-                          <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                          <label className="text-xs sm:text-sm font-medium mb-2 block">Product Image</label>
+                          <div className="border-2 border-dashed rounded-lg p-3 sm:p-4 text-center">
                             {imagePreview ? (
                               <div className="space-y-2">
-                                <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded" />
-                                <Button variant="outline" size="sm" onClick={() => document.getElementById('add-image-upload').click()}>
-                                  Change Image
+                                <img
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="w-full h-32 sm:h-40 object-cover rounded"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => document.getElementById('add-image-upload')?.click()}
+                                  disabled={isUploading}
+                                  className="text-xs sm:text-sm"
+                                >
+                                  {isUploading ? "Uploading..." : "Change Image"}
                                 </Button>
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground" />
-                                <Button variant="outline" onClick={() => document.getElementById('add-image-upload').click()}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Upload Image
+                                <ImageIcon className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground" />
+                                <Button
+                                  variant="outline"
+                                  onClick={() => document.getElementById('add-image-upload')?.click()}
+                                  disabled={isUploading}
+                                  size="sm"
+                                  className="text-xs sm:text-sm"
+                                >
+                                  <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                  {isUploading ? "Uploading..." : "Upload Image"}
                                 </Button>
                               </div>
                             )}
@@ -616,45 +765,64 @@ const handleImageUpload = async (e, isEdit = false) => {
                               accept="image/*"
                               className="hidden"
                               onChange={(e) => handleImageUpload(e, false)}
+                              disabled={isUploading}
                             />
                           </div>
                         </div>
                       </div>
                     </div>
+
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Description</label>
+                      <label className="text-xs sm:text-sm font-medium mb-2 block">Description</label>
                       <Textarea
                         value={newProductForm.description}
-                        onChange={(e) => setNewProductForm({ ...newProductForm, description: e.target.value })}
+                        onChange={(e) =>
+                          setNewProductForm({ ...newProductForm, description: e.target.value })
+                        }
                         placeholder="Brief description of the product"
                         rows={3}
+                        className="text-sm resize-none"
                       />
                     </div>
+
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Ingredients (comma-separated)</label>
+                      <label className="text-xs sm:text-sm font-medium mb-2 block">Ingredients (comma-separated)</label>
                       <Input
                         value={newProductForm.ingredients}
-                        onChange={(e) => setNewProductForm({ ...newProductForm, ingredients: e.target.value })}
+                        onChange={(e) =>
+                          setNewProductForm({ ...newProductForm, ingredients: e.target.value })
+                        }
                         placeholder="e.g. Wheat flour, Butter, Chocolate"
+                        className="text-sm"
                       />
                     </div>
+
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Allergens (comma-separated)</label>
+                      <label className="text-xs sm:text-sm font-medium mb-2 block">Allergens (comma-separated)</label>
                       <Input
                         value={newProductForm.allergens}
-                        onChange={(e) => setNewProductForm({ ...newProductForm, allergens: e.target.value })}
+                        onChange={(e) =>
+                          setNewProductForm({ ...newProductForm, allergens: e.target.value })
+                        }
                         placeholder="e.g. Gluten, Dairy, Eggs"
+                        className="text-sm"
                       />
                     </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleAddProduct} className="flex-1">
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button onClick={handleAddProduct} className="flex-1 text-sm" disabled={isUploading}>
                         <Plus className="h-4 w-4 mr-2" />
                         Add Product
                       </Button>
-                      <Button variant="outline" onClick={() => {
-                        setShowAddProduct(false);
-                        setImagePreview(null);
-                      }}>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddProduct(false);
+                          setImagePreview(null);
+                        }}
+                        disabled={isUploading}
+                        className="text-sm"
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -662,130 +830,140 @@ const handleImageUpload = async (e, isEdit = false) => {
                 </Card>
               )}
 
-              {/* Products List */}
               <div className="grid gap-4">
                 {filteredProducts.map((product) => (
                   <Card key={product.id}>
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       {editingProduct?.id === product.id ? (
-                        // Edit Mode
                         <div className="space-y-4">
-                          <div className="grid md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-4">
                               <div>
-                                <label className="text-sm font-medium mb-2 block">Product Name *</label>
+                                <label className="text-xs sm:text-sm font-medium mb-2 block">Product Name *</label>
                                 <Input
                                   value={editingProduct.name}
                                   onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                  className="text-sm"
                                 />
                               </div>
                               <div>
-                                <label className="text-sm font-medium mb-2 block">Category</label>
+                                <label className="text-xs sm:text-sm font-medium mb-2 block">Category</label>
                                 <Select value={editingProduct.category} onValueChange={(v) => setEditingProduct({ ...editingProduct, category: v })}>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="text-sm">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {categories.map(cat => (
+                                    {categories.filter(c => c !== 'All').map(cat => (
                                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div>
-                                <label className="text-sm font-medium mb-2 block">Price (R)</label>
+                                <label className="text-xs sm:text-sm font-medium mb-2 block">Price (R)</label>
                                 <Input
                                   type="number"
                                   step="0.01"
                                   value={editingProduct.price}
                                   onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                                  className="text-sm"
                                 />
                               </div>
                               <div>
-                                <label className="text-sm font-medium mb-2 block">Weight</label>
+                                <label className="text-xs sm:text-sm font-medium mb-2 block">Weight</label>
                                 <Input
                                   value={editingProduct.weight}
                                   onChange={(e) => setEditingProduct({ ...editingProduct, weight: e.target.value })}
+                                  className="text-sm"
                                 />
                               </div>
                             </div>
                             <div>
-                              <label className="text-sm font-medium mb-2 block">Product Image</label>
-                              <div className="border-2 border-dashed rounded-lg p-4">
-                                <img src={imagePreview || editingProduct.image} alt={editingProduct.name} className="w-full h-40 object-cover rounded mb-2" />
-                                <Button variant="outline" size="sm" className="w-full" onClick={() => document.getElementById(`edit-image-${product.id}`).click()}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Change Image
+                              <label className="text-xs sm:text-sm font-medium mb-2 block">Product Image</label>
+                              <div className="border-2 border-dashed rounded-lg p-3 sm:p-4">
+                                <img src={imagePreview || editingProduct.image} alt={editingProduct.name} className="w-full h-32 sm:h-40 object-cover rounded mb-2" />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full text-xs sm:text-sm"
+                                  onClick={() => document.getElementById(`edit-image-${product.id}`)?.click()}
+                                  disabled={isUploading}
+                                >
+                                  <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                  {isUploading ? "Uploading..." : "Change Image"}
                                 </Button>
                                 <input
-                                  id={`edit-image-${product.id}`}
+                                  id={`edit-image-${editingProduct.id}`}
                                   type="file"
                                   accept="image/*"
                                   className="hidden"
-                                  onChange={(e) => handleImageUpload(e, true)}
+                                  onChange={(e) => handleImageUpload(e, true, editingProduct.id)}
+                                  disabled={isUploading}
                                 />
                               </div>
                             </div>
                           </div>
                           <div>
-                            <label className="text-sm font-medium mb-2 block">Description</label>
+                            <label className="text-xs sm:text-sm font-medium mb-2 block">Description</label>
                             <Textarea
                               value={editingProduct.description}
                               onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                               rows={2}
+                              className="text-sm resize-none"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium mb-2 block">Ingredients (comma-separated)</label>
+                            <label className="text-xs sm:text-sm font-medium mb-2 block">Ingredients (comma-separated)</label>
                             <Input
                               value={editingProduct.ingredients}
                               onChange={(e) => setEditingProduct({ ...editingProduct, ingredients: e.target.value })}
+                              className="text-sm"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium mb-2 block">Allergens (comma-separated)</label>
+                            <label className="text-xs sm:text-sm font-medium mb-2 block">Allergens (comma-separated)</label>
                             <Input
                               value={editingProduct.allergens}
                               onChange={(e) => setEditingProduct({ ...editingProduct, allergens: e.target.value })}
+                              className="text-sm"
                             />
                           </div>
-                          <div className="flex gap-2">
-                            <Button onClick={handleSaveEdit} className="flex-1">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button onClick={handleSaveEdit} className="flex-1 text-sm" disabled={isUploading}>
                               <Save className="h-4 w-4 mr-2" />
                               Save Changes
                             </Button>
                             <Button variant="outline" onClick={() => {
                               setEditingProduct(null);
                               setImagePreview(null);
-                            }}>
+                            }} disabled={isUploading} className="text-sm">
                               Cancel
                             </Button>
                           </div>
                         </div>
                       ) : (
-                        // View Mode
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                            className="w-full sm:w-20 md:w-24 h-48 sm:h-20 md:h-24 object-cover rounded-lg flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg text-foreground">{product.name}</h3>
-                                <Badge variant="outline" className="mt-1">{product.category}</Badge>
+                            <div className="flex flex-col sm:flex-row items-start justify-between gap-2 sm:gap-4 mb-2">
+                              <div className="flex-1 min-w-0 w-full sm:w-auto">
+                                <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{product.name}</h3>
+                                <Badge variant="outline" className="mt-1 text-xs">{product.category}</Badge>
                               </div>
-                              <p className="text-xl font-bold text-primary whitespace-nowrap">R{product.price.toFixed(2)}</p>
+                              <p className="text-lg sm:text-xl font-bold text-primary whitespace-nowrap">R{product.price.toFixed(2)}</p>
                             </div>
                             {product.description && (
-                              <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
                             )}
                             {product.weight && (
                               <p className="text-xs text-muted-foreground">Weight: {product.weight}</p>
                             )}
                             {product.ingredients && product.ingredients.length > 0 && (
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                                 Ingredients: {product.ingredients.join(", ")}
                               </p>
                             )}
@@ -795,22 +973,24 @@ const handleImageUpload = async (e, isEdit = false) => {
                               </p>
                             )}
                           </div>
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleEditProduct(product)}
+                              className="flex-1 sm:flex-initial text-xs sm:text-sm"
                             >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                             <Button
                               variant="destructive"
                               size="sm"
                               onClick={() => handleDeleteProduct(product.id)}
+                              className="flex-1 sm:flex-initial text-xs sm:text-sm"
                             >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                           </div>
                         </div>
@@ -824,7 +1004,6 @@ const handleImageUpload = async (e, isEdit = false) => {
             {/* Messages Tab */}
             <TabsContent value="messages" className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4">
-                {/* Chat List */}
                 <Card className="md:col-span-1">
                   <CardHeader>
                     <CardTitle>Conversations</CardTitle>
@@ -835,16 +1014,10 @@ const handleImageUpload = async (e, isEdit = false) => {
                         <button
                           key={chat.id}
                           onClick={() => setSelectedChat(chat)}
-                          className={`w-full p-4 text-left hover:bg-accent transition-colors ${selectedChat?.id === chat.id ? "bg-accent" : ""
-                            }`}
+                          className={`w-full p-4 text-left hover:bg-accent transition-colors ${selectedChat?.id === chat.id ? "bg-accent" : ""}`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <p className="font-medium text-foreground">{chat.customer}</p>
-                            {chat.messages.some(m => m.from === "customer" && m !== chat.messages[chat.messages.length - 1]) && (
-                              <Badge variant="destructive" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                                1
-                              </Badge>
-                            )}
                           </div>
                           <p className="text-sm text-muted-foreground">Order {chat.orderId}</p>
                           <p className="text-xs text-muted-foreground truncate mt-1">
@@ -856,16 +1029,13 @@ const handleImageUpload = async (e, isEdit = false) => {
                   </CardContent>
                 </Card>
 
-                {/* Chat Window */}
                 <Card className="md:col-span-2">
                   {selectedChat ? (
                     <>
                       <CardHeader className="border-b">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle>{selectedChat.customer}</CardTitle>
-                            <p className="text-sm text-muted-foreground">Order {selectedChat.orderId}</p>
-                          </div>
+                        <div>
+                          <CardTitle>{selectedChat.customer}</CardTitle>
+                          <p className="text-sm text-muted-foreground">Order {selectedChat.orderId}</p>
                         </div>
                       </CardHeader>
                       <CardContent className="p-4">

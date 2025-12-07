@@ -1,22 +1,22 @@
-// src/components/cart/FloatingCartButton.tsx
 import React, { useState } from "react";
-import { ShoppingCart, Plus, Minus, Trash2, X } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useProducts } from "@/contexts/ProductsContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const FloatingCartButton = () => {
   const [showCart, setShowCart] = useState(false);
   const { cart, updateQuantity, removeItem, total, totalItems } = useCart();
   const { products: allProducts } = useProducts();
+  const { isAuthenticated } = useAuth();
 
-  // Don't render if cart is empty
-  if (cart.length === 0) return null;
+  // ✅ Hide button if logged out OR cart is empty
+  if (!isAuthenticated || cart.length === 0) return null;
 
   return (
     <>
-      {/* Floating Cart Button */}
       <button
         onClick={() => setShowCart(!showCart)}
         className="fixed bottom-6 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
@@ -26,7 +26,6 @@ export const FloatingCartButton = () => {
         <span className="hidden sm:inline ml-2">R{total.toFixed(2)}</span>
       </button>
 
-      {/* Cart Sidebar */}
       {showCart && (
         <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setShowCart(false)}>
           <div
@@ -45,7 +44,7 @@ export const FloatingCartButton = () => {
                 <div className="space-y-4 mb-6">
                   {cart.map(item => (
                     <div key={item.id} className="flex gap-4 bg-neutral-50 dark:bg-card rounded-lg p-3 transition-colors duration-300">
-                      <img src={allProducts.find(p => p.id === item.id)?.image ?? ""} alt={item.name} className="w-20 h-20 rounded-lg object-cover" />
+                      <img src={item.imageUrl || allProducts.find(p => p.id === item.id)?.image} alt={item.name} className="w-20 h-20 rounded-lg object-cover" />
                       <div className="flex-1">
                         <h3 className="font-semibold text-foreground dark:text-foreground text-sm">{item.name}</h3>
                         <p className="text-primary font-bold text-sm">R{item.price.toFixed(2)}</p>
