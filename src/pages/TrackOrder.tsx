@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 interface Message {
   _id: string;
@@ -51,49 +51,55 @@ const TrackOrder = () => {
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
-  // Auto-refresh order status every 30 seconds when an order is found
+  // Real-time SSE connection for order status updates
   useEffect(() => {
-    if (!foundOrder) return;
+    const token = localStorage.getItem('token');
+    if (!token || !foundOrder) return;
 
-    const interval = setInterval(() => {
-      refreshOrderStatus();
-    }, 30000); // 30 seconds
+    console.log('🔌 Connecting to Customer SSE for order:', foundOrder.orderNumber);
 
-    return () => clearInterval(interval);
-  }, [foundOrder]);
+    const eventSource = new EventSource(`${API_URL}/api/sse/customer?token=${token}`);
 
-  // Auto-refresh messages every 15 seconds when an order is found
-  useEffect(() => {
-    if (!foundOrder) return;
+    eventSource.onopen = () => {
+      console.log('✅ Customer SSE connected');
+    };
 
-    const interval = setInterval(() => {
-      fetchMessages();
-    }, 15000); // 15 seconds
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 SSE message received:', data);
 
-    return () => clearInterval(interval);
-  }, [foundOrder]);
+        if (data.type === 'order_status_changed') {
+          if (foundOrder && data.order.orderNumber === foundOrder.orderNumber) {
+            console.log('🔄 Updating order status in real-time:', data.order.status);
 
-  const refreshOrderStatus = async () => {
-    if (!foundOrder) return;
+            setFoundOrder(prevOrder => ({
+              ...prevOrder,
+              status: data.order.status,
+              updatedAt: data.order.updatedAt
+            }));
 
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch(`${API_URL}/api/orders/${foundOrder.orderNumber}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+            toast({
+              title: "📦 Order Status Updated",
+              description: `Your order is now: ${data.order.status.toUpperCase()}`,
+            });
+          }
         }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFoundOrder(data);
+      } catch (error) {
+        console.error('Failed to parse SSE message:', error);
       }
-    } catch (error) {
-      console.error('Failed to refresh order status:', error);
-    }
-  };
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      console.log('🔌 Closing Customer SSE connection');
+      eventSource.close();
+    };
+  }, [foundOrder?.orderNumber]);
 
   const handleSearch = async () => {
     if (!orderId.trim()) {
@@ -119,9 +125,7 @@ const TrackOrder = () => {
       }
 
       const response = await fetch(`${API_URL}/api/orders/${orderId.trim()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {
@@ -165,9 +169,7 @@ const TrackOrder = () => {
       if (!token) return;
 
       const response = await fetch(`${API_URL}/api/messages/order/${foundOrder.orderNumber}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {

@@ -109,65 +109,129 @@ export default function Admin() {
     fetchOrders();
   }, []);
 
-  const fetchOrders = async () => {
-  setLoadingOrders(true);
-  try {
+  // Real-time SSE connection for admins
+  useEffect(() => {
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    if (!token || user.role !== 'admin') {
+    if (!token || user.role !== 'admin') return;
+
+    console.log('🔌 Connecting to Admin SSE...');
+
+    const eventSource = new EventSource(`${API_URL}/api/sse/admin?token=${token}`);
+
+    eventSource.onopen = () => {
+      console.log('✅ Admin SSE connected');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 SSE message received:', data);
+
+        if (data.type === 'new_order') {
+          const user = data.order.user?.[0] || {};
+          const transformedOrder = {
+            id: data.order.orderNumber,
+            customer: user?.firstName && user?.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : 'Customer',
+            email: user?.email || 'N/A',
+            items: data.order.items.map(item => `${item.quantity}x ${item.name}`),
+            total: `R${data.order.totalAmount.toFixed(2)}`,
+            status: data.order.status,
+            date: new Date(data.order.createdAt).toLocaleString(),
+            specialInstructions: data.order.specialInstructions || '',
+            _id: data.order._id,
+            orderNumber: data.order.orderNumber
+          };
+
+          setOrders(prevOrders => {
+            const exists = prevOrders.some(o => o.orderNumber === transformedOrder.orderNumber);
+            if (exists) return prevOrders;
+            return [transformedOrder, ...prevOrders];
+          });
+
+          toast({
+            title: "🔔 New Order Received!",
+            description: `Order ${data.order.orderNumber} from ${user.firstName || 'Customer'}`,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to parse SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      console.log('🔌 Closing Admin SSE connection');
+      eventSource.close();
+    };
+  }, []);
+
+  const fetchOrders = async () => {
+    setLoadingOrders(true);
+    try {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      if (!token || user.role !== 'admin') {
+        toast({
+          title: "Access denied",
+          description: "Please log in as admin",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/orders`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      const rawText = await response.text();
+      console.log('Raw response:', rawText);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch orders: ${response.status}`);
+      }
+
+      const data = JSON.parse(rawText);
+      const ordersArray = Array.isArray(data) ? data : (data.orders || []);
+
+      const transformedOrders = ordersArray.map(order => {
+        const user = order.user?.[0] || order.user || order.userId;
+        return {
+          id: order.orderNumber,
+          customer: user?.firstName && user?.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : 'Customer',
+          email: user?.email || 'N/A',
+          items: order.items.map(item => `${item.quantity}x ${item.name}`),
+          total: `R${order.totalAmount.toFixed(2)}`,
+          status: order.status,
+          date: new Date(order.createdAt).toLocaleString(),
+          specialInstructions: order.specialInstructions || '',
+          _id: order._id,
+          orderNumber: order.orderNumber
+        };
+      });
+
+      setOrders(transformedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
       toast({
-        title: "Access denied",
-        description: "Please log in as admin",
+        title: "Error",
+        description: "Failed to load orders",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoadingOrders(false);
     }
-
-    const response = await fetch(`${API_URL}/api/orders`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-
-    const rawText = await response.text();
-    console.log('Raw response:', rawText);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch orders: ${response.status}`);
-    }
-
-    const data = JSON.parse(rawText);
-    const ordersArray = Array.isArray(data) ? data : (data.orders || []);
-
-    const transformedOrders = ordersArray.map(order => {
-      const user = order.user?.[0] || order.user || order.userId;
-      return {
-        id: order.orderNumber,
-        customer: user?.firstName && user?.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : 'Customer',
-        email: user?.email || 'N/A',
-        items: order.items.map(item => `${item.quantity}x ${item.name}`),
-        total: `R${order.totalAmount.toFixed(2)}`,
-        status: order.status,
-        date: new Date(order.createdAt).toLocaleString(),
-        specialInstructions: order.specialInstructions || '',
-        _id: order._id,
-        orderNumber: order.orderNumber
-      };
-    });
-
-    setOrders(transformedOrders);
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    toast({
-      title: "Error",
-      description: "Failed to load orders",
-      variant: "destructive",
-    });
-  } finally {
-    setLoadingOrders(false);
-  }
-};
+  };
 
 
   const filteredProducts = Array.isArray(products) && searchQuery.trim()
@@ -185,150 +249,150 @@ export default function Admin() {
     totalProducts: Array.isArray(products) ? products.length : 0,
   };
 
-// REPLACE your updateOrderStatus function with this diagnostic version
-// This will help us see exactly what's being sent
+  // REPLACE your updateOrderStatus function with this diagnostic version
+  // This will help us see exactly what's being sent
 
-const updateOrderStatus = async (orderNumber, newStatus) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
+  const updateOrderStatus = async (orderNumber, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in as admin",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ✅ DIAGNOSTIC: Log everything we're about to send
+      console.log('\n╔════════════════════════════════════════════════╗');
+      console.log('║  FRONTEND: UPDATING ORDER STATUS              ║');
+      console.log('╚════════════════════════════════════════════════╝');
+      console.log('📦 Order Number:', orderNumber);
+      console.log('🔄 New Status:', newStatus);
+      console.log('🔗 API URL:', API_URL);
+      console.log('🌐 Full URL:', `${API_URL}/api/orders/${orderNumber}/status`);
+      console.log('🎫 Token:', token.substring(0, 20) + '...');
+      console.log('═══════════════════════════════════════════════\n');
+
+      // Show loading state
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.orderNumber === orderNumber
+            ? { ...order, status: newStatus, _isUpdating: true }
+            : order
+        )
+      );
+
+      const url = `${API_URL}/api/orders/${orderNumber}/status`;
+      const payload = { status: newStatus };
+
+      console.log('📤 Making PUT request...');
+      console.log('   URL:', url);
+      console.log('   Payload:', JSON.stringify(payload));
+
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log('📥 Response received:');
+      console.log('   Status:', response.status, response.statusText);
+      console.log('   OK:', response.ok);
+      console.log('   Headers:', Object.fromEntries(response.headers.entries()));
+
+      // Get response as text first for debugging
+      const responseText = await response.text();
+      console.log('📄 Raw Response Text:', responseText);
+
+      // Check if response is ok
+      if (!response.ok) {
+        let errorMessage = 'Failed to update order status';
+        let errorData = null;
+
+        try {
+          errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error('❌ Server error (parsed):', errorData);
+        } catch (e) {
+          console.error('❌ Non-JSON error response:', responseText);
+          errorMessage = `${response.status}: ${response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Parse successful response
+      let updatedOrder;
+      try {
+        updatedOrder = JSON.parse(responseText);
+        console.log('✅ Parsed successful response:', updatedOrder);
+
+        // Verify structure
+        if (!updatedOrder.orderNumber || !updatedOrder.status) {
+          console.error('⚠️ Response missing expected fields');
+          console.error('   Expected: orderNumber, status');
+          console.error('   Received:', Object.keys(updatedOrder));
+          throw new Error('Invalid response structure from server');
+        }
+
+        console.log('✅ Response validation passed');
+
+      } catch (e) {
+        console.error('❌ Failed to parse success response:', e);
+        throw new Error('Invalid response from server');
+      }
+
+      // Update local state with confirmed data
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.orderNumber === orderNumber
+            ? { ...order, status: updatedOrder.status, _isUpdating: false }
+            : order
+        )
+      );
+
       toast({
-        title: "Authentication required",
-        description: "Please log in as admin",
+        title: "Order Updated",
+        description: `Order ${orderNumber} status changed to ${newStatus}. Customer has been notified via email.`,
+      });
+
+      console.log('✅ Status update completed successfully');
+      console.log('═══════════════════════════════════════════════\n');
+
+    } catch (error) {
+      console.error('\n╔════════════════════════════════════════════════╗');
+      console.error('║  FRONTEND ERROR                                ║');
+      console.error('╚════════════════════════════════════════════════╝');
+      console.error('❌ Error:', error.message);
+      console.error('📦 Order Number:', orderNumber);
+      console.error('🔄 Attempted Status:', newStatus);
+      console.error('═══════════════════════════════════════════════\n');
+
+      // Remove loading state
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.orderNumber === orderNumber
+            ? { ...order, _isUpdating: false }
+            : order
+        )
+      );
+
+      // Refetch to ensure correct state
+      console.log('🔄 Refetching orders to sync state...');
+      fetchOrders();
+
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update order status. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-
-    // ✅ DIAGNOSTIC: Log everything we're about to send
-    console.log('\n╔════════════════════════════════════════════════╗');
-    console.log('║  FRONTEND: UPDATING ORDER STATUS              ║');
-    console.log('╚════════════════════════════════════════════════╝');
-    console.log('📦 Order Number:', orderNumber);
-    console.log('🔄 New Status:', newStatus);
-    console.log('🔗 API URL:', API_URL);
-    console.log('🌐 Full URL:', `${API_URL}/api/orders/${orderNumber}/status`);
-    console.log('🎫 Token:', token.substring(0, 20) + '...');
-    console.log('═══════════════════════════════════════════════\n');
-
-    // Show loading state
-    setOrders(prevOrders => 
-      prevOrders.map(order =>
-        order.orderNumber === orderNumber 
-          ? { ...order, status: newStatus, _isUpdating: true } 
-          : order
-      )
-    );
-
-    const url = `${API_URL}/api/orders/${orderNumber}/status`;
-    const payload = { status: newStatus };
-    
-    console.log('📤 Making PUT request...');
-    console.log('   URL:', url);
-    console.log('   Payload:', JSON.stringify(payload));
-    
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    console.log('📥 Response received:');
-    console.log('   Status:', response.status, response.statusText);
-    console.log('   OK:', response.ok);
-    console.log('   Headers:', Object.fromEntries(response.headers.entries()));
-
-    // Get response as text first for debugging
-    const responseText = await response.text();
-    console.log('📄 Raw Response Text:', responseText);
-
-    // Check if response is ok
-    if (!response.ok) {
-      let errorMessage = 'Failed to update order status';
-      let errorData = null;
-      
-      try {
-        errorData = JSON.parse(responseText);
-        errorMessage = errorData.error || errorData.message || errorMessage;
-        console.error('❌ Server error (parsed):', errorData);
-      } catch (e) {
-        console.error('❌ Non-JSON error response:', responseText);
-        errorMessage = `${response.status}: ${response.statusText}`;
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    // Parse successful response
-    let updatedOrder;
-    try {
-      updatedOrder = JSON.parse(responseText);
-      console.log('✅ Parsed successful response:', updatedOrder);
-      
-      // Verify structure
-      if (!updatedOrder.orderNumber || !updatedOrder.status) {
-        console.error('⚠️ Response missing expected fields');
-        console.error('   Expected: orderNumber, status');
-        console.error('   Received:', Object.keys(updatedOrder));
-        throw new Error('Invalid response structure from server');
-      }
-      
-      console.log('✅ Response validation passed');
-      
-    } catch (e) {
-      console.error('❌ Failed to parse success response:', e);
-      throw new Error('Invalid response from server');
-    }
-
-    // Update local state with confirmed data
-    setOrders(prevOrders => 
-      prevOrders.map(order =>
-        order.orderNumber === orderNumber 
-          ? { ...order, status: updatedOrder.status, _isUpdating: false } 
-          : order
-      )
-    );
-
-    toast({
-      title: "Order Updated",
-      description: `Order ${orderNumber} status changed to ${newStatus}. Customer has been notified via email.`,
-    });
-
-    console.log('✅ Status update completed successfully');
-    console.log('═══════════════════════════════════════════════\n');
-
-  } catch (error) {
-    console.error('\n╔════════════════════════════════════════════════╗');
-    console.error('║  FRONTEND ERROR                                ║');
-    console.error('╚════════════════════════════════════════════════╝');
-    console.error('❌ Error:', error.message);
-    console.error('📦 Order Number:', orderNumber);
-    console.error('🔄 Attempted Status:', newStatus);
-    console.error('═══════════════════════════════════════════════\n');
-    
-    // Remove loading state
-    setOrders(prevOrders => 
-      prevOrders.map(order =>
-        order.orderNumber === orderNumber 
-          ? { ...order, _isUpdating: false } 
-          : order
-      )
-    );
-    
-    // Refetch to ensure correct state
-    console.log('🔄 Refetching orders to sync state...');
-    fetchOrders();
-    
-    toast({
-      title: "Update Failed",
-      description: error.message || "Failed to update order status. Please try again.",
-      variant: "destructive",
-    });
-  }
-};
+  };
 
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedChat) return;
