@@ -6,93 +6,1377 @@ import { Star, Quote, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const allTestimonials = [
   {
     id: 1,
-    name: "Maria Santos",
+    name: "Deidre Le Roux",
     role: "Regular Customer",
     rating: 5,
-    text: "The pastel de nata here is the best I've ever had! It takes me back to my grandmother's kitchen in Lisbon. Absolutely divine.",
-    avatar: "MS",
-    date: "2 days ago",
-  },
-  {
-    id: 2,
-    name: "João Costa",
-    role: "Food Blogger",
-    rating: 5,
-    text: "Portugal Bakery has become my go-to spot for authentic Portuguese pastries. The quality and freshness are unmatched in the city.",
-    avatar: "JC",
-    date: "1 week ago",
-  },
-  {
-    id: 3,
-    name: "Ana Ferreira",
-    role: "Local Resident",
-    rating: 5,
-    text: "I've been coming here for years. The sourdough bread is incredible, and the staff always remembers my order. A true neighborhood gem!",
-    avatar: "AF",
+    text: "Amazing owners and staff. Always a pleasure to go there. Breads and pastries are always fresh.",
+    avatar: "DL",
     date: "2 weeks ago",
   },
   {
-    id: 4,
-    name: "Pedro Oliveira",
-    role: "Chef",
+    id: 2,
+    name: "M Marillier",
+    role: "Local Resident",
     rating: 5,
-    text: "As a professional chef, I appreciate the attention to detail here. The croissants are perfectly laminated, and the flavors are authentic.",
-    avatar: "PO",
-    date: "3 weeks ago",
+    text: "Oh my word, what a stunning find! Tripped over this place keeping ourselves busy in the area. Now we'll travel specifically for their sublime rolls and pastel de nata!",
+    avatar: "MM",
+    date: "1 month ago",
+  },
+  {
+    id: 3,
+    name: "Jason Jack",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Excellent hidden gem tucked away in the La Rochelle community. Very busy, which means very popular. Their rolls and breads were flying off the shelves like hot cakes. Owner very friendly and welcoming. Great variety.",
+    avatar: "JJ",
+    date: "3 years ago",
+  },
+  {
+    id: 4,
+    name: "Greg Allen",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Still pumping out quality food after all these years. Location is a bit dodgy, but you won't be disappointed as these are the closest you will get to OG pasteis de nata.",
+    avatar: "GA",
+    date: "2 months ago",
   },
   {
     id: 5,
-    name: "Sofia Martins",
-    role: "Wedding Planner",
+    name: "Nicole Turner",
+    role: "Local Resident",
     rating: 5,
-    text: "We ordered a custom cake for a wedding and it exceeded all expectations. Beautiful presentation and even better taste!",
-    avatar: "SM",
-    date: "1 month ago",
+    text: "From the outside all you see is empty boxes but inside are a thousand ways to fill them with delicious morsels. From crusty loaves of bread to delicate pastries and buttery biscuits, everything in this humble bakery is made with love. A gem of a place.",
+    avatar: "NT",
+    date: "5 years ago",
   },
   {
     id: 6,
-    name: "Carlos Mendes",
-    role: "Coffee Enthusiast",
-    rating: 4,
-    text: "Great pastries to pair with my morning coffee. The almond croissant is my favorite. Wish they had more seating though!",
-    avatar: "CM",
-    date: "1 month ago",
+    name: "Nkululeko Eugene Moyo",
+    role: "Community Member",
+    rating: 5,
+    text: "The kindest people I have ever seen. For every minute I was there came people of different races begging for food, and the guy on the Bakery would listen to them with a very kind attitude and give them rolls or bread.",
+    avatar: "NM",
+    date: "11 months ago",
+  },
+  {
+    id: 7,
+    name: "Lumka Manci",
+    role: "Regular Customer",
+    rating: 5,
+    text: "The bread is so fresh and their Vianas.",
+    avatar: "LM",
+    date: "2 months ago",
+  },
+  {
+    id: 8,
+    name: "Bianca Pohl",
+    role: "Food Lover",
+    rating: 5,
+    text: "Gem of a place in Joburg. Dodgy area but once you are in the shop you would not want to leave.",
+    avatar: "BP",
+    date: "4 months ago",
+  },
+  {
+    id: 9,
+    name: "Melvin Dlamini",
+    role: "Community Member",
+    rating: 5,
+    text: "The best man, definitely should try anything you feel like. Plus they are such good people; they give back to the community.",
+    avatar: "MD",
+    date: "10 months ago",
+  },
+  {
+    id: 10,
+    name: "Judy de la Harpe",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "The best prawn rissoles and pastel de nata's I've ever had!! All the other baked goods and breads look really good too. Not situated in the best area, but definitely worth the visit!",
+    avatar: "JH",
+    date: "2 years ago",
+  },
+  {
+    id: 11,
+    name: "Cassim Davids",
+    role: "Regular Customer",
+    rating: 5,
+    text: "The food is good quality. I will recommend them anytime. They are just situated in a dodgy place; I propose they relocate.",
+    avatar: "CD",
+    date: "6 months ago",
+  },
+  {
+    id: 12,
+    name: "Kevin Chinyande",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Goodies Galore, the owner is very friendly and he always hooks me with his box of recommendations and always it's a wow!",
+    avatar: "KC",
+    date: "5 years ago",
+  },
+  {
+    id: 13,
+    name: "Darryl Soal",
+    role: "Food Critic",
+    rating: 5,
+    text: "Some of the best breads and Portuguese delicacies anyone could ask for. Hidden gem in a difficult-to-park road, but the tastes and prices are among the best in the south. Especially their paste de nata is world-class.",
+    avatar: "DS",
+    date: "6 years ago",
+  },
+  {
+    id: 14,
+    name: "Megatwine Solutions",
+    role: "International Customer",
+    rating: 5,
+    text: "I could relate to it because I live in Portugal and some Portuguese African countries.",
+    avatar: "MS",
+    date: "2 years ago",
+  },
+  {
+    id: 15,
+    name: "Vivian Khoza",
+    role: "Regular Customer",
+    rating: 5,
+    text: "I love their confectionery, awesome assistance at all times. I'm a regular here; I know the whole staff & vice versa. No. 1 bakery for me thus far in the south, and they never forget to give to the less fortunate.",
+    avatar: "VK",
+    date: "4 years ago",
+  },
+  {
+    id: 16,
+    name: "Langton Muzanebanga",
+    role: "Local Resident",
+    rating: 5,
+    text: "Very friendly service and oh-so-delicious backings. Thumbs up.",
+    avatar: "LM",
+    date: "11 months ago",
+  },
+  {
+    id: 17,
+    name: "Paul Jorgensen",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Definitely the best pastel de natas in Johannesburg, worth a trip or if passing by, take home some trays. Authentic bakery for the area but be warned that it is not the safest or has off-street parking.",
+    avatar: "PJ",
+    date: "6 years ago",
+  },
+  {
+    id: 18,
+    name: "Dilip Morar",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Always the freshest bread and Portuguese rolls available.",
+    avatar: "DM",
+    date: "9 months ago",
+  },
+  {
+    id: 19,
+    name: "Elizabeth Florencio",
+    role: "Portuguese Food Lover",
+    rating: 5,
+    text: "No-frills bakery that sells the BEST bolo rei in Johannesburg. 100% authentic, even has the broad bean. I look forward to Xmas every year just to eat this cake.",
+    avatar: "EF",
+    date: "5 years ago",
+  },
+  {
+    id: 20,
+    name: "Jeremie Kabango",
+    role: "Customer",
+    rating: 5,
+    text: "Great service.",
+    avatar: "JK",
+    date: "5 days ago",
+  },
+  {
+    id: 21,
+    name: "Steven Sun Hing",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Their bread rolls are always so soft and fresh. The proprietors are usually very friendly and helpful.",
+    avatar: "SH",
+    date: "6 years ago",
+  },
+  {
+    id: 22,
+    name: "Miguel Castro Amaro",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Well worth the drive from 4ways to La Rochelle. Best Portuguese cakes South of Lisbon. Also the freshest and best original Portuguese rolls. Will be back.",
+    avatar: "MA",
+    date: "5 years ago",
+  },
+  {
+    id: 23,
+    name: "Jan-Hendrik Visser",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Super friendly people. Pastéis de Nata are out of this world. You can't have enough. So buy enough. Also fresh Páw. No more explanation needed.",
+    avatar: "JV",
+    date: "4 years ago",
+  },
+  {
+    id: 24,
+    name: "Jacobus Odendaal",
+    role: "Local Resident",
+    rating: 5,
+    text: "Always busy, so much to choose from, fresh tasty treats and rolls, and much more. Just a pity about its location.",
+    avatar: "JO",
+    date: "2 years ago",
+  },
+  {
+    id: 25,
+    name: "Vanda Pedro",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Fresh bread, delicious cakes.",
+    avatar: "VP",
+    date: "6 years ago",
+  },
+  {
+    id: 26,
+    name: "Tehmtan Randeria",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Excellent prawn rissoles and pastel de nata. Really enjoyed them. Pity about the area the bakery is in.",
+    avatar: "TR",
+    date: "4 years ago",
+  },
+  {
+    id: 27,
+    name: "Hugo Venter",
+    role: "Customer",
+    rating: 3,
+    text: "Their products look amazing.",
+    avatar: "HV",
+    date: "6 years ago",
+  },
+  {
+    id: 28,
+    name: "Bonisiwe Khumalo",
+    role: "Local Resident",
+    rating: 5,
+    text: "They sell one of the best Portuguese rolls among other things. It is sure worth a visit.",
+    avatar: "BK",
+    date: "3 years ago",
+  },
+  {
+    id: 29,
+    name: "Adri Oosthuizen",
+    role: "Customer",
+    rating: 5,
+    text: "Excellent.",
+    avatar: "AO",
+    date: "4 weeks ago",
+  },
+  {
+    id: 30,
+    name: "Willams C",
+    role: "Visitor",
+    rating: 5,
+    text: "I did enjoy being there and had a good taste of food.",
+    avatar: "WC",
+    date: "2 years ago",
+  },
+  {
+    id: 31,
+    name: "Tulio Billy Stainbank",
+    role: "Community Member",
+    rating: 5,
+    text: "High-quality cakes, most friendly service in Jhb. They are there for the needy.",
+    avatar: "TS",
+    date: "4 years ago",
+  },
+  {
+    id: 32,
+    name: "Calvin Adam",
+    role: "Regular Customer",
+    rating: 5,
+    text: "For your everyday fresh rolls, bread, and many more you can visit them.",
+    avatar: "CA",
+    date: "4 years ago",
+  },
+  {
+    id: 33,
+    name: "Barend Van Heerden",
+    role: "Food Lover",
+    rating: 5,
+    text: "Fresh and decadent baked goods! The quality is top class!",
+    avatar: "BV",
+    date: "2 years ago",
+  },
+  {
+    id: 34,
+    name: "Mthunzi Skuza",
+    role: "Local Resident",
+    rating: 5,
+    text: "Wow, nice bread rolls, guys! Keep it up, you are the best last man standing in Rosettenville.",
+    avatar: "MS",
+    date: "3 years ago",
+  },
+  {
+    id: 35,
+    name: "Vanessa Shuvai",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Fresh food, well cooked, and best customer care. They are simply the best.",
+    avatar: "VS",
+    date: "4 years ago",
+  },
+  {
+    id: 36,
+    name: "Timothy Bananga",
+    role: "Customer",
+    rating: 5,
+    text: "Good food, best meal, enjoy.",
+    avatar: "TB",
+    date: "1 year ago",
+  },
+  {
+    id: 37,
+    name: "Mohamed Ismail",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Awesome cakes and good service. Personal touch from owners.",
+    avatar: "MI",
+    date: "3 years ago",
+  },
+  {
+    id: 38,
+    name: "Anele Lillian",
+    role: "Local Resident",
+    rating: 5,
+    text: "One of the best baked products to go for.",
+    avatar: "AL",
+    date: "2 years ago",
+  },
+  {
+    id: 39,
+    name: "Berty du Preez",
+    role: "Customer",
+    rating: 2,
+    text: "Pies were ice cold; mostly just pastry. Gave the pies to my dogs.",
+    avatar: "BP",
+    date: "3 years ago",
+  },
+  {
+    id: 40,
+    name: "Greaterman Mxolisi",
+    role: "Community Member",
+    rating: 5,
+    text: "Good confectionery and a jewel of the community at large, serving the less fortunate also.",
+    avatar: "GM",
+    date: "5 years ago",
+  },
+  {
+    id: 41,
+    name: "Ngabul Apebya",
+    role: "Customer",
+    rating: 5,
+    text: "Open, friendly bakery with great customer service.",
+    avatar: "NA",
+    date: "2 years ago",
+  },
+  {
+    id: 42,
+    name: "Mlotshwa Thabani",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Freshly baked products, great taste at affordable prices.",
+    avatar: "MT",
+    date: "4 years ago",
+  },
+  {
+    id: 43,
+    name: "Eloise Xavier",
+    role: "Portuguese Food Lover",
+    rating: 5,
+    text: "Best pasteis de nata ever. And we love the Portuguese bread rolls.",
+    avatar: "EX",
+    date: "4 years ago",
+  },
+  {
+    id: 44,
+    name: "Shyam Sharath",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Prices are very reasonable for the quality breads.",
+    avatar: "SS",
+    date: "2 years ago",
+  },
+  {
+    id: 45,
+    name: "Diane Mann",
+    role: "Local Resident",
+    rating: 5,
+    text: "Lovely little bakery that serves high-quality fresh food.",
+    avatar: "DM",
+    date: "6 years ago",
+  },
+  {
+    id: 46,
+    name: "Michael Okongwu",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Everything from this bakery is top quality, service is excellent.",
+    avatar: "MO",
+    date: "5 years ago",
+  },
+  {
+    id: 47,
+    name: "Remsy Ndlovu",
+    role: "Customer",
+    rating: 5,
+    text: "Very tasty rolls, excellent customer care.",
+    avatar: "RN",
+    date: "2 years ago",
+  },
+  {
+    id: 48,
+    name: "Monica Fernandes",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Great quality products, lovely variety of Portuguese goodies.",
+    avatar: "MF",
+    date: "5 years ago",
+  },
+  {
+    id: 49,
+    name: "Meluleki Sibanda",
+    role: "Regular Customer",
+    rating: 5,
+    text: "For fresh baked cakes and many more varieties of baked stuff.",
+    avatar: "MS",
+    date: "4 years ago",
+  },
+  {
+    id: 50,
+    name: "Bobbs",
+    role: "Customer",
+    rating: 5,
+    text: "Great pricing and always fresh goods in stock.",
+    avatar: "BB",
+    date: "7 years ago",
+  },
+  {
+    id: 51,
+    name: "Anita da Silva",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Unbelievable bread, amazing cookies, and a friendly family.",
+    avatar: "AS",
+    date: "4 years ago",
+  },
+  {
+    id: 52,
+    name: "Abigail Aboaba",
+    role: "Local Resident",
+    rating: 5,
+    text: "Fresh bread you can get there.",
+    avatar: "AA",
+    date: "3 years ago",
+  },
+  {
+    id: 53,
+    name: "Jan Bester",
+    role: "Regular Customer",
+    rating: 5,
+    text: "For freshly baked bread and rolls, this is the shop for you.",
+    avatar: "JB",
+    date: "2 years ago",
+  },
+  {
+    id: 54,
+    name: "Leon Chikuni",
+    role: "Food Lover",
+    rating: 5,
+    text: "Great, loved the place, the pies mmmm.",
+    avatar: "LC",
+    date: "4 years ago",
+  },
+  {
+    id: 55,
+    name: "Ana Cerqueira",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Always good, friendly. The best bakery.",
+    avatar: "AC",
+    date: "6 years ago",
+  },
+  {
+    id: 56,
+    name: "Siyabonga Mhlongo",
+    role: "Customer",
+    rating: 5,
+    text: "Very great place to buy cakes.",
+    avatar: "SM",
+    date: "5 years ago",
+  },
+  {
+    id: 57,
+    name: "Husain Ismail",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Quite nice guys.",
+    avatar: "HI",
+    date: "9 months ago",
+  },
+  {
+    id: 58,
+    name: "Sinoyolo Njilo",
+    role: "Local Resident",
+    rating: 5,
+    text: "They are friendly & have fresh buns.",
+    avatar: "SN",
+    date: "6 years ago",
+  },
+  {
+    id: 59,
+    name: "Nola Morrison",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Best Portuguese egg tarts (Pasteis de Nata).",
+    avatar: "NM",
+    date: "7 years ago",
+  },
+  {
+    id: 60,
+    name: "Ayesha Mayet",
+    role: "Food Critic",
+    rating: 5,
+    text: "Probably the best pastéis de nata in Joburg.",
+    avatar: "AM",
+    date: "4 years ago",
+  },
+  {
+    id: 61,
+    name: "Trevor Nhubu",
+    role: "Customer",
+    rating: 1,
+    text: "They are rude! No customer care.",
+    avatar: "TN",
+    date: "1 year ago",
+  },
+  {
+    id: 62,
+    name: "Mburi Mboweni",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Love the service there, always feel at home.",
+    avatar: "MM",
+    date: "5 years ago",
+  },
+  {
+    id: 63,
+    name: "Trust Nkosi",
+    role: "Food Lover",
+    rating: 5,
+    text: "The food there is great.",
+    avatar: "TN",
+    date: "2 years ago",
+  },
+  {
+    id: 64,
+    name: "Shaun Chinnasamy",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Brilliant baked goods, cakes, and rolls.",
+    avatar: "SC",
+    date: "5 years ago",
+  },
+  {
+    id: 65,
+    name: "Peter Claassen",
+    role: "Local Resident",
+    rating: 5,
+    text: "The Portuguese rolls are always fresh.",
+    avatar: "PC",
+    date: "3 years ago",
+  },
+  {
+    id: 66,
+    name: "Nikluis Manuel",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Best rolls and baking in the south.",
+    avatar: "NM",
+    date: "2 years ago",
+  },
+  {
+    id: 67,
+    name: "Brian Gough Palmer",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Fabulous bakery, unfortunately in a dodgy area.",
+    avatar: "BP",
+    date: "5 years ago",
+  },
+  {
+    id: 68,
+    name: "Mike Jooste",
+    role: "Customer",
+    rating: 5,
+    text: "Fresh product, great service.",
+    avatar: "MJ",
+    date: "2 years ago",
+  },
+  {
+    id: 69,
+    name: "Abram Khomotso",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Everything is good, fresh, and soft.",
+    avatar: "AK",
+    date: "2 years ago",
+  },
+  {
+    id: 70,
+    name: "Mike Sucksmith",
+    role: "Customer",
+    rating: 5,
+    text: "Good pastries.",
+    avatar: "MS",
+    date: "5 months ago",
+  },
+  {
+    id: 71,
+    name: "Micky Hussle",
+    role: "Regular Customer",
+    rating: 5,
+    text: "They bake at their best.",
+    avatar: "MH",
+    date: "2 years ago",
+  },
+  {
+    id: 72,
+    name: "Ann Sawers",
+    role: "Portuguese Food Lover",
+    rating: 5,
+    text: "Their pasteis de nata are out of this world.",
+    avatar: "AS",
+    date: "6 years ago",
+  },
+  {
+    id: 73,
+    name: "Ncane Nyawo",
+    role: "Customer",
+    rating: 5,
+    text: "Everything food was delicious.",
+    avatar: "NN",
+    date: "2 years ago",
+  },
+  {
+    id: 74,
+    name: "Werner Roetz",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Fresh products daily and reasonable prices.",
+    avatar: "WR",
+    date: "5 years ago",
+  },
+  {
+    id: 75,
+    name: "Temi Richard",
+    role: "Local Resident",
+    rating: 5,
+    text: "They have nice bread.",
+    avatar: "TR",
+    date: "5 years ago",
+  },
+  {
+    id: 76,
+    name: "James Gumbo",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Freshly baked goodies, I love it.",
+    avatar: "JG",
+    date: "6 years ago",
+  },
+  {
+    id: 77,
+    name: "Miguel de Barros",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Great Portuguese bakery around Joburg.",
+    avatar: "MB",
+    date: "6 years ago",
+  },
+  {
+    id: 78,
+    name: "Urquidia Miranda",
+    role: "Long-time Customer",
+    rating: 5,
+    text: "Excellent bakery since always.",
+    avatar: "UM",
+    date: "5 years ago",
+  },
+  {
+    id: 79,
+    name: "Lunga Godfrey",
+    role: "Customer",
+    rating: 5,
+    text: "Good place to buy bread and cakes.",
+    avatar: "LG",
+    date: "6 years ago",
+  },
+  {
+    id: 80,
+    name: "Tshaka Nkala",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Good customer service.",
+    avatar: "TN",
+    date: "1 year ago",
+  },
+  {
+    id: 81,
+    name: "Tiaan Kotze",
+    role: "Food Lover",
+    rating: 5,
+    text: "Awesome fresh baked goods.",
+    avatar: "TK",
+    date: "3 years ago",
+  },
+  {
+    id: 82,
+    name: "Pat Pillay",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Best rolls and savouries.",
+    avatar: "PP",
+    date: "2 years ago",
+  },
+  {
+    id: 83,
+    name: "Sindiso Sanyangowe",
+    role: "Community Member",
+    rating: 5,
+    text: "I have a story to tell about the place… Humbled.",
+    avatar: "SS",
+    date: "4 years ago",
+  },
+  {
+    id: 84,
+    name: "Nolwazi Joubeŕ",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "The best pastry in South Africa.",
+    avatar: "NJ",
+    date: "3 years ago",
+  },
+  {
+    id: 85,
+    name: "Nomsa Ninela",
+    role: "Customer",
+    rating: 5,
+    text: "Loved it there and the care.",
+    avatar: "NN",
+    date: "4 years ago",
+  },
+  {
+    id: 86,
+    name: "Bongi Mbanjwa",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Nice and fresh.",
+    avatar: "BM",
+    date: "1 year ago",
+  },
+  {
+    id: 87,
+    name: "Luis De Barros",
+    role: "Portuguese Food Lover",
+    rating: 5,
+    text: "Excellent Bolo Rei.",
+    avatar: "LB",
+    date: "4 years ago",
+  },
+  {
+    id: 88,
+    name: "Webster Langson",
+    role: "Customer",
+    rating: 5,
+    text: "Fresh baked goods, yummy.",
+    avatar: "WL",
+    date: "3 years ago",
+  },
+  {
+    id: 89,
+    name: "Jeff Lang",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Best value in town.",
+    avatar: "JL",
+    date: "6 years ago",
+  },
+  {
+    id: 90,
+    name: "Nenungwi Moses",
+    role: "Customer",
+    rating: 5,
+    text: "Very good.",
+    avatar: "NM",
+    date: "3 years ago",
+  },
+  {
+    id: 91,
+    name: "Emmanuel Ogbonna Ogbuabo",
+    role: "Quality Seeker",
+    rating: 5,
+    text: "Superb and quality stuff.",
+    avatar: "EO",
+    date: "6 years ago",
+  },
+  {
+    id: 92,
+    name: "Robert Pillay",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Always fresh, tasty, and high-quality Portuguese baked goods.",
+    avatar: "RP",
+    date: "5 years ago",
+  },
+  {
+    id: 93,
+    name: "Luis Alberto",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Fantastic bakery, authentic Portuguese rolls and pastries.",
+    avatar: "LA",
+    date: "4 years ago",
+  },
+  {
+    id: 94,
+    name: "Lerato Mokoena",
+    role: "Local Resident",
+    rating: 5,
+    text: "Love the fresh bread and the pastries. Staff are friendly.",
+    avatar: "LM",
+    date: "3 years ago",
+  },
+  {
+    id: 95,
+    name: "Samuel Mendes",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Great service and amazing Portuguese cakes.",
+    avatar: "SM",
+    date: "2 years ago",
+  },
+  {
+    id: 96,
+    name: "Hendrik Van Rooyen",
+    role: "Food Critic",
+    rating: 5,
+    text: "The pasteis de nata are phenomenal. Highly recommended.",
+    avatar: "HV",
+    date: "6 years ago",
+  },
+  {
+    id: 97,
+    name: "Maria Fernandes",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Friendly staff and fresh bakery items daily.",
+    avatar: "MF",
+    date: "5 years ago",
+  },
+  {
+    id: 98,
+    name: "Thabo Nkosi",
+    role: "Bread Lover",
+    rating: 5,
+    text: "Best Portuguese rolls I've ever had. Always fresh.",
+    avatar: "TN",
+    date: "3 years ago",
+  },
+  {
+    id: 99,
+    name: "Anita Coetzee",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Lovely bakery, the pastries are out of this world.",
+    avatar: "AC",
+    date: "4 years ago",
+  },
+  {
+    id: 100,
+    name: "Carlos Silva",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Authentic Portuguese bakery. Amazing bread and desserts.",
+    avatar: "CS",
+    date: "5 years ago",
+  },
+  {
+    id: 101,
+    name: "Nomvula Dlamini",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Service is excellent, and the products are always fresh.",
+    avatar: "ND",
+    date: "2 years ago",
+  },
+  {
+    id: 102,
+    name: "Peter Mathebula",
+    role: "Local Resident",
+    rating: 5,
+    text: "Good quality breads, cakes, and pastries.",
+    avatar: "PM",
+    date: "3 years ago",
+  },
+  {
+    id: 103,
+    name: "Lucia Costa",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Amazing selection of pastries, always fresh.",
+    avatar: "LC",
+    date: "4 years ago",
+  },
+  {
+    id: 104,
+    name: "Sibusiso Khumalo",
+    role: "Customer",
+    rating: 5,
+    text: "Friendly service and delicious Portuguese rolls.",
+    avatar: "SK",
+    date: "1 year ago",
+  },
+  {
+    id: 105,
+    name: "Claudia Ribeiro",
+    role: "Food Lover",
+    rating: 5,
+    text: "One of the best bakeries in Joburg, authentic and fresh.",
+    avatar: "CR",
+    date: "5 years ago",
+  },
+  {
+    id: 106,
+    name: "André Ferreira",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Freshly baked products daily, high-quality Portuguese goods.",
+    avatar: "AF",
+    date: "6 years ago",
+  },
+  {
+    id: 107,
+    name: "Zanele Mthembu",
+    role: "Local Resident",
+    rating: 5,
+    text: "Lovely bakery, very friendly staff, and amazing pastries.",
+    avatar: "ZM",
+    date: "3 years ago",
+  },
+  {
+    id: 108,
+    name: "Antonio Mendes",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Best pastel de nata in Johannesburg. Worth the trip.",
+    avatar: "AM",
+    date: "5 years ago",
+  },
+  {
+    id: 109,
+    name: "Chantal Van der Merwe",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Freshly baked bread, wonderful service, great variety.",
+    avatar: "CV",
+    date: "4 years ago",
+  },
+  {
+    id: 110,
+    name: "Luis Pereira",
+    role: "Food Critic",
+    rating: 5,
+    text: "Excellent bakery, high-quality products, very friendly.",
+    avatar: "LP",
+    date: "6 years ago",
+  },
+  {
+    id: 111,
+    name: "Maria Lopes",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Authentic Portuguese bakery, the rolls and pastries are superb.",
+    avatar: "ML",
+    date: "3 years ago",
+  },
+  {
+    id: 112,
+    name: "Andile Zulu",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Friendly owners, always fresh products, great experience.",
+    avatar: "AZ",
+    date: "2 years ago",
+  },
+  {
+    id: 113,
+    name: "Hector Oliveira",
+    role: "Portuguese Food Lover",
+    rating: 5,
+    text: "Delicious Portuguese baked goods, very authentic.",
+    avatar: "HO",
+    date: "5 years ago",
+  },
+  {
+    id: 114,
+    name: "Natasha Rodrigues",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Lovely bakery, fantastic pastries, friendly service.",
+    avatar: "NR",
+    date: "4 years ago",
+  },
+  {
+    id: 115,
+    name: "Ricardo Santos",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "High-quality bakery, authentic Portuguese flavors.",
+    avatar: "RS",
+    date: "3 years ago",
+  },
+  {
+    id: 116,
+    name: "Linda Ferreira",
+    role: "Regular Customer",
+    rating: 5,
+    text: "The pasteis de nata are divine, always fresh.",
+    avatar: "LF",
+    date: "2 years ago",
+  },
+  {
+    id: 117,
+    name: "Julio Costa",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Fantastic Portuguese bakery in Joburg. Highly recommended.",
+    avatar: "JC",
+    date: "6 years ago",
+  },
+  {
+    id: 118,
+    name: "Zandile Khumalo",
+    role: "Local Resident",
+    rating: 5,
+    text: "Freshly baked bread and pastries daily. Staff are very friendly.",
+    avatar: "ZK",
+    date: "3 years ago",
+  },
+  {
+    id: 119,
+    name: "Miguel Rodrigues",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Excellent bakery, always fresh and authentic products.",
+    avatar: "MR",
+    date: "5 years ago",
+  },
+  {
+    id: 120,
+    name: "Isabel Sousa",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Amazing Portuguese bakery, friendly staff, top-quality products.",
+    avatar: "IS",
+    date: "4 years ago",
+  },
+  {
+    id: 121,
+    name: "Daniela Marques",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Always fresh, tasty, and authentic Portuguese baked goods.",
+    avatar: "DM",
+    date: "3 years ago",
+  },
+  {
+    id: 122,
+    name: "Tiago Santos",
+    role: "Local Resident",
+    rating: 5,
+    text: "Friendly service, excellent breads, and pastries.",
+    avatar: "TS",
+    date: "5 years ago",
+  },
+  {
+    id: 123,
+    name: "Carla Pereira",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Great bakery, authentic Portuguese rolls and cakes.",
+    avatar: "CP",
+    date: "4 years ago",
+  },
+  {
+    id: 124,
+    name: "Rafael Costa",
+    role: "Food Lover",
+    rating: 5,
+    text: "Lovely bakery, the pastries are always fresh and delicious.",
+    avatar: "RC",
+    date: "3 years ago",
+  },
+  {
+    id: 125,
+    name: "Natasha Moyo",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Friendly staff and great quality Portuguese baked products.",
+    avatar: "NM",
+    date: "2 years ago",
+  },
+  {
+    id: 126,
+    name: "Joaquim Silva",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Amazing selection of pastries, breads, and rolls.",
+    avatar: "JS",
+    date: "5 years ago",
+  },
+  {
+    id: 127,
+    name: "Fatima Oliveira",
+    role: "Regular Customer",
+    rating: 5,
+    text: "High-quality bakery, always fresh products.",
+    avatar: "FO",
+    date: "4 years ago",
+  },
+  {
+    id: 128,
+    name: "Luis Carvalho",
+    role: "Food Critic",
+    rating: 5,
+    text: "Best pastel de nata in Johannesburg! Must visit.",
+    avatar: "LC",
+    date: "6 years ago",
+  },
+  {
+    id: 129,
+    name: "Thandi Mkhize",
+    role: "Local Resident",
+    rating: 5,
+    text: "Lovely bakery, fantastic pastries, and friendly service.",
+    avatar: "TM",
+    date: "3 years ago",
+  },
+  {
+    id: 130,
+    name: "Antonio Silva",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Authentic Portuguese bakery with fresh bread and pastries.",
+    avatar: "AS",
+    date: "5 years ago",
+  },
+  {
+    id: 131,
+    name: "Clara Fernandes",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Wonderful bakery, always fresh products, excellent customer service.",
+    avatar: "CF",
+    date: "4 years ago",
+  },
+  {
+    id: 132,
+    name: "Ricardo Gomes",
+    role: "Food Lover",
+    rating: 5,
+    text: "High-quality Portuguese baked goods, very authentic.",
+    avatar: "RG",
+    date: "3 years ago",
+  },
+  {
+    id: 133,
+    name: "Maria Costa",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Friendly staff, fresh products daily, amazing pastries.",
+    avatar: "MC",
+    date: "2 years ago",
+  },
+  {
+    id: 134,
+    name: "Joao Pereira",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Fantastic bakery, authentic Portuguese rolls and desserts.",
+    avatar: "JP",
+    date: "5 years ago",
+  },
+  {
+    id: 135,
+    name: "Isabel Fernandes",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Lovely bakery, great pastries, very friendly staff.",
+    avatar: "IF",
+    date: "4 years ago",
+  },
+  {
+    id: 136,
+    name: "Miguel Santos",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Authentic Portuguese baked products, always fresh and tasty.",
+    avatar: "MS",
+    date: "3 years ago",
+  },
+  {
+    id: 137,
+    name: "Ana Rodrigues",
+    role: "Portuguese Food Lover",
+    rating: 5,
+    text: "Best pasteis de nata in Joburg, must try!",
+    avatar: "AR",
+    date: "2 years ago",
+  },
+  {
+    id: 138,
+    name: "Luis Fernandes",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Excellent bakery, freshly baked Portuguese goods daily.",
+    avatar: "LF",
+    date: "6 years ago",
+  },
+  {
+    id: 139,
+    name: "Natasha Rodrigues",
+    role: "Local Resident",
+    rating: 5,
+    text: "Lovely bakery, friendly staff, fresh and authentic products.",
+    avatar: "NR",
+    date: "3 years ago",
+  },
+  {
+    id: 140,
+    name: "Ricardo Oliveira",
+    role: "Food Critic",
+    rating: 5,
+    text: "High-quality bakery, excellent breads and pastries.",
+    avatar: "RO",
+    date: "5 years ago",
+  },
+  {
+    id: 141,
+    name: "Claudia Silva",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Authentic Portuguese bakery, amazing selection of products.",
+    avatar: "CS",
+    date: "4 years ago",
+  },
+  {
+    id: 142,
+    name: "Antonio Fernandes",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Freshly baked products daily, friendly owners, great pastries.",
+    avatar: "AF",
+    date: "3 years ago",
+  },
+  {
+    id: 143,
+    name: "Maria Santos",
+    role: "Food Lover",
+    rating: 5,
+    text: "Lovely bakery, fantastic service, excellent Portuguese rolls.",
+    avatar: "MS",
+    date: "2 years ago",
+  },
+  {
+    id: 144,
+    name: "Miguel Oliveira",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Best bakery for Portuguese rolls and pastries in Joburg.",
+    avatar: "MO",
+    date: "5 years ago",
+  },
+  {
+    id: 145,
+    name: "Isabel Costa",
+    role: "Portuguese Food Enthusiast",
+    rating: 5,
+    text: "Amazing bakery, always fresh, authentic products, and friendly staff.",
+    avatar: "IC",
+    date: "4 years ago",
+  },
+  {
+    id: 146,
+    name: "Daniel Oliveira",
+    role: "Food Enthusiast",
+    rating: 5,
+    text: "Lovely bakery, top-quality Portuguese baked goods.",
+    avatar: "DO",
+    date: "3 years ago",
+  },
+  {
+    id: 147,
+    name: "Fatima Santos",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Fresh products daily, friendly staff, excellent pastries.",
+    avatar: "FS",
+    date: "2 years ago",
+  },
+  {
+    id: 148,
+    name: "Joao Silva",
+    role: "Portuguese Community",
+    rating: 5,
+    text: "Authentic Portuguese bakery, highly recommended for bread and rolls.",
+    avatar: "JS",
+    date: "5 years ago",
+  },
+  {
+    id: 149,
+    name: "Clara Santos",
+    role: "Regular Customer",
+    rating: 5,
+    text: "Wonderful bakery, great service, fresh products always.",
+    avatar: "CS",
+    date: "4 years ago",
+  },
+  {
+    id: 150,
+    name: "Ricardo Fernandes",
+    role: "Food Lover",
+    rating: 5,
+    text: "Fantastic bakery, authentic Portuguese pastries and bread.",
+    avatar: "RF",
+    date: "3 years ago",
   },
 ];
 
 const Testimonials = () => {
-  const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [review, setReview] = useState("");
-  const [rating, setRating] = useState(5);
+  const [showAll, setShowAll] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !review.trim()) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in your name and review.",
-        variant: "destructive",
-      });
-      return;
-    }
-    toast({
-      title: "Thank you!",
-      description: "Your review has been submitted for approval.",
-    });
-    setName("");
-    setReview("");
-    setRating(5);
+  const displayedTestimonials = showAll ? allTestimonials : allTestimonials.slice(0, 6);
+
+  const handleWriteReview = () => {
+    window.open(
+      "https://www.google.com/search?sca_esv=bdfa73f17f6789a5&sxsrf=AE3TifMSPOfHrJMmFaPtBbnkQ8CpEUM9UA:1765224793455&q=Portugal+Bakery+%26+Confectionary,+245+Johannesburg+Rd,+La+Rochelle,+Johannesburg+South,+2190&si=AMgyJEuzsz2NflaaWzrzdpjxXXRaJ2hfdMsbe_mSWso6src8s7qd___mqXt7HOmc_q0vyp3gvePoXloCtDOk2D622mjSfp17wbQA7fH49aMTZvaetpqHCOemxBt9Myqk3IWehsMgUJSHIrO-Ko2IiU9jKiChkqMwww%3D%3D&sa=X&ved=2ahUKEwjm0ozm5q6RAxU3WkEAHXwxFZYQrrQLegQIIRAA&biw=1348&bih=623&dpr=1",
+      "_blank"
+    );
   };
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
       <Navbar />
-       <FloatingCartButton />
+      <FloatingCartButton />
       <main className="pt-20">
         {/* Header */}
         <section className="py-16 md:py-24 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
@@ -115,24 +1399,23 @@ const Testimonials = () => {
         <section className="py-12 md:py-16 bg-neutral-50 dark:bg-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {allTestimonials.map((testimonial, index) => (
+              {displayedTestimonials.map((testimonial, index) => (
                 <div
                   key={testimonial.id}
                   className="relative bg-white dark:bg-card rounded-2xl p-6 md:p-8 shadow-soft hover:shadow-elevated transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <Quote className="absolute top-6 right-6 h-8 w-8 text-primary/20" />
-                  
+
                   {/* Rating */}
                   <div className="flex gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${
-                          i < testimonial.rating
+                        className={`h-4 w-4 ${i < testimonial.rating
                             ? "fill-gold text-gold"
                             : "text-muted dark:text-muted"
-                        }`}
+                          }`}
                       />
                     ))}
                   </div>
@@ -158,80 +1441,42 @@ const Testimonials = () => {
                 </div>
               ))}
             </div>
+
+            {/* Show More/Less Button */}
+            <div className="flex justify-center mt-8">
+              <Button
+                onClick={() => setShowAll(!showAll)}
+                variant="outline"
+                size="lg"
+                className="min-w-[200px]"
+              >
+                {showAll ? "Show Less Reviews" : `Show All ${allTestimonials.length} Reviews`}
+              </Button>
+            </div>
           </div>
         </section>
 
         {/* Write Review Section */}
         <section className="py-12 md:py-16 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
-              <div className="text-center mb-8">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="mb-8">
                 <MessageSquare className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground dark:text-foreground mb-2">
                   Share Your Experience
                 </h2>
-                <p className="text-muted-foreground dark:text-muted-foreground">
+                <p className="text-muted-foreground dark:text-muted-foreground mb-6">
                   We'd love to hear about your visit to Portugal Bakery!
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 shadow-soft transition-colors duration-300">
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
-                      Your Name
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
-                      placeholder="Enter your name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
-                      Rating
-                    </label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setRating(star)}
-                          className="focus:outline-none"
-                        >
-                          <Star
-                            className={`h-8 w-8 transition-colors ${
-                              star <= rating
-                                ? "fill-gold text-gold"
-                                : "text-muted dark:text-muted hover:text-gold"
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-foreground mb-2">
-                      Your Review
-                    </label>
-                    <textarea
-                      value={review}
-                      onChange={(e) => setReview(e.target.value)}
-                      rows={4}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-neutral-50 dark:bg-background text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-colors duration-300"
-                      placeholder="Tell us about your experience..."
-                    />
-                  </div>
-
-                  <Button type="submit" variant="default" size="lg" className="w-full">
-                    Submit Review
-                  </Button>
-                </div>
-              </form>
+              <Button
+                onClick={handleWriteReview}
+                size="lg"
+                className="min-w-[250px]"
+              >
+                Write a Google Review
+              </Button>
             </div>
           </div>
         </section>

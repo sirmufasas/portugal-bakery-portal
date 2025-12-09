@@ -135,7 +135,7 @@ const ResetPassword = () => {
     }
 
     if (!tokenValid) {
-        return null; // Will redirect to login
+        return null;
     }
 
     if (resetSuccess) {

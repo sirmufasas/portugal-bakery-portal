@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => ({
         secure: false,
       },
     },
+    // ⚡ Add this line to fix hard refresh issues
+    historyApiFallback: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

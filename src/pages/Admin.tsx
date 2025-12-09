@@ -1,5 +1,5 @@
-// src/pages/Admin.tsx - Complete fixed version with image upload
-import { useState } from "react";
+// src/pages/Admin.tsx - Complete version with backend integration
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,28 +15,9 @@ import { categories } from "@/data/products";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { uploadImage } from "@/utils/uploadImage";
 
-type Product = {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  description: string;
-  ingredients: string[];
-  weight: string;
-  allergens: string[];
-  nutritionalInfo?: {
-    calories: number;
-    protein: string;
-    carbs: string;
-    fat: string;
-  };
-};
-
 import {
   Package,
   MessageSquare,
-  Star,
   Clock,
   CheckCircle,
   XCircle,
@@ -54,29 +35,7 @@ import {
   Search
 } from "lucide-react";
 
-// Mock orders data
-const mockOrders = [
-  {
-    id: "PB-001",
-    customer: "Maria Santos",
-    email: "maria@email.com",
-    items: ["2x Pastel de Nata", "1x Artisan Sourdough"],
-    total: "R7.50",
-    status: "pending",
-    date: "2024-01-15 09:30",
-    specialInstructions: "Please make the custard tarts extra crispy and remove any cinnamon from the sourdough",
-  },
-  {
-    id: "PB-002",
-    customer: "João Silva",
-    email: "joao@email.com",
-    items: ["1x Chocolate Ganache Cake", "4x Butter Croissant"],
-    total: "R39.20",
-    status: "baking",
-    date: "2024-01-15 10:15",
-    specialInstructions: "Birthday cake - need by 3pm. Add extra chocolate and no nuts please!",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const mockMessages = [
   {
@@ -98,45 +57,31 @@ const mockMessages = [
   },
 ];
 
-const mockTestimonials = [
-  {
-    id: 1,
-    name: "Carlos Mendes",
-    rating: 5,
-    text: "Best pastel de nata in the city! The crust is perfectly crispy and the custard is divine.",
-    date: "2024-01-14",
-    status: "approved",
-  },
-  {
-    id: 2,
-    name: "Sofia Almeida",
-    rating: 4,
-    text: "Love their sourdough bread. Fresh and delicious every time I visit.",
-    date: "2024-01-13",
-    status: "pending",
-  },
-];
-
 const statusColors = {
-  pending: "bg-amber-100 text-amber-800 border-amber-200",
-  baking: "bg-orange-100 text-orange-800 border-orange-200",
-  ready: "bg-green-100 text-green-800 border-green-200",
-  delivered: "bg-blue-100 text-blue-800 border-blue-200",
+  pending: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
+  processing: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800",
+  shipped: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
+  delivered: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
+  cancelled: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
 };
 
 const statusIcons = {
   pending: <Clock className="h-3 w-3" />,
-  baking: <ChefHat className="h-3 w-3" />,
-  ready: <CheckCircle className="h-3 w-3" />,
-  delivered: <Package className="h-3 w-3" />,
+  processing: <ChefHat className="h-3 w-3" />,
+  shipped: <Package className="h-3 w-3" />,
+  delivered: <CheckCircle className="h-3 w-3" />,
+  cancelled: <XCircle className="h-3 w-3" />,
 };
 
 export default function Admin() {
   const { toast } = useToast();
   const { products = [], addProduct, updateProduct, deleteProduct } = useProducts();
-  const [orders, setOrders] = useState(mockOrders);
+  
+  // Orders state
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  
   const [messages] = useState(mockMessages);
-  const [testimonials, setTestimonials] = useState(mockTestimonials);
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
@@ -144,6 +89,64 @@ export default function Admin() {
   const [imagePreview, setImagePreview] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  // Fetch orders on mount
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in as admin",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/orders`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      
+      // Transform backend orders to match UI structure
+      const transformedOrders = data.orders.map(order => ({
+        id: order.orderNumber,
+        customer: order.userId?.firstName && order.userId?.lastName 
+          ? `${order.userId.firstName} ${order.userId.lastName}`
+          : 'Customer',
+        email: order.userId?.email || 'N/A',
+        items: order.items.map(item => `${item.quantity}x ${item.name}`),
+        total: `R${order.totalAmount.toFixed(2)}`,
+        status: order.status,
+        date: new Date(order.createdAt).toLocaleString(),
+        specialInstructions: order.specialInstructions || '',
+        _id: order._id,
+        orderNumber: order.orderNumber
+      }));
+
+      setOrders(transformedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load orders",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const filteredProducts = Array.isArray(products) && searchQuery.trim()
     ? products.filter(p =>
@@ -167,30 +170,51 @@ export default function Admin() {
   const stats = {
     totalOrders: orders.length,
     pendingOrders: orders.filter(o => o.status === "pending").length,
-    readyOrders: orders.filter(o => o.status === "ready").length,
-    pendingReviews: testimonials.filter(t => t.status === "pending").length,
+    readyOrders: orders.filter(o => o.status === "delivered").length,
     totalProducts: Array.isArray(products) ? products.length : 0,
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(orders.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-    toast({
-      title: "Order Updated",
-      description: `Order ${orderId} status changed to ${newStatus}`,
-    });
-  };
+  const updateOrderStatus = async (orderNumber, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in as admin",
+          variant: "destructive",
+        });
+        return;
+      }
 
-  const handleTestimonialAction = (id, action) => {
-    if (action === "approve") {
-      setTestimonials(testimonials.map(t =>
-        t.id === id ? { ...t, status: "approved" } : t
+      const response = await fetch(`${API_URL}/api/orders/${orderNumber}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      // Update local state
+      setOrders(orders.map(order =>
+        order.orderNumber === orderNumber ? { ...order, status: newStatus } : order
       ));
-      toast({ title: "Testimonial Approved", description: "The review is now visible on the website." });
-    } else {
-      setTestimonials(testimonials.filter(t => t.id !== id));
-      toast({ title: "Testimonial Removed", description: "The review has been deleted." });
+
+      toast({
+        title: "Order Updated",
+        description: `Order ${orderNumber} status changed to ${newStatus}. Customer has been notified via email.`,
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -214,12 +238,10 @@ export default function Admin() {
     setIsUploading(true);
 
     try {
-      // Upload to Cloudinary
       const imageUrl = await uploadImage(file);
       console.log("📸 Cloudinary response:", imageUrl);
 
       if (isEdit && productId != null) {
-        // Update editing state immediately for preview
         setEditingProduct(prev => ({ ...prev, image: imageUrl }));
         setImagePreview(imageUrl);
 
@@ -228,7 +250,6 @@ export default function Admin() {
           description: "Don't forget to click 'Save Changes' to persist the new image"
         });
       } else {
-        // Adding new product
         setNewProductForm(prev => ({ ...prev, image: imageUrl }));
         setImagePreview(imageUrl);
 
@@ -276,9 +297,6 @@ export default function Admin() {
       },
     };
 
-    console.log("➕ Adding new product:", productData);
-    console.log("📸 Image URL:", productData.image);
-
     try {
       await addProduct(productData);
       setShowAddProduct(false);
@@ -316,94 +334,65 @@ export default function Admin() {
     setImagePreview(product.image);
   };
 
-  // In your Admin.tsx - Updated handleSaveEdit with detailed logging
-const handleSaveEdit = async () => {
-  if (!editingProduct.name || !editingProduct.price) {
-    toast({
-      title: "Error",
-      description: "Please fill in product name and price",
-      variant: "destructive",
-    });
-    return;
-  }
+  const handleSaveEdit = async () => {
+    if (!editingProduct.name || !editingProduct.price) {
+      toast({
+        title: "Error",
+        description: "Please fill in product name and price",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  console.log("🔍 Raw editingProduct state:", editingProduct);
+    const price = parseFloat(editingProduct.price);
+    const ingredients = typeof editingProduct.ingredients === 'string'
+      ? editingProduct.ingredients.split(",").map(i => i.trim()).filter(Boolean)
+      : editingProduct.ingredients;
 
-  // Ensure price is a number
-  const price = parseFloat(editingProduct.price);
-  console.log("💰 Parsed price:", price, "Type:", typeof price);
+    const allergens = typeof editingProduct.allergens === 'string'
+      ? editingProduct.allergens.split(",").map(a => a.trim()).filter(Boolean)
+      : editingProduct.allergens;
 
-  // Ensure ingredients/allergens are arrays of trimmed strings
-  const ingredients = typeof editingProduct.ingredients === 'string'
-    ? editingProduct.ingredients.split(",").map(i => i.trim()).filter(Boolean)
-    : editingProduct.ingredients;
+    const updatedData = {
+      name: editingProduct.name,
+      category: editingProduct.category,
+      price,
+      image: editingProduct.image,
+      description: editingProduct.description,
+      ingredients,
+      weight: editingProduct.weight,
+      allergens,
+    };
 
-  const allergens = typeof editingProduct.allergens === 'string'
-    ? editingProduct.allergens.split(",").map(a => a.trim()).filter(Boolean)
-    : editingProduct.allergens;
+    if (isNaN(price) || price <= 0) {
+      toast({
+        title: "Error",
+        description: "Price must be a valid positive number",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  console.log("🥖 Parsed ingredients:", ingredients);
-  console.log("⚠️ Parsed allergens:", allergens);
+    try {
+      const productId = Number(editingProduct.id);
+      await updateProduct(productId, updatedData);
 
-  const updatedData = {
-    name: editingProduct.name,
-    category: editingProduct.category,
-    price,
-    image: editingProduct.image,
-    description: editingProduct.description,
-    ingredients,
-    weight: editingProduct.weight,
-    allergens,
+      setEditingProduct(null);
+      setImagePreview(null);
+
+      toast({
+        title: "Product Updated",
+        description: `${updatedData.name} has been updated successfully`,
+      });
+    } catch (err) {
+      console.error("❌ Update failed:", err);
+      toast({
+        title: "Error",
+        description: err?.message || "Failed to update product",
+        variant: "destructive",
+      });
+    }
   };
-
-  console.log("💾 Final update payload:", updatedData);
-  console.log("💾 Payload size:", JSON.stringify(updatedData).length, "bytes");
-
-  // Validate the data before sending
-  if (isNaN(price) || price <= 0) {
-    console.error("❌ Invalid price:", editingProduct.price);
-    toast({
-      title: "Error",
-      description: "Price must be a valid positive number",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  if (!Array.isArray(ingredients) || !Array.isArray(allergens)) {
-    console.error("❌ Invalid arrays - ingredients:", ingredients, "allergens:", allergens);
-    toast({
-      title: "Error",
-      description: "Invalid ingredients or allergens format",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  try {
-    // Make sure ID is a number
-    const productId = Number(editingProduct.id);
-    console.log("🆔 Product ID being updated:", productId, typeof productId);
-
-    await updateProduct(productId, updatedData);
-
-    setEditingProduct(null);
-    setImagePreview(null);
-
-    toast({
-      title: "Product Updated",
-      description: `${updatedData.name} has been updated successfully`,
-    });
-  } catch (err) {
-    console.error("❌ Update failed:", err);
-
-    toast({
-      title: "Error",
-      description: err?.message || "Failed to update product",
-      variant: "destructive",
-    });
-  }
-};
 
   const handleDeleteProduct = async (id) => {
     const product = products.find(p => p.id === id);
@@ -438,12 +427,12 @@ const handleSaveEdit = async () => {
               Admin Dashboard
             </h1>
             <p className="text-muted-foreground">
-              Manage orders, products, communications, and testimonials
+              Manage orders, products, and communications
             </p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardContent className="p-4 md:p-6">
                 <div className="flex items-center gap-3">
@@ -478,20 +467,7 @@ const handleSaveEdit = async () => {
                   </div>
                   <div>
                     <p className="text-xl md:text-2xl font-bold text-foreground">{stats.readyOrders}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">Ready</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 md:p-3 rounded-xl bg-blue-500/10">
-                    <Star className="h-5 w-5 md:h-6 md:w-6 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-xl md:text-2xl font-bold text-foreground">{stats.pendingReviews}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">Reviews</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Delivered</p>
                   </div>
                 </div>
               </CardContent>
@@ -513,7 +489,7 @@ const handleSaveEdit = async () => {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
               <TabsTrigger value="orders" className="gap-2">
                 <Package className="h-4 w-4 hidden sm:block" />
                 Orders
@@ -526,77 +502,87 @@ const handleSaveEdit = async () => {
                 <MessageSquare className="h-4 w-4 hidden sm:block" />
                 Messages
               </TabsTrigger>
-              <TabsTrigger value="testimonials" className="gap-2">
-                <Star className="h-4 w-4 hidden sm:block" />
-                Reviews
-              </TabsTrigger>
             </TabsList>
 
             {/* Orders Tab */}
             <TabsContent value="orders" className="space-y-4">
-              {orders.map((order) => (
-                <Card key={order.id}>
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex flex-col lg:flex-row justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="font-mono font-bold text-primary">{order.id}</span>
-                          <Badge className={`${statusColors[order.status]} flex items-center gap-1`}>
-                            {statusIcons[order.status]}
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </Badge>
-                        </div>
-                        <p className="font-medium text-foreground">{order.customer}</p>
-                        <p className="text-sm text-muted-foreground truncate">{order.email}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{order.date}</p>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground mb-1">Items:</p>
-                        <ul className="text-sm text-muted-foreground mb-3">
-                          {order.items.map((item, i) => (
-                            <li key={i}>• {item}</li>
-                          ))}
-                        </ul>
-
-                        {order.specialInstructions && (
-                          <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
-                            <div className="flex items-start gap-2">
-                              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
-                                  Special Instructions:
-                                </p>
-                                <p className="text-sm text-amber-800 dark:text-amber-200 break-words">
-                                  {order.specialInstructions}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-3">
-                        <p className="text-xl font-bold text-primary">{order.total}</p>
-                        <Select
-                          value={order.status}
-                          onValueChange={(value) => updateOrderStatus(order.id, value)}
-                        >
-                          <SelectTrigger className="w-full sm:w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="baking">Baking</SelectItem>
-                            <SelectItem value="ready">Ready</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+              {loadingOrders ? (
+                <div className="flex justify-center items-center py-16">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+              ) : orders.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">No orders yet</p>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                orders.map((order) => (
+                  <Card key={order.id}>
+                    <CardContent className="p-4 md:p-6">
+                      <div className="flex flex-col lg:flex-row justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="font-mono font-bold text-primary">{order.id}</span>
+                            <Badge className={`${statusColors[order.status]} flex items-center gap-1`}>
+                              {statusIcons[order.status]}
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </Badge>
+                          </div>
+                          <p className="font-medium text-foreground">{order.customer}</p>
+                          <p className="text-sm text-muted-foreground truncate">{order.email}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{order.date}</p>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground mb-1">Items:</p>
+                          <ul className="text-sm text-muted-foreground mb-3">
+                            {order.items.map((item, i) => (
+                              <li key={i}>• {item}</li>
+                            ))}
+                          </ul>
+
+                          {order.specialInstructions && (
+                            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                                    Special Instructions:
+                                  </p>
+                                  <p className="text-sm text-amber-800 dark:text-amber-200 break-words">
+                                    {order.specialInstructions}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-3">
+                          <p className="text-xl font-bold text-primary">{order.total}</p>
+                          <Select
+                            value={order.status}
+                            onValueChange={(value) => updateOrderStatus(order.orderNumber, value)}
+                          >
+                            <SelectTrigger className="w-full sm:w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="shipped">Shipped</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </TabsContent>
 
             {/* Products Tab */}
@@ -1082,7 +1068,7 @@ const handleSaveEdit = async () => {
               </div>
             </TabsContent>
 
-            {/* Testimonials Tab */}
+            {/* Testimonials Tab
             <TabsContent value="testimonials" className="space-y-4">
               {testimonials.map((testimonial) => (
                 <Card key={testimonial.id}>
@@ -1138,7 +1124,7 @@ const handleSaveEdit = async () => {
                   </CardContent>
                 </Card>
               ))}
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </div>
       </main>

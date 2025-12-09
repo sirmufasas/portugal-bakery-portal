@@ -104,17 +104,22 @@ export function Navbar() {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem asChild>
-                  <Link to="/track-order" className="flex items-center gap-2">
-                    <Package className="h-4 w-4" /> Track Order
-                  </Link>
-                </DropdownMenuItem>
+                {isLoggedIn && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/track-order" className="flex items-center gap-2">
+                        <Package className="h-4 w-4" /> Track Order
+                      </Link>
+                    </DropdownMenuItem>
 
-                <DropdownMenuItem asChild>
-                  <Link to="/admin" className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" /> Admin Dashboard
-                  </Link>
-                </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" /> Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+
 
                 <DropdownMenuSeparator />
 
@@ -137,28 +142,95 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="fixed inset-0 top-16 z-40 md:hidden bg-background text-foreground p-6">
-            <div className="flex flex-col h-full gap-4">
+          <div className="fixed inset-0 top-16 z-40 md:hidden bg-background text-foreground p-6 overflow-y-auto">
+            <div className="flex flex-col gap-4">
+              {/* Navigation Links */}
               {navLinks.map((link) => (
-                <Link key={link.path} to={link.path} onClick={() => setIsOpen(false)} className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30">
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                >
                   {link.name}
                 </Link>
               ))}
 
-              {!isLoggedIn && (
-                <Button variant="outline" className="w-full h-12 text-base" onClick={() => navigate("/login")}>
-                  Sign In
-                </Button>
+              <div className="border-t border-border my-2"></div>
+
+              {/* Profile Link - Only show if logged in */}
+              {isLoggedIn && (
+                <Link
+                  to="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                >
+                  <User className="h-5 w-5" />
+                  Profile
+                </Link>
               )}
 
               {isLoggedIn && (
-                <Button variant="outline" className="w-full h-12 text-base" onClick={logout}>
+                <>
+                  <Link
+                    to="/track-order"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                  >
+                    <Package className="h-5 w-5" />
+                    Track Order
+                  </Link>
+
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                  >
+                    <Shield className="h-5 w-5" />
+                    Admin Dashboard
+                  </Link>
+                </>
+              )}
+
+              <div className="border-t border-border my-2"></div>
+
+              {/* Auth Button */}
+              {!isLoggedIn ? (
+                <Button
+                  variant="outline"
+                  className="w-full h-12 text-base justify-start gap-3 px-4"
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate("/login");
+                  }}
+                >
+                  <User className="h-5 w-5" />
+                  Sign In
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full h-12 text-base justify-start gap-3 px-4"
+                  onClick={() => {
+                    setIsOpen(false);
+                    logout();
+                  }}
+                >
+                  <User className="h-5 w-5" />
                   Logout
                 </Button>
               )}
 
-              {/* Contact Developer Button on Mobile */}
-              <Button variant="outline" className="w-full h-12 text-base mt-2" onClick={() => setOpenContact(true)}>
+              {/* Contact Developer Button */}
+              <Button
+                variant="outline"
+                className="w-full h-12 text-base justify-start gap-3 px-4 mt-2"
+                onClick={() => {
+                  setIsOpen(false);
+                  setOpenContact(true);
+                }}
+              >
+                <User className="h-5 w-5" />
                 Contact Developer
               </Button>
             </div>

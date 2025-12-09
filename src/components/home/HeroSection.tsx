@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-bakery.jpg";
+import logoImage from "@/assets/268fcf8f-7821-40a6-bd4b-029f7983a83d-removebg-preview (1).png";
 
 export function HeroSection() {
   return (
@@ -14,6 +15,16 @@ export function HeroSection() {
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 via-espresso/70 to-transparent" />
+      </div>
+
+      {/* Logo in Top Right - Responsive */}
+      <div className="absolute top-20 right-4 sm:top-24 sm:right-6 md:top-28 md:right-8 lg:top-32 lg:right-12 z-20 animate-fade-in">
+        <img
+          src={logoImage}
+          alt="Portugal Bakery Logo"
+          className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-105"
+          style={{ imageRendering: '-webkit-optimize-contrast', backfaceVisibility: 'hidden' }}
+        />
       </div>
 
       {/* Content */}

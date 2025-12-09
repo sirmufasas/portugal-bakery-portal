@@ -19,29 +19,30 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-
-  // Load user from localStorage on mount
-  useEffect(() => {
+  const [user, setUser] = useState<User | null>(() => {
+    // Load user from localStorage initially
     const savedUser = localStorage.getItem("user");
-    const savedToken = localStorage.getItem("token");
-    if (savedUser && savedToken) {
-      try {
-        setUser(JSON.parse(savedUser));
-        setToken(savedToken);
-      } catch {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-      }
-    }
-  }, []);
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-  const login = (userData: User, token: string) => {
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem("token");
+  });
+
+  // Keep localStorage in sync with state
+  useEffect(() => {
+    if (user && token) {
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    }
+  }, [user, token]);
+
+  const login = (userData: User, authToken: string) => {
     setUser(userData);
-    setToken(token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", token);
+    setToken(authToken);
   };
 
   const logout = () => {
@@ -49,11 +50,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     localStorage.clear();
     sessionStorage.clear();
-
     window.dispatchEvent(new Event("user-logout"));
-
-    // Hard refresh and redirect to login
-    window.location.href = "/login";
+    window.location.href = "/login"; // redirect to login page
   };
 
   const isAuthenticated = !!user && !!token;
@@ -67,6 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
