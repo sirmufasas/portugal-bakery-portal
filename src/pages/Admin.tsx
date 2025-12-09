@@ -1,3 +1,4 @@
+
 // src/pages/Admin.tsx - Complete version with backend integration
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -32,10 +33,11 @@ import {
   ShoppingBag,
   Upload,
   Image as ImageIcon,
-  Search
+  Search,
+  Flame
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const mockMessages = [
   {
@@ -76,11 +78,9 @@ const statusIcons = {
 export default function Admin() {
   const { toast } = useToast();
   const { products = [], addProduct, updateProduct, deleteProduct } = useProducts();
-  
-  // Orders state
+
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  
   const [messages] = useState(mockMessages);
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState("");
@@ -89,72 +89,6 @@ export default function Admin() {
   const [imagePreview, setImagePreview] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-
-  // Fetch orders on mount
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in as admin",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/api/orders`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-
-      const data = await response.json();
-      
-      // Transform backend orders to match UI structure
-      const transformedOrders = data.orders.map(order => ({
-        id: order.orderNumber,
-        customer: order.userId?.firstName && order.userId?.lastName 
-          ? `${order.userId.firstName} ${order.userId.lastName}`
-          : 'Customer',
-        email: order.userId?.email || 'N/A',
-        items: order.items.map(item => `${item.quantity}x ${item.name}`),
-        total: `R${order.totalAmount.toFixed(2)}`,
-        status: order.status,
-        date: new Date(order.createdAt).toLocaleString(),
-        specialInstructions: order.specialInstructions || '',
-        _id: order._id,
-        orderNumber: order.orderNumber
-      }));
-
-      setOrders(transformedOrders);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load orders",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingOrders(false);
-    }
-  };
-
-  const filteredProducts = Array.isArray(products) && searchQuery.trim()
-    ? products.filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    : (Array.isArray(products) ? products : []);
 
   const [newProductForm, setNewProductForm] = useState({
     name: "",
@@ -165,7 +99,84 @@ export default function Admin() {
     ingredients: "",
     weight: "",
     allergens: "",
+    calories: "200",
+    protein: "5g",
+    carbs: "30g",
+    fat: "8g",
   });
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+  setLoadingOrders(true);
+  try {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!token || user.role !== 'admin') {
+      toast({
+        title: "Access denied",
+        description: "Please log in as admin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/api/orders`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    const rawText = await response.text();
+    console.log('Raw response:', rawText);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch orders: ${response.status}`);
+    }
+
+    const data = JSON.parse(rawText);
+    const ordersArray = Array.isArray(data) ? data : (data.orders || []);
+
+    const transformedOrders = ordersArray.map(order => {
+      const user = order.user?.[0] || order.user || order.userId;
+      return {
+        id: order.orderNumber,
+        customer: user?.firstName && user?.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : 'Customer',
+        email: user?.email || 'N/A',
+        items: order.items.map(item => `${item.quantity}x ${item.name}`),
+        total: `R${order.totalAmount.toFixed(2)}`,
+        status: order.status,
+        date: new Date(order.createdAt).toLocaleString(),
+        specialInstructions: order.specialInstructions || '',
+        _id: order._id,
+        orderNumber: order.orderNumber
+      };
+    });
+
+    setOrders(transformedOrders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    toast({
+      title: "Error",
+      description: "Failed to load orders",
+      variant: "destructive",
+    });
+  } finally {
+    setLoadingOrders(false);
+  }
+};
+
+
+  const filteredProducts = Array.isArray(products) && searchQuery.trim()
+    ? products.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : (Array.isArray(products) ? products : []);
 
   const stats = {
     totalOrders: orders.length,
@@ -174,49 +185,150 @@ export default function Admin() {
     totalProducts: Array.isArray(products) ? products.length : 0,
   };
 
-  const updateOrderStatus = async (orderNumber, newStatus) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in as admin",
-          variant: "destructive",
-        });
-        return;
-      }
+// REPLACE your updateOrderStatus function with this diagnostic version
+// This will help us see exactly what's being sent
 
-      const response = await fetch(`${API_URL}/api/orders/${orderNumber}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update order status');
-      }
-
-      // Update local state
-      setOrders(orders.map(order =>
-        order.orderNumber === orderNumber ? { ...order, status: newStatus } : order
-      ));
-
+const updateOrderStatus = async (orderNumber, newStatus) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
       toast({
-        title: "Order Updated",
-        description: `Order ${orderNumber} status changed to ${newStatus}. Customer has been notified via email.`,
-      });
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update order status",
+        title: "Authentication required",
+        description: "Please log in as admin",
         variant: "destructive",
       });
+      return;
     }
-  };
+
+    // ✅ DIAGNOSTIC: Log everything we're about to send
+    console.log('\n╔════════════════════════════════════════════════╗');
+    console.log('║  FRONTEND: UPDATING ORDER STATUS              ║');
+    console.log('╚════════════════════════════════════════════════╝');
+    console.log('📦 Order Number:', orderNumber);
+    console.log('🔄 New Status:', newStatus);
+    console.log('🔗 API URL:', API_URL);
+    console.log('🌐 Full URL:', `${API_URL}/api/orders/${orderNumber}/status`);
+    console.log('🎫 Token:', token.substring(0, 20) + '...');
+    console.log('═══════════════════════════════════════════════\n');
+
+    // Show loading state
+    setOrders(prevOrders => 
+      prevOrders.map(order =>
+        order.orderNumber === orderNumber 
+          ? { ...order, status: newStatus, _isUpdating: true } 
+          : order
+      )
+    );
+
+    const url = `${API_URL}/api/orders/${orderNumber}/status`;
+    const payload = { status: newStatus };
+    
+    console.log('📤 Making PUT request...');
+    console.log('   URL:', url);
+    console.log('   Payload:', JSON.stringify(payload));
+    
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('📥 Response received:');
+    console.log('   Status:', response.status, response.statusText);
+    console.log('   OK:', response.ok);
+    console.log('   Headers:', Object.fromEntries(response.headers.entries()));
+
+    // Get response as text first for debugging
+    const responseText = await response.text();
+    console.log('📄 Raw Response Text:', responseText);
+
+    // Check if response is ok
+    if (!response.ok) {
+      let errorMessage = 'Failed to update order status';
+      let errorData = null;
+      
+      try {
+        errorData = JSON.parse(responseText);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        console.error('❌ Server error (parsed):', errorData);
+      } catch (e) {
+        console.error('❌ Non-JSON error response:', responseText);
+        errorMessage = `${response.status}: ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    // Parse successful response
+    let updatedOrder;
+    try {
+      updatedOrder = JSON.parse(responseText);
+      console.log('✅ Parsed successful response:', updatedOrder);
+      
+      // Verify structure
+      if (!updatedOrder.orderNumber || !updatedOrder.status) {
+        console.error('⚠️ Response missing expected fields');
+        console.error('   Expected: orderNumber, status');
+        console.error('   Received:', Object.keys(updatedOrder));
+        throw new Error('Invalid response structure from server');
+      }
+      
+      console.log('✅ Response validation passed');
+      
+    } catch (e) {
+      console.error('❌ Failed to parse success response:', e);
+      throw new Error('Invalid response from server');
+    }
+
+    // Update local state with confirmed data
+    setOrders(prevOrders => 
+      prevOrders.map(order =>
+        order.orderNumber === orderNumber 
+          ? { ...order, status: updatedOrder.status, _isUpdating: false } 
+          : order
+      )
+    );
+
+    toast({
+      title: "Order Updated",
+      description: `Order ${orderNumber} status changed to ${newStatus}. Customer has been notified via email.`,
+    });
+
+    console.log('✅ Status update completed successfully');
+    console.log('═══════════════════════════════════════════════\n');
+
+  } catch (error) {
+    console.error('\n╔════════════════════════════════════════════════╗');
+    console.error('║  FRONTEND ERROR                                ║');
+    console.error('╚════════════════════════════════════════════════╝');
+    console.error('❌ Error:', error.message);
+    console.error('📦 Order Number:', orderNumber);
+    console.error('🔄 Attempted Status:', newStatus);
+    console.error('═══════════════════════════════════════════════\n');
+    
+    // Remove loading state
+    setOrders(prevOrders => 
+      prevOrders.map(order =>
+        order.orderNumber === orderNumber 
+          ? { ...order, _isUpdating: false } 
+          : order
+      )
+    );
+    
+    // Refetch to ensure correct state
+    console.log('🔄 Refetching orders to sync state...');
+    fetchOrders();
+    
+    toast({
+      title: "Update Failed",
+      description: error.message || "Failed to update order status. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
 
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedChat) return;
@@ -239,7 +351,6 @@ export default function Admin() {
 
     try {
       const imageUrl = await uploadImage(file);
-      console.log("📸 Cloudinary response:", imageUrl);
 
       if (isEdit && productId != null) {
         setEditingProduct(prev => ({ ...prev, image: imageUrl }));
@@ -280,25 +391,46 @@ export default function Admin() {
       return;
     }
 
+    const price = parseFloat(newProductForm.price);
+    if (isNaN(price) || price <= 0) {
+      toast({
+        title: "Error",
+        description: "Price must be a valid positive number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const ingredients = newProductForm.ingredients
+      .split(",")
+      .map(i => i.trim())
+      .filter(Boolean);
+
+    const allergens = newProductForm.allergens
+      .split(",")
+      .map(a => a.trim())
+      .filter(Boolean);
+
     const productData = {
       name: newProductForm.name,
       category: newProductForm.category,
-      price: parseFloat(newProductForm.price),
+      price: price,
       image: newProductForm.image || "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400",
-      description: newProductForm.description,
-      ingredients: newProductForm.ingredients.split(",").map(i => i.trim()).filter(Boolean),
-      weight: newProductForm.weight,
-      allergens: newProductForm.allergens.split(",").map(a => a.trim()).filter(Boolean),
+      description: newProductForm.description || `Delicious ${newProductForm.name.toLowerCase()}`,
+      ingredients: ingredients.length > 0 ? ingredients : ["Wheat flour", "Water", "Salt"],
+      weight: newProductForm.weight || "100g",
+      allergens: allergens.length > 0 ? allergens : [],
       nutritionalInfo: {
-        calories: 0,
-        protein: "0g",
-        carbs: "0g",
-        fat: "0g",
+        calories: parseInt(newProductForm.calories) || 200,
+        protein: newProductForm.protein || "5g",
+        carbs: newProductForm.carbs || "30g",
+        fat: newProductForm.fat || "8g",
       },
     };
 
     try {
       await addProduct(productData);
+
       setShowAddProduct(false);
       setNewProductForm({
         name: "",
@@ -309,6 +441,10 @@ export default function Admin() {
         ingredients: "",
         weight: "",
         allergens: "",
+        calories: "200",
+        protein: "5g",
+        carbs: "30g",
+        fat: "8g",
       });
       setImagePreview(null);
 
@@ -317,9 +453,10 @@ export default function Admin() {
         description: `${productData.name} has been added to the menu`,
       });
     } catch (err) {
+      console.error("❌ Add product error:", err);
       toast({
         title: "Error",
-        description: "Failed to add product",
+        description: err?.message || "Failed to add product",
         variant: "destructive",
       });
     }
@@ -345,25 +482,6 @@ export default function Admin() {
     }
 
     const price = parseFloat(editingProduct.price);
-    const ingredients = typeof editingProduct.ingredients === 'string'
-      ? editingProduct.ingredients.split(",").map(i => i.trim()).filter(Boolean)
-      : editingProduct.ingredients;
-
-    const allergens = typeof editingProduct.allergens === 'string'
-      ? editingProduct.allergens.split(",").map(a => a.trim()).filter(Boolean)
-      : editingProduct.allergens;
-
-    const updatedData = {
-      name: editingProduct.name,
-      category: editingProduct.category,
-      price,
-      image: editingProduct.image,
-      description: editingProduct.description,
-      ingredients,
-      weight: editingProduct.weight,
-      allergens,
-    };
-
     if (isNaN(price) || price <= 0) {
       toast({
         title: "Error",
@@ -373,19 +491,34 @@ export default function Admin() {
       return;
     }
 
-    try {
-      const productId = Number(editingProduct.id);
-      await updateProduct(productId, updatedData);
+    const ingredients = editingProduct.ingredients
+      .split(",")
+      .map(i => i.trim())
+      .filter(Boolean);
 
+    const allergens = editingProduct.allergens
+      .split(",")
+      .map(a => a.trim())
+      .filter(Boolean);
+
+    const productData = {
+      ...editingProduct,
+      price: price,
+      ingredients: ingredients.length > 0 ? ingredients : ["Wheat flour", "Water", "Salt"],
+      allergens: allergens.length > 0 ? allergens : [],
+    };
+
+    try {
+      await updateProduct(editingProduct.id, productData);
       setEditingProduct(null);
       setImagePreview(null);
 
       toast({
         title: "Product Updated",
-        description: `${updatedData.name} has been updated successfully`,
+        description: `${productData.name} has been updated`,
       });
     } catch (err) {
-      console.error("❌ Update failed:", err);
+      console.error("❌ Update product error:", err);
       toast({
         title: "Error",
         description: err?.message || "Failed to update product",
@@ -421,7 +554,6 @@ export default function Admin() {
       <FloatingCartButton />
       <main className="pt-20 md:pt-24 pb-16">
         <div className="container mx-auto px-4">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
               Admin Dashboard
@@ -431,7 +563,6 @@ export default function Admin() {
             </p>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardContent className="p-4 md:p-6">
@@ -487,7 +618,6 @@ export default function Admin() {
             </Card>
           </div>
 
-          {/* Main Content Tabs */}
           <Tabs defaultValue="orders" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
               <TabsTrigger value="orders" className="gap-2">
@@ -504,7 +634,6 @@ export default function Admin() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Orders Tab */}
             <TabsContent value="orders" className="space-y-4">
               {loadingOrders ? (
                 <div className="flex justify-center items-center py-16">
@@ -585,7 +714,6 @@ export default function Admin() {
               )}
             </TabsContent>
 
-            {/* Products Tab */}
             <TabsContent value="products" className="space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
@@ -644,6 +772,10 @@ export default function Admin() {
                             ingredients: "",
                             weight: "",
                             allergens: "",
+                            calories: "200",
+                            protein: "5g",
+                            carbs: "30g",
+                            fat: "8g",
                           });
                         }}
                       >
@@ -794,7 +926,59 @@ export default function Admin() {
                         className="text-sm"
                       />
                     </div>
-
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        Nutritional Information
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Calories</label>
+                          <Input
+                            type="number"
+                            value={newProductForm.calories}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, calories: e.target.value })
+                            }
+                            placeholder="200"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Protein</label>
+                          <Input
+                            value={newProductForm.protein}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, protein: e.target.value })
+                            }
+                            placeholder="5g"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Carbs</label>
+                          <Input
+                            value={newProductForm.carbs}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, carbs: e.target.value })
+                            }
+                            placeholder="30g"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Fat</label>
+                          <Input
+                            value={newProductForm.fat}
+                            onChange={(e) =>
+                              setNewProductForm({ ...newProductForm, fat: e.target.value })
+                            }
+                            placeholder="8g"
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button onClick={handleAddProduct} className="flex-1 text-sm" disabled={isUploading}>
                         <Plus className="h-4 w-4 mr-2" />

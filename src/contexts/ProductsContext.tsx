@@ -1,6 +1,9 @@
 // src/contexts/ProductsContext.tsx
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Product, allProducts } from "@/data/products";
+import type { Product } from "@/data/products";
+import { allProducts } from "@/data/products";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 interface ProductsContextType {
   products: Product[];
@@ -20,7 +23,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function loadProducts() {
       try {
-        const res = await fetch("/api/products");
+        const res = await fetch(`${API_URL}/api/products`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
@@ -34,7 +37,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
           console.log("📦 Backend unavailable, using frontend products");
           setProducts(allProducts);
         }
-      } catch {
+      } catch (error) {
         console.log("📦 Using frontend data (backend not connected)");
         setProducts(allProducts);
       } finally {
@@ -44,13 +47,13 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
     async function seedBackend() {
       try {
-        const res = await fetch("/api/products/seed", {
+        const res = await fetch(`${API_URL}/api/products/seed`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(allProducts),
         });
         if (res.ok) {
-          const fetchRes = await fetch("/api/products");
+          const fetchRes = await fetch(`${API_URL}/api/products`);
           const backendProducts = await fetchRes.json();
           setProducts(backendProducts);
           console.log("✅ Backend seeded and synced");
@@ -73,7 +76,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     console.log("⚡ Optimistically added product ID:", tempId);
 
     try {
-      const res = await fetch("/api/products", {
+      const res = await fetch(`${API_URL}/api/products`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
@@ -90,7 +93,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
   };
 
- const updateProduct = async (id: number, productData: Partial<Product>) => {
+  const updateProduct = async (id: number, productData: Partial<Product>) => {
     const originalProducts = [...products];
     const existingProduct = products.find(p => p.id === id);
     if (!existingProduct) throw new Error("Product not found in local state");
@@ -101,7 +104,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
     try {
       // Try numeric ID first
-      let res = await fetch(`/api/products/${id}`, {
+      let res = await fetch(`${API_URL}/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
@@ -110,7 +113,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       // If 404 and we have _id, try that instead
       if (res.status === 404 && existingProduct._id) {
         console.log("🔄 Retrying with MongoDB _id:", existingProduct._id);
-        res = await fetch(`/api/products/${existingProduct._id}`, {
+        res = await fetch(`${API_URL}/api/products/${existingProduct._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(productData),
@@ -122,7 +125,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         console.error(`❌ Backend returned ${res.status}:`, errorText);
         
         // Check if update actually worked despite error
-        const checkRes = await fetch(`/api/products/${id}`);
+        const checkRes = await fetch(`${API_URL}/api/products/${id}`);
         if (checkRes.ok) {
           const updated = await checkRes.json();
           setProducts(prev => prev.map(p => (p.id === id ? updated : p)));
@@ -142,7 +145,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       
       // Last resort: verify if it actually updated
       try {
-        const verifyRes = await fetch(`/api/products/${id}`);
+        const verifyRes = await fetch(`${API_URL}/api/products/${id}`);
         if (verifyRes.ok) {
           const verified = await verifyRes.json();
           setProducts(prev => prev.map(p => (p.id === id ? verified : p)));
@@ -163,16 +166,27 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     const existingProduct = products.find(p => p.id === id);
     if (!existingProduct) throw new Error("Product not found in local state");
 
+    // Optimistically remove from UI
     setProducts(prev => prev.filter(p => p.id !== id));
+    console.log("🗑️ Optimistically removed product ID:", id);
 
     try {
       const urlId = existingProduct._id || id;
-      const res = await fetch(`/api/products/${urlId}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/products/${urlId}`, { 
+        method: "DELETE" 
+      });
+      
       if (res.status === 404) {
         console.warn("⚠️ Product already deleted on backend, keeping UI removal:", id);
         return;
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`❌ Delete failed: ${res.status}`, errorText);
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
       console.log("✅ Product deleted from backend, ID:", id);
     } catch (err) {
       console.error("❌ Failed to delete product:", err);
@@ -181,15 +195,29 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const value: ProductsContextType = {
+    products,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    isLoading,
+  };
+
   return (
-    <ProductsContext.Provider value={{ products, addProduct, updateProduct, deleteProduct, isLoading }}>
+    <ProductsContext.Provider value={value}>
       {children}
     </ProductsContext.Provider>
   );
 }
 
-export function useProducts() {
+// Export the hook
+export function useProducts(): ProductsContextType {
   const context = useContext(ProductsContext);
-  if (!context) throw new Error("useProducts must be used within a ProductsProvider");
+  if (!context) {
+    throw new Error("useProducts must be used within a ProductsProvider");
+  }
   return context;
 }
+
+// Also export the context itself if needed
+export { ProductsContext };

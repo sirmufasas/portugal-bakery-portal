@@ -47,30 +47,31 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} /> {/* ✅ Added */}
 
                   {/* Protected Routes */}
-                  <Route 
-                    path="/profile" 
+                  <Route
+                    path="/profile"
                     element={
                       <ProtectedRoute>
                         <Profile />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/track-order" 
+                  <Route
+                    path="/track-order"
                     element={
                       <ProtectedRoute>
                         <TrackOrder />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/admin" 
+                  <Route
+                    path="/admin"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute adminOnly={true}>
                         <Admin />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
+
 
                   {/* Fallback */}
                   <Route path="*" element={<NotFound />} />

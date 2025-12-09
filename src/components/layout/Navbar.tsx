@@ -106,20 +106,23 @@ export function Navbar() {
 
                 {isLoggedIn && (
                   <>
+                    {/* Track Order - visible for all logged in users */}
                     <DropdownMenuItem asChild>
                       <Link to="/track-order" className="flex items-center gap-2">
                         <Package className="h-4 w-4" /> Track Order
                       </Link>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" /> Admin Dashboard
-                      </Link>
-                    </DropdownMenuItem>
+                    {/* Admin Dashboard - only for admins */}
+                    {user?.role === "admin" && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" /> Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                   </>
                 )}
-
 
                 <DropdownMenuSeparator />
 
@@ -177,20 +180,21 @@ export function Navbar() {
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
                   >
-                    <Package className="h-5 w-5" />
-                    Track Order
+                    <Package className="h-5 w-5" /> Track Order
                   </Link>
 
-                  <Link
-                    to="/admin"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
-                  >
-                    <Shield className="h-5 w-5" />
-                    Admin Dashboard
-                  </Link>
+                  {user?.role === "admin" && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                    >
+                      <Shield className="h-5 w-5" /> Admin Dashboard
+                    </Link>
+                  )}
                 </>
               )}
+
 
               <div className="border-t border-border my-2"></div>
 

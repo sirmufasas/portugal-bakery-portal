@@ -1,5 +1,4 @@
-// Add this to the top of Order.tsx component
-
+// Order.tsx - Updated with Dummy Payment System
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -10,7 +9,10 @@ import { allProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { YocoPayment } from "@/components/order/YocoPayment";
+// ❌ COMMENTED OUT YOCO
+// import { YocoPayment } from "@/components/order/YocoPayment";
+// ✅ NEW DUMMY PAYMENT
+import { DummyPayment } from "@/components/order/DummyPayment";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -48,53 +50,6 @@ const Order = () => {
     return null;
   }
 
-  // ✅ CRITICAL: Force close Yoco popup on any step change
-  const forceCloseYoco = () => {
-    // Remove ALL iframes
-    const iframes = document.querySelectorAll("iframe");
-    iframes.forEach((iframe) => {
-      const src = iframe.getAttribute("src") || "";
-      if (src.includes("yoco") || src.includes("pay.yoco") || src.includes("checkout")) {
-        iframe.remove();
-      }
-    });
-
-    // Remove ALL high z-index overlays
-    const allDivs = document.querySelectorAll("div");
-    allDivs.forEach((div) => {
-      const style = window.getComputedStyle(div);
-      const zIndex = parseInt(style.zIndex);
-      if (zIndex > 99999) {
-        div.remove();
-      }
-    });
-
-    // Remove Yoco elements
-    const yocoElements = document.querySelectorAll(
-      "[id*='yoco'], [class*='yoco'], [id*='Yoco'], [class*='Yoco'], [id*='checkout']"
-    );
-    yocoElements.forEach((el) => el.remove());
-
-    // Reset body styles
-    document.body.style.overflow = "";
-    document.body.style.position = "";
-    document.documentElement.style.overflow = "";
-  };
-
-  // ✅ Close popup whenever orderStep changes
-  useEffect(() => {
-    if (orderStep !== "payment") {
-      forceCloseYoco();
-    }
-  }, [orderStep]);
-
-  // ✅ Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      forceCloseYoco();
-    };
-  }, []);
-
   const handleAddToCart = (product: {
     id: string;
     name: string;
@@ -121,14 +76,12 @@ const Order = () => {
       return;
     }
 
-    // Add to cart without 'quantity' since the type forbids it
     addToCart({
-      id: Number(product.id), // convert string to number
+      id: Number(product.id),
       name: product.name,
       price: product.price,
       imageUrl: product.image,
     });
-
 
     toast({
       title: "Added to cart",
@@ -137,13 +90,9 @@ const Order = () => {
     });
   };
 
-
-
-
   const handleProceedToCheckout = () => {
     if (!cart.length)
       return toast({ title: "Cart is empty", description: "Please add items.", variant: "destructive" });
-    forceCloseYoco(); // Close before navigating
     setOrderStep("checkout");
   };
 
@@ -154,25 +103,21 @@ const Order = () => {
   };
 
   const handleBackToCheckout = () => {
-    forceCloseYoco(); // Force close before going back
     setOrderStep("checkout");
   };
 
   const handleBackToMenu = () => {
-    forceCloseYoco(); // Force close before going back
     setOrderStep("menu");
   };
 
   const handlePaymentComplete = async (paymentID: string) => {
     setIsProcessing(true);
-    forceCloseYoco();
 
     try {
       // Generate order ID
       const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
 
       // Send order to backend
-      // Read auth token from localStorage (if any) and conditionally include Authorization header
       const token = localStorage.getItem("token");
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -189,7 +134,7 @@ const Order = () => {
           customerName,
           customerEmail,
           items: cart,
-          total,
+          totalAmount: total,
           specialInstructions,
           paymentID,
         }),
@@ -197,10 +142,16 @@ const Order = () => {
 
       if (!res.ok) throw new Error("Failed to save order");
 
-      setOrderId(newOrderId);
+      const orderData = await res.json();
+
+      setOrderId(orderData.orderNumber);
       setOrderStep("confirmed");
-      clearCart(); // clear local cart after order is saved
-      toast({ title: "Payment successful!", description: `Your order ID is ${newOrderId}` });
+      clearCart();
+      
+      toast({ 
+        title: "Payment successful!", 
+        description: `Your order ID is ${orderData.orderNumber}. Check your email for confirmation.` 
+      });
     } catch (err) {
       console.error(err);
       toast({
@@ -212,7 +163,6 @@ const Order = () => {
       setIsProcessing(false);
     }
   };
-
 
   // --- Render Steps ---
   if (orderStep === "confirmed") {
@@ -251,7 +201,6 @@ const Order = () => {
               variant="default"
               size="lg"
               onClick={() => {
-                forceCloseYoco();
                 setOrderStep("menu");
                 clearCart();
                 setSpecialInstructions("");
@@ -378,20 +327,18 @@ const Order = () => {
               Back to Details
             </Button>
 
-            {/* Yoco Payment with balanced spacing */}
-            <div className="bg-card rounded-2xl p-8 shadow-soft">
-              <YocoPayment
-                amountZAR={total}
-                onSuccess={handlePaymentComplete}
-                onError={() =>
-                  toast({
-                    title: "Payment failed",
-                    description: "Please try again.",
-                    variant: "destructive",
-                  })
-                }
-              />
-            </div>
+            {/* ✅ DUMMY PAYMENT COMPONENT */}
+            <DummyPayment
+              amountZAR={total}
+              onSuccess={handlePaymentComplete}
+              onError={() =>
+                toast({
+                  title: "Payment failed",
+                  description: "Please try again.",
+                  variant: "destructive",
+                })
+              }
+            />
           </div>
         </main>
         <Footer />

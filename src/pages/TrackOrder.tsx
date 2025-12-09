@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,81 +8,198 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 interface Message {
-  id: string;
-  sender: "user" | "bakery";
-  text: string;
-  timestamp: Date;
+  _id: string;
+  fromUserId: string;
+  toUserId: string;
+  message: string;
+  subject: string;
+  createdAt: string;
+  isRead: boolean;
 }
 
-const mockOrders = [
-  {
-    id: "PB-M2X9K7",
-    status: "baking",
-    items: ["Butter Croissant x2", "Chocolate Cake", "Sourdough Loaf"],
-    total: 38.30,
-    placedAt: new Date(Date.now() - 30 * 60 * 1000),
-    estimatedReady: new Date(Date.now() + 20 * 60 * 1000),
-  },
-  {
-    id: "PB-L5T3N8",
-    status: "ready",
-    items: ["Pastel de Nata x6", "Baguette x2"],
-    total: 15.00,
-    placedAt: new Date(Date.now() - 60 * 60 * 1000),
-    estimatedReady: new Date(Date.now() - 10 * 60 * 1000),
-  },
-];
+interface Order {
+  _id: string;
+  orderNumber: string;
+  status: string;
+  userId: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  createdAt: string;
+  specialInstructions?: string;
+}
 
 const statusSteps = [
-  { key: "received", label: "Order Received", icon: Package },
-  { key: "baking", label: "Baking", icon: ChefHat },
-  { key: "ready", label: "Ready for Pickup", icon: CheckCircle },
+  { key: "pending", label: "Order Received", icon: Package },
+  { key: "processing", label: "Processing", icon: ChefHat },
+  { key: "shipped", label: "Shipped", icon: Package },
+  { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
 
 const TrackOrder = () => {
   const { toast } = useToast();
   const [orderId, setOrderId] = useState("");
-  const [foundOrder, setFoundOrder] = useState<typeof mockOrders[0] | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "1", sender: "bakery", text: "Thank you for your order! We'll update you on the progress.", timestamp: new Date(Date.now() - 25 * 60 * 1000) },
-  ]);
+  const [foundOrder, setFoundOrder] = useState<Order | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
 
-  const handleSearch = () => {
-    const order = mockOrders.find(o => o.id.toLowerCase() === orderId.toLowerCase());
-    if (order) {
-      setFoundOrder(order);
-    } else {
-      toast({
-        title: "Order not found",
-        description: "Please check your order ID and try again.",
-        variant: "destructive",
+  // Auto-refresh order status every 30 seconds when an order is found
+  useEffect(() => {
+    if (!foundOrder) return;
+
+    const interval = setInterval(() => {
+      refreshOrderStatus();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [foundOrder]);
+
+  // Auto-refresh messages every 15 seconds when an order is found
+  useEffect(() => {
+    if (!foundOrder) return;
+
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 15000); // 15 seconds
+
+    return () => clearInterval(interval);
+  }, [foundOrder]);
+
+  const refreshOrderStatus = async () => {
+    if (!foundOrder) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_URL}/api/orders/${foundOrder.orderNumber}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFoundOrder(data);
+      }
+    } catch (error) {
+      console.error('Failed to refresh order status:', error);
     }
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      sender: "user",
-      text: newMessage,
-      timestamp: new Date(),
-    }]);
-    setNewMessage("");
-    toast({
-      title: "Message sent",
-      description: "The bakery will respond shortly.",
-    });
+  const handleSearch = async () => {
+    if (!orderId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an order ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to track your order",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/orders/${orderId.trim()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFoundOrder(data);
+        await fetchMessages();
+      } else if (response.status === 404) {
+        toast({
+          title: "Order not found",
+          description: "Please check your order ID and try again.",
+          variant: "destructive",
+        });
+        setFoundOrder(null);
+      } else if (response.status === 403) {
+        toast({
+          title: "Access denied",
+          description: "You don't have permission to view this order.",
+          variant: "destructive",
+        });
+      } else {
+        throw new Error('Failed to fetch order');
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch order details",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusIndex = (status: string) => statusSteps.findIndex(s => s.key === status);
+  const fetchMessages = async () => {
+    if (!foundOrder) return;
+
+    setMessagesLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_URL}/api/messages/order/${foundOrder.orderNumber}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !foundOrder) return;
+
+    toast({
+      title: "Coming Soon",
+      description: "Customer messaging will be available soon. For now, please contact us directly.",
+    });
+    setNewMessage("");
+  };
+
+  const getStatusIndex = (status: string) => {
+    const index = statusSteps.findIndex(s => s.key === status);
+    return index >= 0 ? index : 0;
+  };
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark transition-colors duration-300">
       <Navbar />
-       <FloatingCartButton />
+      <FloatingCartButton />
       <main className="pt-20">
 
         {/* Header */}
@@ -112,10 +229,15 @@ const TrackOrder = () => {
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="flex-1 dark:bg-card-dark dark:text-foreground-dark dark:border-border-dark"
+                  className="flex-1 bg-white dark:bg-[#2D2416] text-foreground dark:text-white dark:border-[#5C4632] placeholder:text-muted-foreground dark:placeholder:text-gray-400 focus:ring-primary dark:focus:ring-primary-dark"
+                  disabled={loading}
                 />
-                <Button onClick={handleSearch}>
-                  <Search className="h-4 w-4 mr-2" />
+                <Button onClick={handleSearch} disabled={loading}>
+                  {loading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <Search className="h-4 w-4 mr-2" />
+                  )}
                   Track
                 </Button>
               </div>
@@ -135,12 +257,12 @@ const TrackOrder = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Order ID</p>
-                        <p className="text-2xl font-bold text-primary dark:text-primary-dark">{foundOrder.id}</p>
+                        <p className="text-2xl font-bold text-primary dark:text-primary-dark">{foundOrder.orderNumber}</p>
                       </div>
                       <div className="text-left sm:text-right">
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Estimated Ready</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Order Date</p>
                         <p className="font-semibold text-foreground dark:text-foreground-dark">
-                          {foundOrder.estimatedReady.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(foundOrder.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -196,45 +318,69 @@ const TrackOrder = () => {
                       {foundOrder.items.map((item, index) => (
                         <li key={index} className="text-muted-foreground dark:text-muted-foreground-dark flex items-center gap-2">
                           <span className="w-2 h-2 bg-primary dark:bg-primary-dark rounded-full" />
-                          {item}
+                          {item.quantity}x {item.name} - R{(item.price * item.quantity).toFixed(2)}
                         </li>
                       ))}
                     </ul>
                     <div className="mt-4 pt-4 border-t border-border dark:border-border-dark flex justify-between">
-                      <span className="font-semibold">Total</span>
-                      <span className="font-bold text-primary dark:text-primary-dark">R{foundOrder.total.toFixed(2)}</span>
+                      <span className="font-semibold text-foreground dark:text-foreground-dark">Total</span>
+                      <span className="font-bold text-primary dark:text-primary-dark">R{foundOrder.totalAmount.toFixed(2)}</span>
                     </div>
                   </div>
+
+                  {/* Special Instructions */}
+                  {foundOrder.specialInstructions && (
+                    <div className="p-6 border-b border-border dark:border-border-dark">
+                      <h3 className="font-semibold text-foreground dark:text-foreground-dark mb-2">Special Instructions</h3>
+                      <p className="text-muted-foreground dark:text-muted-foreground-dark">
+                        {foundOrder.specialInstructions}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Messages */}
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <MessageSquare className="h-5 w-5 text-primary dark:text-primary-dark" />
                       <h3 className="font-semibold text-foreground dark:text-foreground-dark">Messages</h3>
+                      {messagesLoading && (
+                        <div className="ml-auto">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
-                      {messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={cn(
-                            "p-3 rounded-lg max-w-[80%]",
-                            msg.sender === "user"
-                              ? "bg-primary text-primary-foreground dark:text-primary-foreground-dark ml-auto"
-                              : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
-                          )}
-                        >
-                          <p className="text-sm">{msg.text}</p>
-                          <p className={cn(
-                            "text-xs mt-1",
-                            msg.sender === "user"
-                              ? "text-primary-foreground/70 dark:text-primary-foreground-dark/70"
-                              : "text-muted-foreground dark:text-muted-foreground-dark"
-                          )}>
-                            {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      ))}
+                      {messages.length === 0 ? (
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark text-center py-4">
+                          No messages yet. The bakery will send you updates here.
+                        </p>
+                      ) : (
+                        messages.map((msg) => (
+                          <div
+                            key={msg._id}
+                            className={cn(
+                              "p-3 rounded-lg max-w-[80%]",
+                              msg.fromUserId === foundOrder.userId
+                                ? "bg-primary text-primary-foreground dark:text-primary-foreground-dark ml-auto"
+                                : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
+                            )}
+                          >
+                            {msg.subject && (
+                              <p className="text-xs font-semibold mb-1 opacity-90">{msg.subject}</p>
+                            )}
+                            <p className="text-sm">{msg.message}</p>
+                            <p className={cn(
+                              "text-xs mt-1",
+                              msg.fromUserId === foundOrder.userId
+                                ? "text-primary-foreground/70 dark:text-primary-foreground-dark/70"
+                                : "text-muted-foreground dark:text-muted-foreground-dark"
+                            )}>
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))
+                      )}
                     </div>
 
                     <div className="flex gap-2">
@@ -243,7 +389,7 @@ const TrackOrder = () => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                        className="dark:bg-background-dark dark:text-foreground-dark"
+                        className="bg-white dark:bg-[#2D2416] text-foreground dark:text-white dark:border-[#5C4632] placeholder:text-muted-foreground dark:placeholder:text-gray-400 focus:ring-primary dark:focus:ring-primary-dark"
                       />
                       <Button onClick={handleSendMessage}>
                         <Send className="h-4 w-4" />
@@ -257,7 +403,7 @@ const TrackOrder = () => {
         )}
 
         {/* Help Section */}
-        {!foundOrder && (
+        {!foundOrder && !loading && (
           <section className="py-16 bg-background dark:bg-background-dark">
             <div className="container mx-auto px-4">
               <div className="max-w-2xl mx-auto text-center">

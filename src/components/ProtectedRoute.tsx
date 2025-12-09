@@ -4,15 +4,20 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  adminOnly?: boolean; // optional flag for admin-only pages
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation(); // capture current path
+const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
+  const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    // Redirect to signup but remember where user wanted to go
     return <Navigate to="/signup" replace state={{ from: location }} />;
+  }
+
+  // Admin-only page check
+  if (adminOnly && user?.role !== "admin") {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

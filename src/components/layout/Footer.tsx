@@ -14,15 +14,20 @@ export function Footer() {
               Every bite tells a story of tradition and passion.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="text-cream/70 hover:text-amber transition-colors">
+              {/* <a href="#" className="text-cream/70 hover:text-amber transition-colors">
                 <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-cream/70 hover:text-amber transition-colors">
+              </a> */}
+              <a
+                href="https://www.instagram.com/portugal_bakery/?hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cream/70 hover:text-amber transition-colors"
+              >
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-cream/70 hover:text-amber transition-colors">
+              {/* <a href="#" className="text-cream/70 hover:text-amber transition-colors">
                 <Twitter className="h-5 w-5" />
-              </a>
+              </a> */}
             </div>
           </div>
 
