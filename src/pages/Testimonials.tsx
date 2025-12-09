@@ -6,7 +6,7 @@ import { Star, Quote, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
 const allTestimonials = [
   {
