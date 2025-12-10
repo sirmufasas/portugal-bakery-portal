@@ -120,10 +120,18 @@ const TrackOrder = () => {
         console.log('📡 Support message received:', data);
 
         if (data.type === 'new_support_message') {
+          // ✅ FIX: Validate message before adding to state
+          if (!data.message || typeof data.message !== 'object') {
+            console.error('Invalid message format:', data.message);
+            return;
+          }
+
           setMessages(prev => {
+            // Check if message already exists
             if (prev.some(m => m._id === data.message._id)) {
               return prev;
             }
+            // Add message only if it's valid
             return [...prev, data.message];
           });
 
@@ -218,7 +226,11 @@ const TrackOrder = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setMessages(data);
+        // ✅ FIX: Filter out any invalid messages
+        const validMessages = data.filter((msg: any) => 
+          msg && typeof msg === 'object' && msg._id && msg.message
+        );
+        setMessages(validMessages);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -254,13 +266,24 @@ const TrackOrder = () => {
       if (response.ok) {
         const data = await response.json();
         
-        // Add user message
-        setMessages(prev => [...prev, data.userMessage]);
+        // ✅ FIX: Validate messages before adding to state
+        const messagesToAdd: Message[] = [];
         
-        // Add auto-reply after a short delay
-        setTimeout(() => {
-          setMessages(prev => [...prev, data.autoReply]);
-        }, 500);
+        if (data.userMessage && typeof data.userMessage === 'object' && data.userMessage._id) {
+          messagesToAdd.push(data.userMessage);
+        }
+        
+        if (data.autoReply && typeof data.autoReply === 'object' && data.autoReply._id) {
+          // Add auto-reply after a short delay
+          setTimeout(() => {
+            setMessages(prev => [...prev, data.autoReply]);
+          }, 500);
+        }
+        
+        // Add user message immediately
+        if (messagesToAdd.length > 0) {
+          setMessages(prev => [...prev, ...messagesToAdd]);
+        }
 
         setNewMessage("");
         
@@ -448,49 +471,51 @@ const TrackOrder = () => {
                           No messages yet. Send us a message below!
                         </p>
                       ) : (
-                        messages.map((msg) => {
-                          const isFromUser = !msg.isFromAdmin;
-                          return (
-                            <div
-                              key={msg._id}
-                              className={cn(
-                                "flex",
-                                isFromUser ? "justify-end" : "justify-start"
-                              )}
-                            >
+                        messages
+                          .filter(msg => msg && msg._id) // ✅ FIX: Filter out invalid messages
+                          .map((msg) => {
+                            const isFromUser = !msg.isFromAdmin;
+                            return (
                               <div
+                                key={msg._id}
                                 className={cn(
-                                  "max-w-[80%] rounded-lg p-3",
-                                  isFromUser
-                                    ? "bg-primary text-primary-foreground"
-                                    : msg.isAutoReply
-                                    ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
-                                    : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
+                                  "flex",
+                                  isFromUser ? "justify-end" : "justify-start"
                                 )}
                               >
-                                {!isFromUser && msg.fromUserName && (
-                                  <p className="text-xs font-semibold mb-1 opacity-80">
-                                    {msg.fromUserName}
-                                  </p>
-                                )}
-                                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                                <p
+                                <div
                                   className={cn(
-                                    "text-xs mt-1",
+                                    "max-w-[80%] rounded-lg p-3",
                                     isFromUser
-                                      ? "text-primary-foreground/70"
-                                      : "text-muted-foreground dark:text-muted-foreground-dark"
+                                      ? "bg-primary text-primary-foreground"
+                                      : msg.isAutoReply
+                                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
+                                      : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
                                   )}
                                 >
-                                  {new Date(msg.createdAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </p>
+                                  {!isFromUser && msg.fromUserName && (
+                                    <p className="text-xs font-semibold mb-1 opacity-80">
+                                      {msg.fromUserName}
+                                    </p>
+                                  )}
+                                  <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                  <p
+                                    className={cn(
+                                      "text-xs mt-1",
+                                      isFromUser
+                                        ? "text-primary-foreground/70"
+                                        : "text-muted-foreground dark:text-muted-foreground-dark"
+                                    )}
+                                  >
+                                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })
+                            );
+                          })
                       )}
                     </div>
 

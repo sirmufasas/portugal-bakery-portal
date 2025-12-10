@@ -1,77 +1,235 @@
 // src/utils/sounds.ts
-export const playNotificationSound = (type: 'message' | 'order' = 'message') => {
-    const volume = type === 'order' ? 0.8 : 0.4; // Louder for orders
 
-    console.log(`🔔 Playing ${type} notification sound at volume ${volume}`);
+let audioContext: AudioContext | null = null;
+let unlocked = false;
+let forcePlayQueue: Array<() => void> = [];
 
+/**
+ * Initialize AudioContext - this will be called repeatedly until unlocked
+ */
+export const initAudioContext = () => {
+  if (!audioContext) {
     try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        if (type === 'order') {
-            // More dramatic three-tone alert for orders
-            oscillator.type = 'sine';
-
-            // First tone (high)
-            oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.15);
-            // Second tone (low)
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.15);
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.3);
-            // Third tone (high)
-            oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.3);
-            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.6);
-
-            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(volume, audioContext.currentTime + 0.5);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
-
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.6);
-        } else {
-            // Regular bell sound for messages
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.2);
-
-            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
-        }
-
-        console.log('✅ Sound played successfully');
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('🔊 AudioContext created, state:', audioContext.state);
     } catch (error) {
-        console.error('❌ Error playing sound:', error);
-        console.log('🔄 Trying fallback beep...');
-
-        // Fallback: Try to play a simple beep
-        try {
-            const beep = new Audio(
-                'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTeF0fPTgjMGHm7A7+OZSA0PVqzn77BdGAg+ltryxnUnBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jdXzzn0vBSV7yvHajj4IF2W98+OdTA0NUqvl8LFfGQc7ltzy0YA2Bx9tx/Dbk0QODlCq5fCzYhsINZHY8tGANQccbsHv45lIDQ5TrOXwtmMcBjiP1/PMeS0FJXnJ8tyOPggYZbvs46FOEQ1Mpe/'
-            );
-            beep.volume = volume;
-            beep.play().catch(e => console.error('Fallback beep also failed:', e));
-        } catch (e) {
-            console.error('❌ All sound playback methods failed');
-        }
+      console.error('❌ Failed to create AudioContext:', error);
+      return false;
     }
+  }
+  return true;
 };
 
-// Request audio permission on page load
-export const requestAudioPermission = async () => {
-    try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        await audioContext.resume();
-        console.log('✅ Audio context ready');
-        return true;
-    } catch (error) {
-        console.error('❌ Could not initialize audio context:', error);
-        return false;
+/**
+ * Aggressively unlock audio on ANY user interaction
+ */
+export const forceUnlockAudio = async (): Promise<boolean> => {
+  if (unlocked) return true;
+  
+  if (!audioContext) {
+    initAudioContext();
+  }
+  
+  if (!audioContext) return false;
+
+  try {
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+      console.log('🔓 AudioContext resumed, state:', audioContext.state);
     }
+    
+    if (audioContext.state === 'running') {
+      unlocked = true;
+      console.log('✅ Audio UNLOCKED - notifications will play');
+      
+      // Play any queued sounds
+      while (forcePlayQueue.length > 0) {
+        const play = forcePlayQueue.shift();
+        if (play) {
+          console.log('🔊 Playing queued sound...');
+          play();
+        }
+      }
+      
+      return true;
+    }
+  } catch (error) {
+    console.error('❌ Failed to unlock audio:', error);
+  }
+  
+  return false;
+};
+
+/**
+ * Request both audio and notification permissions
+ */
+export const requestAllPermissions = async () => {
+  console.log('🔔 Requesting permissions...');
+  
+  // Initialize audio
+  initAudioContext();
+  
+  // Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('🔔 Notification permission:', permission);
+    } catch (error) {
+      console.error('❌ Failed to request notification permission:', error);
+    }
+  }
+  
+  // Try to unlock audio
+  await forceUnlockAudio();
+  
+  return {
+    audio: unlocked,
+    notifications: 'Notification' in window ? Notification.permission : 'denied'
+  };
+};
+
+/**
+ * Play notification sound - WILL PLAY EVEN WITHOUT USER GESTURE
+ * If audio is locked, it will queue and play on next user interaction
+ */
+export const playNotificationSound = (type: 'message' | 'order' = 'message') => {
+  console.log(`🔔 playNotificationSound called: ${type}`);
+  
+  const actualPlay = () => {
+    if (!audioContext) {
+      console.warn('⚠️ No AudioContext');
+      initAudioContext();
+      if (!audioContext) return;
+    }
+
+    try {
+      // Force resume if suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log('🔓 AudioContext resumed during play');
+        });
+      }
+
+      const volume = type === 'order' ? 1.0 : 0.6; // MAX VOLUME for orders
+      console.log(`🔊 Creating sound: ${type} at volume ${volume}`);
+
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      if (type === 'order') {
+        // LOUD three-tone alert for orders
+        osc.type = 'square'; // More aggressive waveform
+        const now = audioContext.currentTime;
+        
+        // Three ascending beeps
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.setValueAtTime(1000, now + 0.15);
+        osc.frequency.setValueAtTime(1200, now + 0.3);
+        
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.setValueAtTime(volume, now + 0.45);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+        osc.start(now);
+        osc.stop(now + 0.6);
+        
+        console.log('✅ ORDER SOUND PLAYING');
+      } else {
+        // Message beep
+        osc.type = 'sine';
+        const now = audioContext.currentTime;
+        
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(400, now + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+        
+        console.log('✅ MESSAGE SOUND PLAYING');
+      }
+    } catch (error) {
+      console.error('❌ Error playing sound:', error);
+    }
+  };
+
+  // If audio is unlocked, play immediately
+  if (unlocked && audioContext?.state === 'running') {
+    actualPlay();
+  } else {
+    // Queue it and try to unlock
+    console.warn('⚠️ Audio locked - queueing sound and attempting unlock');
+    forcePlayQueue.push(actualPlay);
+    forceUnlockAudio().then(success => {
+      if (success) {
+        console.log('✅ Audio unlocked via forced attempt');
+      }
+    });
+  }
+};
+
+/**
+ * Show browser notification
+ */
+export const showNotification = (title: string, body: string, type: 'order' | 'message' = 'message') => {
+  console.log('🔔 showNotification called:', title);
+  
+  if (!('Notification' in window)) {
+    console.warn('⚠️ Notifications not supported');
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    try {
+      const notification = new Notification(title, {
+        body,
+        icon: type === 'order' ? '📦' : '💬',
+        badge: type === 'order' ? '📦' : '💬',
+        tag: `${type}-${Date.now()}`,
+        requireInteraction: type === 'order', // Order notifications stay until clicked
+        silent: false // Not silent - let system sound play too
+      });
+      
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+      
+      console.log('✅ Notification shown');
+    } catch (error) {
+      console.error('❌ Failed to show notification:', error);
+    }
+  } else if (Notification.permission === 'default') {
+    console.warn('⚠️ Notification permission not granted yet');
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        showNotification(title, body, type);
+      }
+    });
+  }
+};
+
+/**
+ * Combined notification - plays sound AND shows browser notification
+ */
+export const notifyAdmin = (type: 'order' | 'message', title: string, body: string) => {
+  console.log(`📢 NOTIFY ADMIN: ${type} - ${title}`);
+  
+  // Play sound
+  playNotificationSound(type);
+  
+  // Show browser notification
+  showNotification(title, body, type);
+  
+  // Vibrate if supported (mobile)
+  if ('vibrate' in navigator) {
+    if (type === 'order') {
+      navigator.vibrate([200, 100, 200, 100, 200]); // Long vibration pattern
+    } else {
+      navigator.vibrate(200); // Short vibration
+    }
+  }
 };

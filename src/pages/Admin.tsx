@@ -15,7 +15,7 @@ import { categories } from "@/data/products";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { uploadImage } from "@/utils/uploadImage";
 import { AdminFloatingMessageButton } from "@/components/admin/AdminFloatingMessageButton";
-import { playNotificationSound, requestAudioPermission } from "@/utils/sounds";
+import { notifyAdmin, requestAllPermissions, forceUnlockAudio } from "@/utils/sounds";
 
 import {
   Package,
@@ -104,30 +104,50 @@ export default function Admin() {
     fat: "8g",
   });
 
-  // Initialize audio on mount
   useEffect(() => {
-    const initAudio = async () => {
-      const enabled = await requestAudioPermission();
-      setAudioEnabled(enabled);
-      if (!enabled) {
-        console.warn('⚠️ Audio notifications may not work. User interaction required.');
+    console.log('🎵 Initializing admin notifications...');
+
+    // Request permissions immediately
+    requestAllPermissions().then(permissions => {
+      console.log('✅ Permissions:', permissions);
+
+      if (permissions.audio) {
+        console.log('✅ Audio ready - notifications will play sounds');
+      } else {
+        console.warn('⚠️ Audio locked - will unlock on first user interaction');
       }
+
+      if (permissions.notifications === 'granted') {
+        console.log('✅ Browser notifications enabled');
+      } else {
+        console.warn('⚠️ Browser notifications not enabled');
+      }
+    });
+
+    // Set up listeners for ANY user interaction to unlock audio
+    const unlockOnInteraction = () => {
+      console.log('👆 User interaction detected - unlocking audio...');
+      forceUnlockAudio().then(success => {
+        if (success) {
+          console.log('✅ Audio unlocked successfully');
+          // Remove listeners after successful unlock
+          document.removeEventListener('click', unlockOnInteraction);
+          document.removeEventListener('keydown', unlockOnInteraction);
+          document.removeEventListener('touchstart', unlockOnInteraction);
+        }
+      });
     };
-    initAudio();
+
+    document.addEventListener('click', unlockOnInteraction);
+    document.addEventListener('keydown', unlockOnInteraction);
+    document.addEventListener('touchstart', unlockOnInteraction);
+
+    return () => {
+      document.removeEventListener('click', unlockOnInteraction);
+      document.removeEventListener('keydown', unlockOnInteraction);
+      document.removeEventListener('touchstart', unlockOnInteraction);
+    };
   }, []);
-
-  // Enable audio on first user interaction
-  useEffect(() => {
-    const enableAudio = async () => {
-      if (!audioEnabled) {
-        const enabled = await requestAudioPermission();
-        setAudioEnabled(enabled);
-      }
-    };
-
-    document.addEventListener('click', enableAudio, { once: true });
-    return () => document.removeEventListener('click', enableAudio);
-  }, [audioEnabled]);
 
   useEffect(() => {
     fetchOrders();
@@ -162,6 +182,8 @@ export default function Admin() {
         console.log('📡 SSE message received:', data);
 
         if (data.type === 'new_order') {
+          console.log('🎉 NEW ORDER RECEIVED - TRIGGERING NOTIFICATIONS');
+
           const user = data.order.user?.[0] || {};
           const transformedOrder = {
             id: data.order.orderNumber,
@@ -186,22 +208,23 @@ export default function Admin() {
 
           // Increment new order count
           setNewOrderCount(prev => prev + 1);
-
-          // Start bouncing animation for orders tab
           setBouncingOrders(true);
 
-          // Play LOUD notification sound for orders
-          console.log('🔔 Playing order notification sound...');
-          playNotificationSound('order');
+          // 🔔 PLAY SOUND + SHOW NOTIFICATION
+          const notificationTitle = '🎉 NEW ORDER!';
+          const notificationBody = `Order #${data.order.orderNumber} from ${transformedOrder.customer} - ${transformedOrder.total}`;
 
-          // Show prominent toast notification
+          console.log('🔊 Calling notifyAdmin...');
+          notifyAdmin('order', notificationTitle, notificationBody);
+
+          // Show toast in the app
           toast({
-            title: "🎉 NEW ORDER RECEIVED!",
-            description: `Order #${data.order.orderNumber} from ${user.firstName || 'Customer'} - ${transformedOrder.total}`,
-            duration: 8000,
+            title: notificationTitle,
+            description: notificationBody,
+            duration: 10000,
           });
 
-          console.log('✅ Order notification complete');
+          console.log('✅ All notifications triggered');
         }
       } catch (error) {
         console.error('Failed to parse SSE message:', error);
@@ -249,6 +272,8 @@ export default function Admin() {
         console.log('📡 Admin SSE message received:', data);
 
         if (data.type === 'new_support_message') {
+          console.log('💬 NEW SUPPORT MESSAGE - TRIGGERING NOTIFICATIONS');
+
           fetchSupportConversations();
 
           if (selectedConversation && data.message.userId === selectedConversation.userId) {
@@ -263,11 +288,17 @@ export default function Admin() {
             setBouncingChat(true);
           }
 
-          playNotificationSound('message');
+          // 🔔 PLAY SOUND + SHOW NOTIFICATION
+          const notificationTitle = '💬 New Support Message';
+          const notificationBody = `${data.message.fromUserName}: ${data.message.message.substring(0, 100)}`;
 
+          console.log('🔊 Calling notifyAdmin for message...');
+          notifyAdmin('message', notificationTitle, notificationBody);
+
+          // Show toast
           toast({
-            title: "💬 New Support Message",
-            description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
+            title: notificationTitle,
+            description: notificationBody,
           });
         }
       } catch (error) {
@@ -278,13 +309,6 @@ export default function Admin() {
     eventSource.onerror = (error) => {
       console.error('❌ Support SSE error:', error);
       eventSource.close();
-
-      setTimeout(() => {
-        console.log('🔄 Retrying Admin Support Chat SSE connection...');
-        if (token && user.role === 'admin') {
-          eventSource.close();
-        }
-      }, 5000);
     };
 
     eventSourceSupportRef.current = eventSource;
@@ -862,8 +886,8 @@ export default function Admin() {
 
           <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-              <TabsTrigger 
-                value="orders" 
+              <TabsTrigger
+                value="orders"
                 className={`gap-2 relative ${bouncingOrders ? 'animate-bounce' : ''}`}
               >
                 <Package className="h-4 w-4 hidden sm:block" />
@@ -881,8 +905,8 @@ export default function Admin() {
                   <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-2 w-2"></span>
                 )}
               </TabsTrigger>
-              <TabsTrigger 
-                value="support" 
+              <TabsTrigger
+                value="support"
                 className={`gap-2 relative ${bouncingChat ? 'animate-bounce' : ''}`}
               >
                 <MessageSquare className="h-4 w-4 hidden sm:block" />
@@ -897,7 +921,7 @@ export default function Admin() {
 
             {/* Rest of TabsContent remains the same as in your original file */}
             {/* I'll include just the orders tab here for brevity, but you should keep all the original TabsContent sections */}
-            
+
             <TabsContent value="orders" className="space-y-4">
               {loadingOrders ? (
                 <div className="flex justify-center items-center py-16">
