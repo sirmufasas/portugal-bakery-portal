@@ -852,10 +852,6 @@ export default function Admin() {
                 <ShoppingBag className="h-4 w-4 hidden sm:block" />
                 Products
               </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-2">
-                <MessageSquare className="h-4 w-4 hidden sm:block" />
-                Messages
-              </TabsTrigger>
               <TabsTrigger value="support" className="gap-2">
                 <Users className="h-4 w-4 hidden sm:block" />
                 Support Chat
