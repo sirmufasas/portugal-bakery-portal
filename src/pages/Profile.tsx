@@ -467,14 +467,14 @@ const Profile = () => {
                                     </p>
                                 </div>
 
-                                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-900/50">
+                                {/* <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-900/50">
                                     <p className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-500">
                                         {fetchingOrders ? "..." : totalItemsPurchased}
                                     </p>
                                     <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                                         Items Purchased
                                     </p>
-                                </div>
+                                </div> */}
                             </CardContent>
                         </Card>
 
