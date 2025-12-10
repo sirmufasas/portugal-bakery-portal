@@ -78,7 +78,7 @@ export const requestAllPermissions = async () => {
 };
 
 /**
- * Play 10-second LOOPING sound
+ * Play 6-second LOOPING sound
  */
 export const playNotificationSound = (type: "message" | "order" = "message") => {
   console.log(`🔔 playNotificationSound called: ${type}`);
@@ -94,7 +94,7 @@ export const playNotificationSound = (type: "message" | "order" = "message") => 
     }
 
     try {
-      const duration = 10; // 🔥 10 seconds
+      const duration = 6; // 🔥 6 seconds
       const volume = type === "order" ? 1.0 : 0.7;
       const interval = type === "order" ? 800 : 1500;
       const endTime = audioContext.currentTime + duration;
@@ -132,10 +132,10 @@ export const playNotificationSound = (type: "message" | "order" = "message") => 
       };
 
       loop();
-      console.log("🔁 10-SECOND SOUND LOOP STARTED");
+      console.log("🔁 6-SECOND SOUND LOOP STARTED");
 
     } catch (error) {
-      console.error("❌ Error playing 10-second sound:", error);
+      console.error("❌ Error playing 6-second sound:", error);
     }
   };
 
