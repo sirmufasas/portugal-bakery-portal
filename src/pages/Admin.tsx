@@ -185,62 +185,71 @@ export default function Admin() {
     };
   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+ useEffect(() => {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    if (!token || user.role !== 'admin') return;
+  if (!token || user.role !== 'admin') return;
 
-    console.log('🔌 Connecting to Admin Support Chat SSE...');
+  console.log('🔌 Connecting to Admin Support Chat SSE...');
 
-    const eventSource = new EventSource(`${API_URL}/api/sse/admin-support?token=${token}`);
+  const eventSource = new EventSource(`${API_URL}/api/sse/admin-support?token=${token}`);
 
-    eventSource.onopen = () => {
-      console.log('✅ Admin Support Chat SSE connected');
-    };
+  eventSource.onopen = () => {
+    console.log('✅ Admin Support Chat SSE connected');
+  };
 
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('📡 Support SSE message received:', data);
+  eventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log('📡 Admin SSE message received:', data);
 
-        if (data.type === 'new_support_message') {
-          // Update conversations list
-          fetchSupportConversations();
+      if (data.type === 'new_support_message') {
+        // Update conversations list
+        fetchSupportConversations();
 
-          // If this conversation is currently open, add message
-          if (selectedConversation && data.message.userId === selectedConversation.userId) {
-            setConversationMessages(prev => {
-              if (prev.some(m => m._id === data.message._id)) {
-                return prev;
-              }
-              return [...prev, data.message];
-            });
-          }
-
-          // Show notification
-          toast({
-            title: "💬 New Support Message",
-            description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
+        // If this conversation is currently open, add message
+        if (selectedConversation && data.message.userId === selectedConversation.userId) {
+          setConversationMessages(prev => {
+            if (prev.some(m => m._id === data.message._id)) {
+              return prev;
+            }
+            return [...prev, data.message];
           });
         }
-      } catch (error) {
-        console.error('Failed to parse support SSE message:', error);
+
+        // Show notification
+        toast({
+          title: "💬 New Support Message",
+          description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
+        });
       }
-    };
+    } catch (error) {
+      console.error('Failed to parse support SSE message:', error);
+    }
+  };
 
-    eventSource.onerror = (error) => {
-      console.error('❌ Support SSE error:', error);
-      eventSource.close();
-    };
+  eventSource.onerror = (error) => {
+    console.error('❌ Support SSE error:', error);
+    eventSource.close();
+    
+    // Retry connection after 5 seconds
+    setTimeout(() => {
+      console.log('🔄 Retrying Admin Support Chat SSE connection...');
+      if (token && user.role === 'admin') {
+        eventSource.close();
+        // The useEffect will re-run
+      }
+    }, 5000);
+  };
 
-    eventSourceSupportRef.current = eventSource;
+  eventSourceSupportRef.current = eventSource;
 
-    return () => {
-      console.log('🔌 Closing Admin Support Chat SSE connection');
-      eventSource.close();
-    };
-  }, [selectedConversation]);
+  return () => {
+    console.log('🔌 Closing Admin Support Chat SSE connection');
+    eventSource.close();
+  };
+}, [selectedConversation, toast]);
 
   const fetchSupportConversations = async () => {
     setLoadingConversations(true);
