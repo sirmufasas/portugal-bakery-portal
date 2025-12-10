@@ -1,6 +1,6 @@
 
 // src/pages/Admin.tsx - Complete version with backend integration
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -34,30 +34,32 @@ import {
   Upload,
   Image as ImageIcon,
   Search,
-  Flame
+  Flame,
+  Users,
+  Loader2  // Add this
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
-const mockMessages = [
-  {
-    id: 1,
-    orderId: "PB-001",
-    customer: "Maria Santos",
-    messages: [
-      { from: "customer", text: "Hi, can I pick up at 2pm instead of 1pm?", time: "10:30" },
-      { from: "admin", text: "Of course! We'll have your order ready at 2pm.", time: "10:35" },
-    ],
-  },
-  {
-    id: 2,
-    orderId: "PB-002",
-    customer: "João Silva",
-    messages: [
-      { from: "customer", text: "Can you add 'Happy Birthday Ana' on the cake?", time: "10:20" },
-    ],
-  },
-];
+// const mockMessages = [
+//   {
+//     id: 1,
+//     orderId: "PB-001",
+//     customer: "Maria Santos",
+//     messages: [
+//       { from: "customer", text: "Hi, can I pick up at 2pm instead of 1pm?", time: "10:30" },
+//       { from: "admin", text: "Of course! We'll have your order ready at 2pm.", time: "10:35" },
+//     ],
+//   },
+//   {
+//     id: 2,
+//     orderId: "PB-002",
+//     customer: "João Silva",
+//     messages: [
+//       { from: "customer", text: "Can you add 'Happy Birthday Ana' on the cake?", time: "10:20" },
+//     ],
+//   },
+// ];
 
 const statusColors = {
   pending: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
@@ -75,13 +77,14 @@ const statusIcons = {
   cancelled: <XCircle className="h-3 w-3" />,
 };
 
+
 export default function Admin() {
   const { toast } = useToast();
   const { products = [], addProduct, updateProduct, deleteProduct } = useProducts();
-
+  
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [messages] = useState(mockMessages);
+  const [messages, setMessages] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
@@ -89,7 +92,15 @@ export default function Admin() {
   const [imagePreview, setImagePreview] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-
+  
+  const [supportConversations, setSupportConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [conversationMessages, setConversationMessages] = useState([]);
+  const [supportMessage, setSupportMessage] = useState("");
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [sendingSupportMessage, setSendingSupportMessage] = useState(false);
+  const eventSourceSupportRef = useRef<EventSource | null>(null);
+  
   const [newProductForm, setNewProductForm] = useState({
     name: "",
     category: "Pastries",
@@ -171,6 +182,153 @@ export default function Admin() {
       console.log('🔌 Closing Admin SSE connection');
       eventSource.close();
     };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!token || user.role !== 'admin') return;
+
+    console.log('🔌 Connecting to Admin Support Chat SSE...');
+
+    const eventSource = new EventSource(`${API_URL}/api/sse/admin-support?token=${token}`);
+
+    eventSource.onopen = () => {
+      console.log('✅ Admin Support Chat SSE connected');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 Support SSE message received:', data);
+
+        if (data.type === 'new_support_message') {
+          // Update conversations list
+          fetchSupportConversations();
+
+          // If this conversation is currently open, add message
+          if (selectedConversation && data.message.userId === selectedConversation.userId) {
+            setConversationMessages(prev => {
+              if (prev.some(m => m._id === data.message._id)) {
+                return prev;
+              }
+              return [...prev, data.message];
+            });
+          }
+
+          // Show notification
+          toast({
+            title: "💬 New Support Message",
+            description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to parse support SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ Support SSE error:', error);
+      eventSource.close();
+    };
+
+    eventSourceSupportRef.current = eventSource;
+
+    return () => {
+      console.log('🔌 Closing Admin Support Chat SSE connection');
+      eventSource.close();
+    };
+  }, [selectedConversation]);
+
+  const fetchSupportConversations = async () => {
+    setLoadingConversations(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/support/conversations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSupportConversations(data);
+      }
+    } catch (error) {
+      console.error('Error fetching support conversations:', error);
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
+
+  const fetchConversationMessages = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/support/conversation/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setConversationMessages(data);
+      }
+    } catch (error) {
+      console.error('Error fetching conversation messages:', error);
+    }
+  };
+
+  const handleSelectConversation = (conversation) => {
+    setSelectedConversation(conversation);
+    fetchConversationMessages(conversation.userId);
+  };
+
+  const handleSendSupportMessage = async () => {
+    if (!supportMessage.trim() || !selectedConversation || sendingSupportMessage) return;
+
+    setSendingSupportMessage(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/support/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: supportMessage,
+          recipientId: selectedConversation.userId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setConversationMessages(prev => [...prev, data]);
+        setSupportMessage("");
+
+        toast({
+          title: "Message sent",
+          description: "Your message has been sent to the customer",
+        });
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingSupportMessage(false);
+    }
+  };
+
+  // ADD THIS useEffect TO FETCH CONVERSATIONS ON MOUNT:
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role === 'admin') {
+      fetchSupportConversations();
+    }
   }, []);
 
   const fetchOrders = async () => {
@@ -695,6 +853,10 @@ export default function Admin() {
               <TabsTrigger value="messages" className="gap-2">
                 <MessageSquare className="h-4 w-4 hidden sm:block" />
                 Messages
+              </TabsTrigger>
+              <TabsTrigger value="support" className="gap-2">
+                <Users className="h-4 w-4 hidden sm:block" />
+                Support Chat
               </TabsTrigger>
             </TabsList>
 
@@ -1235,7 +1397,7 @@ export default function Admin() {
               </div>
             </TabsContent>
 
-            {/* Messages Tab */}
+            {/* Messages Tab
             <TabsContent value="messages" className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4">
                 <Card className="md:col-span-1">
@@ -1314,65 +1476,136 @@ export default function Admin() {
                   )}
                 </Card>
               </div>
-            </TabsContent>
+            </TabsContent> */}
 
-            {/* Testimonials Tab
-            <TabsContent value="testimonials" className="space-y-4">
-              {testimonials.map((testimonial) => (
-                <Card key={testimonial.id}>
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <p className="font-medium text-foreground">{testimonial.name}</p>
-                          <Badge
-                            className={
-                              testimonial.status === "approved"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : "bg-amber-100 text-amber-800 border-amber-200"
-                            }
-                          >
-                            {testimonial.status === "approved" ? "Approved" : "Pending"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1 mb-2">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${i < testimonial.rating
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-gray-300"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">{testimonial.text}</p>
-                        <p className="text-xs text-muted-foreground">{testimonial.date}</p>
+            <TabsContent value="support" className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* Conversations List */}
+                <Card className="md:col-span-1">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Support Conversations
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {loadingConversations ? (
+                      <div className="flex justify-center items-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                      <div className="flex sm:flex-col gap-2">
-                        {testimonial.status === "pending" && (
-                          <Button
-                            onClick={() => handleTestimonialAction(testimonial.id, "approve")}
-                            className="flex-1 sm:flex-initial gap-2"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Approve
-                          </Button>
-                        )}
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleTestimonialAction(testimonial.id, "delete")}
-                          className="flex-1 sm:flex-initial gap-2"
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Remove
-                        </Button>
+                    ) : supportConversations.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                        <p className="text-sm">No support conversations yet</p>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="divide-y">
+                        {supportConversations.map((conversation) => (
+                          <button
+                            key={conversation.userId}
+                            onClick={() => handleSelectConversation(conversation)}
+                            className={`w-full p-4 text-left hover:bg-accent transition-colors ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
+                              }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                              {conversation.messageCount > 0 && (
+                                <Badge variant="secondary" className="ml-2">
+                                  {conversation.messageCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
+                            <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(conversation.lastMessageTime).toLocaleString()}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              ))}
-            </TabsContent> */}
+
+                {/* Chat Window */}
+                <Card className="md:col-span-2">
+                  {selectedConversation ? (
+                    <>
+                      <CardHeader className="border-b">
+                        <div>
+                          <CardTitle>{selectedConversation.userName}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{selectedConversation.userEmail}</p>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
+                          {conversationMessages.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-8">No messages yet</p>
+                          ) : (
+                            conversationMessages.map((msg) => {
+                              const isFromAdmin = msg.isFromAdmin;
+                              return (
+                                <div
+                                  key={msg._id}
+                                  className={`flex ${isFromAdmin ? "justify-end" : "justify-start"}`}
+                                >
+                                  <div
+                                    className={`max-w-[80%] rounded-lg p-3 ${isFromAdmin
+                                        ? "bg-primary text-primary-foreground"
+                                        : msg.isAutoReply
+                                          ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200"
+                                          : "bg-muted"
+                                      }`}
+                                  >
+                                    {msg.fromUserName && (
+                                      <p className="text-xs font-semibold mb-1 opacity-80">
+                                        {msg.fromUserName}
+                                      </p>
+                                    )}
+                                    <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                    <p className="text-xs opacity-70 mt-1">
+                                      {new Date(msg.createdAt).toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Input
+                            value={supportMessage}
+                            onChange={(e) => setSupportMessage(e.target.value)}
+                            placeholder="Type your message..."
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendSupportMessage();
+                              }
+                            }}
+                            disabled={sendingSupportMessage}
+                          />
+                          <Button onClick={handleSendSupportMessage} disabled={sendingSupportMessage}>
+                            {sendingSupportMessage ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </>
+                  ) : (
+                    <CardContent className="flex items-center justify-center h-full min-h-[400px]">
+                      <div className="text-center text-muted-foreground">
+                        <Users className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                        <p>Select a conversation to start messaging</p>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </main>

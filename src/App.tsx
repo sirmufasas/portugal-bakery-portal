@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
+import { FloatingMessageButton } from "@/components/chat/FloatingMessageButton";
 
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -18,7 +19,7 @@ import Order from "./pages/Order";
 import TrackOrder from "./pages/TrackOrder";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
-import ResetPassword from "./pages/ResetPassword"; // ✅ Import ResetPassword
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -35,6 +36,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <FloatingMessageButton />
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Index />} />
@@ -44,7 +46,7 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/order" element={<Order />} />
-                  <Route path="/reset-password" element={<ResetPassword />} /> {/* ✅ Added */}
+                  <Route path="/reset-password" element={<ResetPassword />} />
 
                   {/* Protected Routes */}
                   <Route
@@ -71,7 +73,6 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
-
 
                   {/* Fallback */}
                   <Route path="*" element={<NotFound />} />
