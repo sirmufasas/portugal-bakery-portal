@@ -16,6 +16,7 @@ import { categories } from "@/data/products";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { uploadImage } from "@/utils/uploadImage";
 import { AdminFloatingMessageButton } from "@/components/admin/AdminFloatingMessageButton";
+import { playNotificationSound } from "@/utils/sounds";
 
 import {
   Package,
@@ -102,7 +103,13 @@ export default function Admin() {
   const [sendingSupportMessage, setSendingSupportMessage] = useState(false);
   const eventSourceSupportRef = useRef<EventSource | null>(null);
 
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+  const [hasNewProducts, setHasNewProducts] = useState(false);
+  const [newOrderCount, setNewOrderCount] = useState(0);
+  const [bouncingChat, setBouncingChat] = useState(false);
+
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [bouncingOrders, setBouncingOrders] = useState(false);
 
 
   const [newProductForm, setNewProductForm] = useState({
@@ -167,9 +174,20 @@ export default function Admin() {
             return [transformedOrder, ...prevOrders];
           });
 
+          // Increment new order count
+          setNewOrderCount(prev => prev + 1);
+
+          // Start bouncing animation for orders tab
+          setBouncingOrders(true);
+
+          // Play LOUD notification sound for orders
+          playNotificationSound('order');
+
           toast({
-            title: "🔔 New Order Received!",
+            title: "🔔 NEW ORDER RECEIVED!",
             description: `Order ${data.order.orderNumber} from ${user.firstName || 'Customer'}`,
+            variant: "default",
+            className: "bg-green-500 text-white border-green-600",
           });
         }
       } catch (error) {
@@ -187,6 +205,18 @@ export default function Admin() {
       eventSource.close();
     };
   }, []);
+
+  useEffect(() => {
+    // You might want to reset this when user views the orders tab
+    // For simplicity, we'll stop bouncing after 10 seconds
+    if (bouncingOrders) {
+      const timer = setTimeout(() => {
+        setBouncingOrders(false);
+      }, 10000); // Stop after 10 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [bouncingOrders]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -219,7 +249,15 @@ export default function Admin() {
               }
               return [...prev, data.message];
             });
+          } else {
+            // Increment unread count if conversation is not open
+            setUnreadSupportCount(prev => prev + 1);
+            // Start bouncing animation
+            setBouncingChat(true);
           }
+
+          // Play notification sound
+          playNotificationSound();
 
           // Show notification
           toast({
@@ -254,6 +292,12 @@ export default function Admin() {
     };
   }, [selectedConversation, toast]);
 
+  useEffect(() => {
+    if (selectedConversation) {
+      setBouncingChat(false);
+    }
+  }, [selectedConversation]);
+
   const fetchSupportConversations = async () => {
     setLoadingConversations(true);
     try {
@@ -265,6 +309,10 @@ export default function Admin() {
       if (response.ok) {
         const data = await response.json();
         setSupportConversations(data);
+
+        // Calculate total unread messages from conversations
+        const totalUnread = data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+        setUnreadSupportCount(totalUnread);
       }
     } catch (error) {
       console.error('Error fetching support conversations:', error);
@@ -296,8 +344,12 @@ export default function Admin() {
   };
 
   const handleSelectConversation = async (conversation) => {
-    setLoadingMessages(true); // Show loader
+    setLoadingMessages(true);
     setSelectedConversation(conversation);
+
+    // Reset unread count for this conversation
+    setUnreadSupportCount(prev => Math.max(0, prev - (conversation.unreadCount || 0)));
+    setBouncingChat(false);
 
     try {
       await fetchConversationMessages(conversation.userId);
@@ -309,9 +361,24 @@ export default function Admin() {
         variant: "destructive",
       });
     } finally {
-      setLoadingMessages(false); // Hide loader
+      setLoadingMessages(false);
     }
   };
+
+  // Add effect to check for new products
+  useEffect(() => {
+    const checkForNewProducts = () => {
+      // You might want to implement this based on your backend
+      // For now, we'll just show a badge when products are added
+      if (products.length > 0) {
+        // You could compare with previous product count or check timestamps
+        // This is a simple implementation
+        setHasNewProducts(true);
+      }
+    };
+
+    checkForNewProducts();
+  }, [products]);
 
   const handleSendSupportMessage = async () => {
     if (!supportMessage.trim() || !selectedConversation || sendingSupportMessage) return;
@@ -875,17 +942,30 @@ export default function Admin() {
 
           <Tabs defaultValue="orders" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="orders" className="gap-2">
+              <TabsTrigger value="orders" className="gap-2 relative">
                 <Package className="h-4 w-4 hidden sm:block" />
                 Orders
+                {newOrderCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {newOrderCount}
+                  </span>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="products" className="gap-2">
+              <TabsTrigger value="products" className="gap-2 relative">
                 <ShoppingBag className="h-4 w-4 hidden sm:block" />
                 Products
+                {hasNewProducts && (
+                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-2 w-2"></span>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="support" className="gap-2">
+              <TabsTrigger value="support" className="gap-2 relative">
                 <Users className="h-4 w-4 hidden sm:block" />
                 Support Chat
+                {unreadSupportCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadSupportCount}
+                  </span>
+                )}
               </TabsTrigger>
             </TabsList>
 
@@ -1518,48 +1598,48 @@ export default function Admin() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                      {loadingConversations ? (
-                        <div className="flex justify-center items-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        </div>
-                      ) : supportConversations.length === 0 ? (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                          <p className="text-sm">No support conversations yet</p>
-                        </div>
-                      ) : (
-                        <div className="divide-y">
-                          {supportConversations.map((conversation) => (
-                            <button
-                              key={conversation.userId}
-                              onClick={() => handleSelectConversation(conversation)}
-                              disabled={loadingMessages && selectedConversation?.userId === conversation.userId}
-                              className={`w-full p-4 text-left hover:bg-accent transition-colors disabled:opacity-70 ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
-                                }`}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium text-foreground truncate">{conversation.userName}</p>
-                                  {loadingMessages && selectedConversation?.userId === conversation.userId && (
-                                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                  )}
-                                </div>
-                                {conversation.messageCount > 0 && (
-                                  <Badge variant="secondary" className="ml-2">
-                                    {conversation.messageCount}
-                                  </Badge>
+                    {loadingConversations ? (
+                      <div className="flex justify-center items-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    ) : supportConversations.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                        <p className="text-sm">No support conversations yet</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {supportConversations.map((conversation) => (
+                          <button
+                            key={conversation.userId}
+                            onClick={() => handleSelectConversation(conversation)}
+                            disabled={loadingMessages && selectedConversation?.userId === conversation.userId}
+                            className={`w-full p-4 text-left hover:bg-accent transition-colors disabled:opacity-70 ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
+                              }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                                {loadingMessages && selectedConversation?.userId === conversation.userId && (
+                                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
                                 )}
                               </div>
-                              <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
-                              <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(conversation.lastMessageTime).toLocaleString()}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
+                              {conversation.messageCount > 0 && (
+                                <Badge variant="secondary" className="ml-2">
+                                  {conversation.messageCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
+                            <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(conversation.lastMessageTime).toLocaleString()}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
 
                 {/* Chat Window */}
