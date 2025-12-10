@@ -1,4 +1,4 @@
-// src/pages/Admin.tsx - Fixed version with proper notifications
+// src/pages/Admin.tsx - Fixed with responsive chat, WhatsApp-style read receipts, and order sections
 import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -39,7 +39,9 @@ import {
   Users,
   Loader2,
   Bell,
-  Volume2
+  Volume2,
+  Truck,
+  ArrowLeft
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
@@ -55,7 +57,7 @@ const statusColors = {
 const statusIcons = {
   pending: <Clock className="h-3 w-3" />,
   processing: <ChefHat className="h-3 w-3" />,
-  shipped: <Package className="h-3 w-3" />,
+  shipped: <Truck className="h-3 w-3" />,
   delivered: <CheckCircle className="h-3 w-3" />,
   cancelled: <XCircle className="h-3 w-3" />,
 };
@@ -88,6 +90,7 @@ export default function Admin() {
   const [bouncingOrders, setBouncingOrders] = useState(false);
   const [currentTab, setCurrentTab] = useState("orders");
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [showMobileChatList, setShowMobileChatList] = useState(true);
 
   const [newProductForm, setNewProductForm] = useState({
     name: "",
@@ -107,7 +110,6 @@ export default function Admin() {
   useEffect(() => {
     console.log('🎵 Initializing admin notifications...');
 
-    // Request permissions immediately
     requestAllPermissions().then(permissions => {
       console.log('✅ Permissions:', permissions);
 
@@ -124,13 +126,11 @@ export default function Admin() {
       }
     });
 
-    // Set up listeners for ANY user interaction to unlock audio
     const unlockOnInteraction = () => {
       console.log('👆 User interaction detected - unlocking audio...');
       forceUnlockAudio().then(success => {
         if (success) {
           console.log('✅ Audio unlocked successfully');
-          // Remove listeners after successful unlock
           document.removeEventListener('click', unlockOnInteraction);
           document.removeEventListener('keydown', unlockOnInteraction);
           document.removeEventListener('touchstart', unlockOnInteraction);
@@ -153,7 +153,6 @@ export default function Admin() {
     fetchOrders();
   }, []);
 
-  // Reset new order count when viewing orders tab
   useEffect(() => {
     if (currentTab === "orders") {
       setNewOrderCount(0);
@@ -161,7 +160,6 @@ export default function Admin() {
     }
   }, [currentTab]);
 
-  // Real-time SSE connection for admins
   useEffect(() => {
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -206,18 +204,15 @@ export default function Admin() {
             return [transformedOrder, ...prevOrders];
           });
 
-          // Increment new order count
           setNewOrderCount(prev => prev + 1);
           setBouncingOrders(true);
 
-          // 🔔 PLAY SOUND + SHOW NOTIFICATION
           const notificationTitle = '🎉 NEW ORDER!';
           const notificationBody = `Order #${data.order.orderNumber} from ${transformedOrder.customer} - ${transformedOrder.total}`;
 
           console.log('🔊 Calling notifyAdmin...');
           notifyAdmin('order', notificationTitle, notificationBody);
 
-          // Show toast in the app
           toast({
             title: notificationTitle,
             description: notificationBody,
@@ -288,14 +283,12 @@ export default function Admin() {
             setBouncingChat(true);
           }
 
-          // 🔔 PLAY SOUND + SHOW NOTIFICATION
           const notificationTitle = '💬 New Support Message';
           const notificationBody = `${data.message.fromUserName}: ${data.message.message.substring(0, 100)}`;
 
           console.log('🔊 Calling notifyAdmin for message...');
           notifyAdmin('message', notificationTitle, notificationBody);
 
-          // Show toast
           toast({
             title: notificationTitle,
             description: notificationBody,
@@ -372,6 +365,16 @@ export default function Admin() {
   const handleSelectConversation = async (conversation) => {
     setLoadingMessages(true);
     setSelectedConversation(conversation);
+    setShowMobileChatList(false);
+
+    // Mark conversation as read
+    setSupportConversations(prev =>
+      prev.map(conv =>
+        conv.userId === conversation.userId
+          ? { ...conv, unreadCount: 0 }
+          : conv
+      )
+    );
 
     setUnreadSupportCount(prev => Math.max(0, prev - (conversation.unreadCount || 0)));
     setBouncingChat(false);
@@ -521,6 +524,15 @@ export default function Admin() {
     pendingOrders: orders.filter(o => o.status === "pending").length,
     readyOrders: orders.filter(o => o.status === "delivered").length,
     totalProducts: Array.isArray(products) ? products.length : 0,
+  };
+
+  // Group orders by status
+  const ordersByStatus = {
+    pending: orders.filter(o => o.status === "pending"),
+    processing: orders.filter(o => o.status === "processing"),
+    shipped: orders.filter(o => o.status === "shipped"),
+    delivered: orders.filter(o => o.status === "delivered"),
+    cancelled: orders.filter(o => o.status === "cancelled"),
   };
 
   const updateOrderStatus = async (orderNumber, newStatus) => {
@@ -813,6 +825,71 @@ export default function Admin() {
     }
   };
 
+  const renderOrderCard = (order) => (
+    <Card key={order.id} className={order.status === 'delivered' ? 'border-2 border-green-500 dark:border-green-700' : ''}>
+      <CardContent className="p-4 md:p-6">
+        <div className="flex flex-col lg:flex-row justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="font-mono font-bold text-primary">{order.id}</span>
+              <Badge className={`${statusColors[order.status]} flex items-center gap-1`}>
+                {statusIcons[order.status]}
+                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              </Badge>
+            </div>
+            <p className="font-medium text-foreground">{order.customer}</p>
+            <p className="text-sm text-muted-foreground truncate">{order.email}</p>
+            <p className="text-sm text-muted-foreground mt-1">{order.date}</p>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground mb-1">Items:</p>
+            <ul className="text-sm text-muted-foreground mb-3">
+              {order.items.map((item, i) => (
+                <li key={i}>• {item}</li>
+              ))}
+            </ul>
+
+            {order.specialInstructions && (
+              <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                      Special Instructions:
+                    </p>
+                    <p className="text-sm text-amber-800 dark:text-amber-200 break-words">
+                      {order.specialInstructions}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-3">
+            <p className="text-xl font-bold text-primary">{order.total}</p>
+            <Select
+              value={order.status}
+              onValueChange={(value) => updateOrderStatus(order.orderNumber, value)}
+            >
+              <SelectTrigger className="w-full sm:w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="shipped">Shipped</SelectItem>
+                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -919,10 +996,7 @@ export default function Admin() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Rest of TabsContent remains the same as in your original file */}
-            {/* I'll include just the orders tab here for brevity, but you should keep all the original TabsContent sections */}
-
-            <TabsContent value="orders" className="space-y-4">
+            <TabsContent value="orders" className="space-y-6">
               {loadingOrders ? (
                 <div className="flex justify-center items-center py-16">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -935,70 +1009,77 @@ export default function Admin() {
                   </CardContent>
                 </Card>
               ) : (
-                orders.map((order) => (
-                  <Card key={order.id}>
-                    <CardContent className="p-4 md:p-6">
-                      <div className="flex flex-col lg:flex-row justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <span className="font-mono font-bold text-primary">{order.id}</span>
-                            <Badge className={`${statusColors[order.status]} flex items-center gap-1`}>
-                              {statusIcons[order.status]}
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                            </Badge>
-                          </div>
-                          <p className="font-medium text-foreground">{order.customer}</p>
-                          <p className="text-sm text-muted-foreground truncate">{order.email}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{order.date}</p>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground mb-1">Items:</p>
-                          <ul className="text-sm text-muted-foreground mb-3">
-                            {order.items.map((item, i) => (
-                              <li key={i}>• {item}</li>
-                            ))}
-                          </ul>
-
-                          {order.specialInstructions && (
-                            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
-                              <div className="flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
-                                    Special Instructions:
-                                  </p>
-                                  <p className="text-sm text-amber-800 dark:text-amber-200 break-words">
-                                    {order.specialInstructions}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-3">
-                          <p className="text-xl font-bold text-primary">{order.total}</p>
-                          <Select
-                            value={order.status}
-                            onValueChange={(value) => updateOrderStatus(order.orderNumber, value)}
-                          >
-                            <SelectTrigger className="w-full sm:w-36">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="processing">Processing</SelectItem>
-                              <SelectItem value="shipped">Shipped</SelectItem>
-                              <SelectItem value="delivered">Delivered</SelectItem>
-                              <SelectItem value="cancelled">Cancelled</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                <>
+                  {/* Pending Orders */}
+                  {ordersByStatus.pending.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Clock className="h-5 w-5 text-amber-500" />
+                        <h2 className="text-xl font-bold text-foreground">Pending Orders</h2>
+                        <Badge variant="secondary">{ordersByStatus.pending.length}</Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      <div className="space-y-4">
+                        {ordersByStatus.pending.map(renderOrderCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Processing Orders */}
+                  {ordersByStatus.processing.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <ChefHat className="h-5 w-5 text-orange-500" />
+                        <h2 className="text-xl font-bold text-foreground">Processing Orders</h2>
+                        <Badge variant="secondary">{ordersByStatus.processing.length}</Badge>
+                      </div>
+                      <div className="space-y-4">
+                        {ordersByStatus.processing.map(renderOrderCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Shipped Orders */}
+                  {ordersByStatus.shipped.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Truck className="h-5 w-5 text-blue-500" />
+                        <h2 className="text-xl font-bold text-foreground">Shipped Orders</h2>
+                        <Badge variant="secondary">{ordersByStatus.shipped.length}</Badge>
+                      </div>
+                      <div className="space-y-4">
+                        {ordersByStatus.shipped.map(renderOrderCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Delivered Orders */}
+                  {ordersByStatus.delivered.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <h2 className="text-xl font-bold text-foreground">Delivered Orders</h2>
+                        <Badge variant="secondary">{ordersByStatus.delivered.length}</Badge>
+                      </div>
+                      <div className="space-y-4">
+                        {ordersByStatus.delivered.map(renderOrderCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cancelled Orders */}
+                  {ordersByStatus.cancelled.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <XCircle className="h-5 w-5 text-red-500" />
+                        <h2 className="text-xl font-bold text-foreground">Cancelled Orders</h2>
+                        <Badge variant="secondary">{ordersByStatus.cancelled.length}</Badge>
+                      </div>
+                      <div className="space-y-4">
+                        {ordersByStatus.cancelled.map(renderOrderCard)}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 
@@ -1459,89 +1540,150 @@ export default function Admin() {
               </div>
             </TabsContent>
 
-            {/* Messages Tab
-            <TabsContent value="messages" className="space-y-4">
-              <div className="grid md:grid-cols-3 gap-4">
-                <Card className="md:col-span-1">
-                  <CardHeader>
-                    <CardTitle>Conversations</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y">
-                      {messages.map((chat) => (
-                        <button
-                          key={chat.id}
-                          onClick={() => setSelectedChat(chat)}
-                          className={`w-full p-4 text-left hover:bg-accent transition-colors ${selectedChat?.id === chat.id ? "bg-accent" : ""}`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="font-medium text-foreground">{chat.customer}</p>
-                          </div>
-                          <p className="text-sm text-muted-foreground">Order {chat.orderId}</p>
-                          <p className="text-xs text-muted-foreground truncate mt-1">
-                            {chat.messages[chat.messages.length - 1].text}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="md:col-span-2">
-                  {selectedChat ? (
-                    <>
-                      <CardHeader className="border-b">
-                        <div>
-                          <CardTitle>{selectedChat.customer}</CardTitle>
-                          <p className="text-sm text-muted-foreground">Order {selectedChat.orderId}</p>
+            <TabsContent value="support" className="space-y-4">
+              {/* Mobile: Show either list or chat */}
+              <div className="block md:hidden">
+                {showMobileChatList ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Support Conversations
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {loadingConversations ? (
+                        <div className="flex justify-center items-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-                          {selectedChat.messages.map((msg, idx) => (
-                            <div
-                              key={idx}
-                              className={`flex ${msg.from === "admin" ? "justify-end" : "justify-start"}`}
+                      ) : supportConversations.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                          <p className="text-sm">No support conversations yet</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {supportConversations.map((conversation) => (
+                            <button
+                              key={conversation.userId}
+                              onClick={() => handleSelectConversation(conversation)}
+                              className="w-full p-4 text-left hover:bg-accent transition-colors"
                             >
-                              <div
-                                className={`max-w-[80%] rounded-lg p-3 ${msg.from === "admin"
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted"
-                                  }`}
-                              >
-                                <p className="text-sm">{msg.text}</p>
-                                <p className="text-xs opacity-70 mt-1">{msg.time}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                                </div>
+                                {conversation.unreadCount > 0 && (
+                                  <Badge className="ml-2 bg-red-500 text-white hover:bg-red-600">
+                                    {conversation.unreadCount}
+                                  </Badge>
+                                )}
                               </div>
-                            </div>
+                              <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
+                              <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(conversation.lastMessageTime).toLocaleString()}
+                              </p>
+                            </button>
                           ))}
                         </div>
-                        <div className="flex gap-2">
-                          <Input
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Type your message..."
-                            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                          />
-                          <Button onClick={sendMessage}>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </>
-                  ) : (
-                    <CardContent className="flex items-center justify-center h-full min-h-[400px]">
-                      <div className="text-center text-muted-foreground">
-                        <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                        <p>Select a conversation to start messaging</p>
-                      </div>
+                      )}
                     </CardContent>
-                  )}
-                </Card>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="border-b">
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setShowMobileChatList(true);
+                            setSelectedConversation(null);
+                          }}
+                        >
+                          <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                        <div className="flex-1">
+                          <CardTitle>{selectedConversation?.userName}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{selectedConversation?.userEmail}</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      {loadingMessages ? (
+                        <div className="flex justify-center items-center py-16">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
+                            {conversationMessages.length === 0 ? (
+                              <p className="text-center text-muted-foreground py-8">No messages yet</p>
+                            ) : (
+                              conversationMessages.map((msg) => {
+                                const isFromAdmin = msg.isFromAdmin;
+                                return (
+                                  <div
+                                    key={msg._id}
+                                    className={`flex ${isFromAdmin ? "justify-end" : "justify-start"}`}
+                                  >
+                                    <div
+                                      className={`max-w-[80%] rounded-lg p-3 ${isFromAdmin
+                                        ? "bg-primary text-primary-foreground"
+                                        : msg.isAutoReply
+                                          ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200"
+                                          : "bg-muted"
+                                        }`}
+                                    >
+                                      {msg.fromUserName && (
+                                        <p className="text-xs font-semibold mb-1 opacity-80">
+                                          {msg.fromUserName}
+                                        </p>
+                                      )}
+                                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                      <p className="text-xs opacity-70 mt-1">
+                                        {new Date(msg.createdAt).toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              value={supportMessage}
+                              onChange={(e) => setSupportMessage(e.target.value)}
+                              placeholder="Type your message..."
+                              onKeyPress={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendSupportMessage();
+                                }
+                              }}
+                              disabled={sendingSupportMessage || loadingMessages}
+                            />
+                            <Button
+                              onClick={handleSendSupportMessage}
+                              disabled={sendingSupportMessage || loadingMessages}
+                            >
+                              {sendingSupportMessage ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
-            </TabsContent> */}
 
-            <TabsContent value="support" className="space-y-4">
-              <div className="grid md:grid-cols-3 gap-4">
+              {/* Desktop: Show both side by side */}
+              <div className="hidden md:grid md:grid-cols-3 gap-4">
                 {/* Conversations List */}
                 <Card className="md:col-span-1">
                   <CardHeader>
@@ -1577,9 +1719,9 @@ export default function Admin() {
                                   <Loader2 className="h-3 w-3 animate-spin text-primary" />
                                 )}
                               </div>
-                              {conversation.messageCount > 0 && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {conversation.messageCount}
+                              {conversation.unreadCount > 0 && (
+                                <Badge className="ml-2 bg-red-500 text-white hover:bg-red-600">
+                                  {conversation.unreadCount}
                                 </Badge>
                               )}
                             </div>
@@ -1606,7 +1748,6 @@ export default function Admin() {
                         </div>
                       </CardHeader>
                       <CardContent className="p-4">
-                        {/* Show loader while messages are loading */}
                         {loadingMessages ? (
                           <div className="flex justify-center items-center py-16">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

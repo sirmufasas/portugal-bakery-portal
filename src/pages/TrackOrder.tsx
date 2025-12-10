@@ -3,7 +3,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2 } from "lucide-react";
+import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
@@ -42,6 +42,7 @@ const statusSteps = [
   { key: "processing", label: "Processing", icon: ChefHat },
   { key: "shipped", label: "Shipped", icon: Package },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
+  { key: "cancelled", label: "Cancelled", icon: XCircle },
 ];
 
 const TrackOrder = () => {
