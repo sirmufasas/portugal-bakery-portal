@@ -1,10 +1,10 @@
-// src/pages/Menu.tsx - Updated to fix image property issue
+// src/pages/Menu.tsx - Updated with dropdown filter
 import React, { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, X, AlertTriangle, Scale, Flame, Search } from "lucide-react";
+import { ShoppingBag, X, AlertTriangle, Scale, Flame, Search, Filter, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { categories } from "@/data/products";
@@ -20,6 +20,7 @@ const Menu = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { addToCart, totalItems } = useCart();
   const { products: allProducts } = useProducts();
   const { user } = useAuth();
@@ -69,7 +70,7 @@ const Menu = () => {
       ...product,
       imageUrl: product.image
     });
-    
+
     toast({
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
@@ -276,52 +277,117 @@ const Menu = () => {
           </div>
         </section>
 
-        {/* Category Filter */}
+        {/* Search and Filter Bar */}
         <section className="py-6 bg-neutral-50 dark:bg-background border-b border-border sticky top-16 md:top-20 z-40 transition-colors duration-300">
           <div className="container mx-auto px-4">
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Search products by name, description, or category..."
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  className="w-full pl-10 pr-4 py-3 rounded-full border border-border bg-white dark:bg-card text-foreground dark:text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 shadow-sm"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-            </div>
+            {/* Search Bar with Filter Button */}
+            <div className="max-w-2xl mx-auto mb-0">
+              <div className="flex gap-2">
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={handleSearch}
+                    className="w-full pl-10 pr-4 py-3 rounded-full border border-border bg-white dark:bg-card text-foreground dark:text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 shadow-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+                    >
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
 
-            {/* Category Filters */}
-            <div className="flex flex-wrap justify-center gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
-                    activeCategory === category
-                      ? "bg-primary text-primary-foreground shadow-soft"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                {/* Filter Dropdown Button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3 rounded-full border transition-all duration-300 shadow-sm whitespace-nowrap",
+                      isFilterOpen
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-white dark:bg-card text-foreground dark:text-foreground border-border hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    )}
+                  >
+                    <Filter className="h-5 w-5" />
+                    <span className="hidden sm:inline font-medium">Filter</span>
+                    {activeCategory !== "All" && (
+                      <span className="bg-primary-foreground/20 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        1
+                      </span>
+                    )}
+                    <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", isFilterOpen && "rotate-180")} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isFilterOpen && (
+                    <>
+                      {/* Backdrop for mobile */}
+                      <div
+                        className="fixed inset-0 z-40 md:hidden"
+                        onClick={() => setIsFilterOpen(false)}
+                      />
+
+                      {/* Dropdown Content */}
+                      <div className="absolute right-0 mt-2 w-screen max-w-xs sm:max-w-sm bg-white dark:bg-card rounded-2xl shadow-elevated border border-border p-4 z-50 animate-fade-in-up">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-foreground">Filter by Category</h3>
+                          <button
+                            onClick={() => setIsFilterOpen(false)}
+                            className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto">
+                          {categories.map((category) => (
+                            <button
+                              key={category}
+                              onClick={() => {
+                                setActiveCategory(category);
+                                setIsFilterOpen(false);
+                              }}
+                              className={cn(
+                                "px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-left",
+                                activeCategory === category
+                                  ? "bg-primary text-primary-foreground shadow-soft"
+                                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span>{category}</span>
+                                {category !== "All" && (
+                                  <span className="text-xs opacity-70">
+                                    {allProducts.filter(p => p.category === category).length}
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+
+                        {activeCategory !== "All" && (
+                          <button
+                            onClick={() => {
+                              setActiveCategory("All");
+                              setIsFilterOpen(false);
+                            }}
+                            className="w-full mt-4 px-4 py-2 rounded-lg text-sm font-medium bg-neutral-100 dark:bg-neutral-800 text-foreground hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                          >
+                            Clear Filter
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
-                >
-                  {category}
-                  {category !== "All" && (
-                    <span className="ml-1 text-xs opacity-70">
-                      ({allProducts.filter(p => p.category === category).length})
-                    </span>
-                  )}
-                </button>
-              ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
