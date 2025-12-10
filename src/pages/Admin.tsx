@@ -1,4 +1,5 @@
-// src/pages/Admin.tsx - Fixed with responsive chat, WhatsApp-style read receipts, and order sections
+
+// src/pages/Admin.tsx - Fixed with proper notifications and unread counts
 import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -157,6 +158,8 @@ export default function Admin() {
     if (currentTab === "orders") {
       setNewOrderCount(0);
       setBouncingOrders(false);
+    } else if (currentTab === "products") {
+      setHasNewProducts(false); // ✅ Clear green dot when viewing products
     }
   }, [currentTab]);
 
@@ -199,27 +202,33 @@ export default function Admin() {
           };
 
           setOrders(prevOrders => {
+            // ✅ FIX: Check if order already exists before adding
             const exists = prevOrders.some(o => o.orderNumber === transformedOrder.orderNumber);
-            if (exists) return prevOrders;
+            if (exists) {
+              console.log('Order already exists, skipping notification');
+              return prevOrders;
+            }
+
+            // Only increment counter and show notifications for truly NEW orders
+            setNewOrderCount(prev => prev + 1);
+            setBouncingOrders(true);
+
+            const notificationTitle = '🎉 NEW ORDER!';
+            const notificationBody = `Order #${data.order.orderNumber} from ${transformedOrder.customer} - ${transformedOrder.total}`;
+
+            console.log('🔊 Calling notifyAdmin...');
+            notifyAdmin('order', notificationTitle, notificationBody);
+
+            toast({
+              title: notificationTitle,
+              description: notificationBody,
+              duration: 10000,
+            });
+
+            console.log('✅ All notifications triggered');
+
             return [transformedOrder, ...prevOrders];
           });
-
-          setNewOrderCount(prev => prev + 1);
-          setBouncingOrders(true);
-
-          const notificationTitle = '🎉 NEW ORDER!';
-          const notificationBody = `Order #${data.order.orderNumber} from ${transformedOrder.customer} - ${transformedOrder.total}`;
-
-          console.log('🔊 Calling notifyAdmin...');
-          notifyAdmin('order', notificationTitle, notificationBody);
-
-          toast({
-            title: notificationTitle,
-            description: notificationBody,
-            duration: 10000,
-          });
-
-          console.log('✅ All notifications triggered');
         }
       } catch (error) {
         console.error('Failed to parse SSE message:', error);
@@ -328,9 +337,11 @@ export default function Admin() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Conversations loaded:', data); // ✅ Debug logging
         setSupportConversations(data);
 
         const totalUnread = data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+        console.log('📊 Total unread messages:', totalUnread); // ✅ Debug logging
         setUnreadSupportCount(totalUnread);
       }
     } catch (error) {
@@ -366,21 +377,33 @@ export default function Admin() {
     setLoadingMessages(true);
     setSelectedConversation(conversation);
     setShowMobileChatList(false);
-
-    // Mark conversation as read
-    setSupportConversations(prev =>
-      prev.map(conv =>
-        conv.userId === conversation.userId
-          ? { ...conv, unreadCount: 0 }
-          : conv
-      )
-    );
-
-    setUnreadSupportCount(prev => Math.max(0, prev - (conversation.unreadCount || 0)));
     setBouncingChat(false);
 
     try {
       await fetchConversationMessages(conversation.userId);
+
+      // ✅ Mark as read on backend (if you have this endpoint)
+      const token = localStorage.getItem('token');
+      try {
+        await fetch(`${API_URL}/api/support/mark-read/${conversation.userId}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.log('No mark-read endpoint available');
+      }
+
+      // Update frontend
+      setSupportConversations(prev =>
+        prev.map(conv =>
+          conv.userId === conversation.userId
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        )
+      );
+
+      setUnreadSupportCount(prev => Math.max(0, prev - (conversation.unreadCount || 0)));
+
     } catch (error) {
       console.error('Error loading messages:', error);
       toast({
@@ -392,16 +415,6 @@ export default function Admin() {
       setLoadingMessages(false);
     }
   };
-
-  useEffect(() => {
-    const checkForNewProducts = () => {
-      if (products.length > 0) {
-        setHasNewProducts(true);
-      }
-    };
-
-    checkForNewProducts();
-  }, [products]);
 
   const handleSendSupportMessage = async () => {
     if (!supportMessage.trim() || !selectedConversation || sendingSupportMessage) return;
@@ -724,6 +737,9 @@ export default function Admin() {
         fat: "8g",
       });
       setImagePreview(null);
+
+      // ✅ Set flag to show green dot on Products tab
+      setHasNewProducts(true);
 
       toast({
         title: "Product Added",
