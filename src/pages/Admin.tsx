@@ -82,7 +82,7 @@ const statusIcons = {
 export default function Admin() {
   const { toast } = useToast();
   const { products = [], addProduct, updateProduct, deleteProduct } = useProducts();
-  
+
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -93,7 +93,7 @@ export default function Admin() {
   const [imagePreview, setImagePreview] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  
+
   const [supportConversations, setSupportConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [conversationMessages, setConversationMessages] = useState([]);
@@ -101,6 +101,9 @@ export default function Admin() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [sendingSupportMessage, setSendingSupportMessage] = useState(false);
   const eventSourceSupportRef = useRef<EventSource | null>(null);
+
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
 
   const [newProductForm, setNewProductForm] = useState({
     name: "",
@@ -185,71 +188,71 @@ export default function Admin() {
     };
   }, []);
 
- useEffect(() => {
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  if (!token || user.role !== 'admin') return;
+    if (!token || user.role !== 'admin') return;
 
-  console.log('🔌 Connecting to Admin Support Chat SSE...');
+    console.log('🔌 Connecting to Admin Support Chat SSE...');
 
-  const eventSource = new EventSource(`${API_URL}/api/sse/admin-support?token=${token}`);
+    const eventSource = new EventSource(`${API_URL}/api/sse/admin-support?token=${token}`);
 
-  eventSource.onopen = () => {
-    console.log('✅ Admin Support Chat SSE connected');
-  };
+    eventSource.onopen = () => {
+      console.log('✅ Admin Support Chat SSE connected');
+    };
 
-  eventSource.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      console.log('📡 Admin SSE message received:', data);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 Admin SSE message received:', data);
 
-      if (data.type === 'new_support_message') {
-        // Update conversations list
-        fetchSupportConversations();
+        if (data.type === 'new_support_message') {
+          // Update conversations list
+          fetchSupportConversations();
 
-        // If this conversation is currently open, add message
-        if (selectedConversation && data.message.userId === selectedConversation.userId) {
-          setConversationMessages(prev => {
-            if (prev.some(m => m._id === data.message._id)) {
-              return prev;
-            }
-            return [...prev, data.message];
+          // If this conversation is currently open, add message
+          if (selectedConversation && data.message.userId === selectedConversation.userId) {
+            setConversationMessages(prev => {
+              if (prev.some(m => m._id === data.message._id)) {
+                return prev;
+              }
+              return [...prev, data.message];
+            });
+          }
+
+          // Show notification
+          toast({
+            title: "💬 New Support Message",
+            description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
           });
         }
-
-        // Show notification
-        toast({
-          title: "💬 New Support Message",
-          description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
-        });
+      } catch (error) {
+        console.error('Failed to parse support SSE message:', error);
       }
-    } catch (error) {
-      console.error('Failed to parse support SSE message:', error);
-    }
-  };
+    };
 
-  eventSource.onerror = (error) => {
-    console.error('❌ Support SSE error:', error);
-    eventSource.close();
-    
-    // Retry connection after 5 seconds
-    setTimeout(() => {
-      console.log('🔄 Retrying Admin Support Chat SSE connection...');
-      if (token && user.role === 'admin') {
-        eventSource.close();
-        // The useEffect will re-run
-      }
-    }, 5000);
-  };
+    eventSource.onerror = (error) => {
+      console.error('❌ Support SSE error:', error);
+      eventSource.close();
 
-  eventSourceSupportRef.current = eventSource;
+      // Retry connection after 5 seconds
+      setTimeout(() => {
+        console.log('🔄 Retrying Admin Support Chat SSE connection...');
+        if (token && user.role === 'admin') {
+          eventSource.close();
+          // The useEffect will re-run
+        }
+      }, 5000);
+    };
 
-  return () => {
-    console.log('🔌 Closing Admin Support Chat SSE connection');
-    eventSource.close();
-  };
-}, [selectedConversation, toast]);
+    eventSourceSupportRef.current = eventSource;
+
+    return () => {
+      console.log('🔌 Closing Admin Support Chat SSE connection');
+      eventSource.close();
+    };
+  }, [selectedConversation, toast]);
 
   const fetchSupportConversations = async () => {
     setLoadingConversations(true);
@@ -286,9 +289,15 @@ export default function Admin() {
     }
   };
 
-  const handleSelectConversation = (conversation) => {
+  const handleSelectConversation = async (conversation) => {
+    setLoadingMessages(true); // Show loader
     setSelectedConversation(conversation);
-    fetchConversationMessages(conversation.userId);
+
+    try {
+      await fetchConversationMessages(conversation.userId);
+    } finally {
+      setLoadingMessages(false); // Hide loader
+    }
   };
 
   const handleSendSupportMessage = async () => {
@@ -1496,6 +1505,7 @@ export default function Admin() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
+                    // Update the conversation list rendering to show loader on selected item
                     {loadingConversations ? (
                       <div className="flex justify-center items-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -1511,11 +1521,17 @@ export default function Admin() {
                           <button
                             key={conversation.userId}
                             onClick={() => handleSelectConversation(conversation)}
-                            className={`w-full p-4 text-left hover:bg-accent transition-colors ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
+                            disabled={loadingMessages && selectedConversation?.userId === conversation.userId}
+                            className={`w-full p-4 text-left hover:bg-accent transition-colors disabled:opacity-70 ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
                               }`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                                {loadingMessages && selectedConversation?.userId === conversation.userId && (
+                                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                )}
+                              </div>
                               {conversation.messageCount > 0 && (
                                 <Badge variant="secondary" className="ml-2">
                                   {conversation.messageCount}
@@ -1545,61 +1561,73 @@ export default function Admin() {
                         </div>
                       </CardHeader>
                       <CardContent className="p-4">
-                        <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
-                          {conversationMessages.length === 0 ? (
-                            <p className="text-center text-muted-foreground py-8">No messages yet</p>
-                          ) : (
-                            conversationMessages.map((msg) => {
-                              const isFromAdmin = msg.isFromAdmin;
-                              return (
-                                <div
-                                  key={msg._id}
-                                  className={`flex ${isFromAdmin ? "justify-end" : "justify-start"}`}
-                                >
-                                  <div
-                                    className={`max-w-[80%] rounded-lg p-3 ${isFromAdmin
-                                        ? "bg-primary text-primary-foreground"
-                                        : msg.isAutoReply
-                                          ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200"
-                                          : "bg-muted"
-                                      }`}
-                                  >
-                                    {msg.fromUserName && (
-                                      <p className="text-xs font-semibold mb-1 opacity-80">
-                                        {msg.fromUserName}
-                                      </p>
-                                    )}
-                                    <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                                    <p className="text-xs opacity-70 mt-1">
-                                      {new Date(msg.createdAt).toLocaleString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Input
-                            value={supportMessage}
-                            onChange={(e) => setSupportMessage(e.target.value)}
-                            placeholder="Type your message..."
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendSupportMessage();
-                              }
-                            }}
-                            disabled={sendingSupportMessage}
-                          />
-                          <Button onClick={handleSendSupportMessage} disabled={sendingSupportMessage}>
-                            {sendingSupportMessage ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
+                        {/* Show loader while messages are loading */}
+                        {loadingMessages ? (
+                          <div className="flex justify-center items-center py-16">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
+                              {conversationMessages.length === 0 ? (
+                                <p className="text-center text-muted-foreground py-8">No messages yet</p>
+                              ) : (
+                                conversationMessages.map((msg) => {
+                                  const isFromAdmin = msg.isFromAdmin;
+                                  return (
+                                    <div
+                                      key={msg._id}
+                                      className={`flex ${isFromAdmin ? "justify-end" : "justify-start"}`}
+                                    >
+                                      <div
+                                        className={`max-w-[80%] rounded-lg p-3 ${isFromAdmin
+                                          ? "bg-primary text-primary-foreground"
+                                          : msg.isAutoReply
+                                            ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200"
+                                            : "bg-muted"
+                                          }`}
+                                      >
+                                        {msg.fromUserName && (
+                                          <p className="text-xs font-semibold mb-1 opacity-80">
+                                            {msg.fromUserName}
+                                          </p>
+                                        )}
+                                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                        <p className="text-xs opacity-70 mt-1">
+                                          {new Date(msg.createdAt).toLocaleString()}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                value={supportMessage}
+                                onChange={(e) => setSupportMessage(e.target.value)}
+                                placeholder="Type your message..."
+                                onKeyPress={(e) => {
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendSupportMessage();
+                                  }
+                                }}
+                                disabled={sendingSupportMessage || loadingMessages}
+                              />
+                              <Button
+                                onClick={handleSendSupportMessage}
+                                disabled={sendingSupportMessage || loadingMessages}
+                              >
+                                {sendingSupportMessage ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </CardContent>
                     </>
                   ) : (

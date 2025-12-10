@@ -46,44 +46,49 @@ const Profile = () => {
             return;
         }
 
-        // Fetch user's purchases
-        const fetchOrders = async () => {
-            if (!token) {
-                setFetchingOrders(false);
-                return;
-            }
+       const fetchOrders = async () => {
+    if (!token) {
+        setFetchingOrders(false);
+        return;
+    }
 
-            try {
-                setFetchingOrders(true);
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my-orders`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+    try {
+        setFetchingOrders(true);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my-orders`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
 
-                if (!res.ok) {
-                    throw new Error("Failed to fetch orders");
-                }
+        if (!res.ok) throw new Error("Failed to fetch orders");
 
-                const data = await res.json();
-                
-                // Ensure data is an array and has the correct structure
-                if (Array.isArray(data)) {
-                    setPurchases(data);
-                } else {
-                    console.error("Invalid orders data format:", data);
-                    setPurchases([]);
-                }
-            } catch (err) {
-                console.error("Error fetching orders:", err);
-                toast({
-                    title: "Error",
-                    description: "Failed to fetch your purchases.",
-                    variant: "destructive",
-                });
-                setPurchases([]);
-            } finally {
-                setFetchingOrders(false);
-            }
-        };
+        const data = await res.json();
+
+        // Map backend orders → frontend Purchase format
+        const mapped = Array.isArray(data)
+            ? data.flatMap((order: any) =>
+                  order.items.map((item: any) => ({
+                      id: order._id,
+                      productName: item.product?.name || "Unknown Product",
+                      quantity: item.quantity,
+                      date: order.createdAt,
+                      total: order.total,
+                  }))
+              )
+            : [];
+
+        setPurchases(mapped);
+    } catch (err) {
+        console.error("Error fetching orders:", err);
+        toast({
+            title: "Error",
+            description: "Failed to fetch your purchases.",
+            variant: "destructive",
+        });
+        setPurchases([]);
+    } finally {
+        setFetchingOrders(false);
+    }
+};
+
 
         fetchOrders();
     }, [user, token, navigate, toast]);
