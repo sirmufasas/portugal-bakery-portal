@@ -4,9 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
+
 import { FloatingMessageButton } from "@/components/chat/FloatingMessageButton";
 
 import Index from "./pages/Index";
@@ -26,6 +27,12 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
+/** Helper component to avoid context errors */
+const FloatingButtonWrapper = () => {
+  const { user } = useAuth();
+  return user?.role !== "admin" ? <FloatingMessageButton /> : null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -36,7 +43,10 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <FloatingMessageButton />
+
+                {/* Floating button is now protected from admin */}
+                <FloatingButtonWrapper />
+
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Index />} />
@@ -57,6 +67,7 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+
                   <Route
                     path="/track-order"
                     element={
@@ -65,6 +76,7 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+
                   <Route
                     path="/admin"
                     element={
@@ -74,7 +86,7 @@ const App = () => (
                     }
                   />
 
-                  {/* Fallback */}
+                  {/* 404 */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
