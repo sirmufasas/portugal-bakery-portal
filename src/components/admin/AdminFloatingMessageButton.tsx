@@ -1,6 +1,6 @@
-// src/components/admin/AdminFloatingMessageButton.tsx
+// src/components/admin/AdminFloatingMessageButton.tsx - Fixed version
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, X, Send, Loader2, Bell } from "lucide-react";
+import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { playNotificationSound } from "@/utils/sounds";
-
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -47,7 +46,6 @@ export const AdminFloatingMessageButton = () => {
     const eventSourceRef = useRef<EventSource | null>(null);
     const [bouncing, setBouncing] = useState(false);
 
-
     // Only show for admins
     if (!isAuthenticated || user?.role !== 'admin') return null;
 
@@ -78,18 +76,18 @@ export const AdminFloatingMessageButton = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        console.log('🔌 Admin: Connecting to Support Chat SSE...');
+        console.log('🔌 Admin Floating: Connecting to Support Chat SSE...');
 
         const eventSource = new EventSource(`${API_URL}/api/sse/admin-support?token=${token}`);
 
         eventSource.onopen = () => {
-            console.log('✅ Admin Support Chat SSE connected');
+            console.log('✅ Admin Floating Support Chat SSE connected');
         };
 
         eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                console.log('📡 Admin SSE message received:', data);
+                console.log('📡 Admin Floating SSE message received:', data);
 
                 if (data.type === 'new_support_message') {
                     // Update conversations list
@@ -128,7 +126,7 @@ export const AdminFloatingMessageButton = () => {
         };
 
         eventSource.onerror = (error) => {
-            console.error('❌ SSE error:', error);
+            console.error('❌ Admin Floating SSE error:', error);
             eventSource.close();
         };
 
@@ -251,32 +249,33 @@ export const AdminFloatingMessageButton = () => {
                     onClick={() => {
                         setShowChat(true);
                         fetchConversations();
-                        setBouncing(false); // Stop bouncing when clicked
+                        setBouncing(false);
                     }}
                     className={cn(
-                        "fixed bottom-24 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 relative",
+                        "fixed bottom-24 right-6 z-50 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:from-blue-600 hover:to-blue-700 relative group",
                         bouncing && "animate-bounce"
                     )}
                     title="Support Messages"
                 >
-                    <MessageSquare className="h-6 w-6" />
+                    <MessageCircle className="h-6 w-6" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse shadow-lg">
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                     )}
+                    <span className="absolute inset-0 rounded-full bg-blue-400 opacity-0 group-hover:opacity-20 transition-opacity"></span>
                 </button>
             )}
 
             {/* Chat Window */}
             {showChat && (
                 <div className="fixed bottom-6 right-6 z-50 w-[600px] max-w-[calc(100vw-3rem)] h-[600px] bg-white dark:bg-card rounded-2xl shadow-2xl flex overflow-hidden border border-border">
-
+                    
                     {/* Conversations List */}
                     <div className="w-1/3 border-r border-border flex flex-col">
-                        <div className="bg-primary text-primary-foreground p-4">
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4">
                             <h3 className="font-semibold flex items-center gap-2">
-                                <MessageSquare className="h-5 w-5" />
+                                <MessageCircle className="h-5 w-5" />
                                 Support Chat
                             </h3>
                             <p className="text-xs opacity-90">Customer Messages</p>
@@ -289,7 +288,7 @@ export const AdminFloatingMessageButton = () => {
                                 </div>
                             ) : conversations.length === 0 ? (
                                 <div className="p-4 text-center text-muted-foreground">
-                                    <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                                    <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-20" />
                                     <p className="text-xs">No conversations yet</p>
                                 </div>
                             ) : (
@@ -306,7 +305,7 @@ export const AdminFloatingMessageButton = () => {
                                             <div className="flex items-center justify-between mb-1">
                                                 <p className="font-medium text-sm truncate">{conv.userName}</p>
                                                 {conv.messageCount > 0 && (
-                                                    <Badge variant="destructive" className="ml-2">
+                                                    <Badge className="ml-2 bg-red-500 hover:bg-red-600">
                                                         {conv.messageCount}
                                                     </Badge>
                                                 )}
@@ -325,7 +324,7 @@ export const AdminFloatingMessageButton = () => {
                         {selectedConversation ? (
                             <>
                                 {/* Header */}
-                                <div className="bg-primary text-primary-foreground p-4 flex items-center justify-between">
+                                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 flex items-center justify-between">
                                     <div>
                                         <h3 className="font-semibold">{selectedConversation.userName}</h3>
                                         <p className="text-xs opacity-90">{selectedConversation.userEmail}</p>
@@ -334,7 +333,7 @@ export const AdminFloatingMessageButton = () => {
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => setShowChat(false)}
-                                        className="text-primary-foreground hover:bg-primary-foreground/20"
+                                        className="text-white hover:bg-white/20"
                                     >
                                         <X className="h-5 w-5" />
                                     </Button>
@@ -344,15 +343,12 @@ export const AdminFloatingMessageButton = () => {
                                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-neutral-50 dark:bg-card">
                                     {messages.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                                            <MessageSquare className="h-12 w-12 mb-3 opacity-30" />
+                                            <MessageCircle className="h-12 w-12 mb-3 opacity-30" />
                                             <p className="text-sm">No messages yet</p>
                                         </div>
                                     ) : (
                                         <>
                                             {messages.map((msg) => {
-                                                // Check if message is from admin
-                                                // If fromUserId is null, it could be an auto-reply
-                                                // If isFromAdmin is true, it's from admin
                                                 const isFromAdmin = msg.isFromAdmin === true ||
                                                     (msg.fromUserId && msg.fromUserId !== selectedConversation.userId);
 
@@ -368,7 +364,7 @@ export const AdminFloatingMessageButton = () => {
                                                             className={cn(
                                                                 "max-w-[80%] rounded-lg p-3",
                                                                 isFromAdmin
-                                                                    ? "bg-primary text-primary-foreground"
+                                                                    ? "bg-blue-500 text-white"
                                                                     : msg.isAutoReply
                                                                         ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
                                                                         : "bg-white dark:bg-card border border-border text-foreground"
@@ -384,7 +380,7 @@ export const AdminFloatingMessageButton = () => {
                                                                 className={cn(
                                                                     "text-xs mt-1",
                                                                     isFromAdmin
-                                                                        ? "text-primary-foreground/70"
+                                                                        ? "text-white/70"
                                                                         : "text-muted-foreground"
                                                                 )}
                                                             >
@@ -422,6 +418,7 @@ export const AdminFloatingMessageButton = () => {
                                             onClick={handleSendMessage}
                                             disabled={!newMessage.trim() || sending}
                                             size="icon"
+                                            className="bg-blue-500 hover:bg-blue-600"
                                         >
                                             {sending ? (
                                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -434,20 +431,20 @@ export const AdminFloatingMessageButton = () => {
                             </>
                         ) : (
                             <div className="flex-1 flex flex-col">
-                                <div className="bg-primary text-primary-foreground p-4 flex items-center justify-between">
+                                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 flex items-center justify-between">
                                     <h3 className="font-semibold">Support Chat</h3>
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => setShowChat(false)}
-                                        className="text-primary-foreground hover:bg-primary-foreground/20"
+                                        className="text-white hover:bg-white/20"
                                     >
                                         <X className="h-5 w-5" />
                                     </Button>
                                 </div>
                                 <div className="flex-1 flex items-center justify-center text-center text-muted-foreground p-4">
                                     <div>
-                                        <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                                        <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-20" />
                                         <p>Select a conversation to view messages</p>
                                     </div>
                                 </div>

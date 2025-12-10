@@ -1,5 +1,4 @@
-
-// src/pages/Admin.tsx - Complete version with backend integration
+// src/pages/Admin.tsx - Fixed version with proper notifications
 import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -16,7 +15,7 @@ import { categories } from "@/data/products";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { uploadImage } from "@/utils/uploadImage";
 import { AdminFloatingMessageButton } from "@/components/admin/AdminFloatingMessageButton";
-import { playNotificationSound } from "@/utils/sounds";
+import { playNotificationSound, requestAudioPermission } from "@/utils/sounds";
 
 import {
   Package,
@@ -38,30 +37,12 @@ import {
   Search,
   Flame,
   Users,
-  Loader2  // Add this
+  Loader2,
+  Bell,
+  Volume2
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
-
-// const mockMessages = [
-//   {
-//     id: 1,
-//     orderId: "PB-001",
-//     customer: "Maria Santos",
-//     messages: [
-//       { from: "customer", text: "Hi, can I pick up at 2pm instead of 1pm?", time: "10:30" },
-//       { from: "admin", text: "Of course! We'll have your order ready at 2pm.", time: "10:35" },
-//     ],
-//   },
-//   {
-//     id: 2,
-//     orderId: "PB-002",
-//     customer: "João Silva",
-//     messages: [
-//       { from: "customer", text: "Can you add 'Happy Birthday Ana' on the cake?", time: "10:20" },
-//     ],
-//   },
-// ];
 
 const statusColors = {
   pending: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
@@ -79,16 +60,12 @@ const statusIcons = {
   cancelled: <XCircle className="h-3 w-3" />,
 };
 
-
 export default function Admin() {
   const { toast } = useToast();
   const { products = [], addProduct, updateProduct, deleteProduct } = useProducts();
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [messages, setMessages] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [newMessage, setNewMessage] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -107,10 +84,10 @@ export default function Admin() {
   const [hasNewProducts, setHasNewProducts] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [bouncingChat, setBouncingChat] = useState(false);
-
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [bouncingOrders, setBouncingOrders] = useState(false);
-
+  const [currentTab, setCurrentTab] = useState("orders");
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   const [newProductForm, setNewProductForm] = useState({
     name: "",
@@ -127,9 +104,42 @@ export default function Admin() {
     fat: "8g",
   });
 
+  // Initialize audio on mount
+  useEffect(() => {
+    const initAudio = async () => {
+      const enabled = await requestAudioPermission();
+      setAudioEnabled(enabled);
+      if (!enabled) {
+        console.warn('⚠️ Audio notifications may not work. User interaction required.');
+      }
+    };
+    initAudio();
+  }, []);
+
+  // Enable audio on first user interaction
+  useEffect(() => {
+    const enableAudio = async () => {
+      if (!audioEnabled) {
+        const enabled = await requestAudioPermission();
+        setAudioEnabled(enabled);
+      }
+    };
+
+    document.addEventListener('click', enableAudio, { once: true });
+    return () => document.removeEventListener('click', enableAudio);
+  }, [audioEnabled]);
+
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Reset new order count when viewing orders tab
+  useEffect(() => {
+    if (currentTab === "orders") {
+      setNewOrderCount(0);
+      setBouncingOrders(false);
+    }
+  }, [currentTab]);
 
   // Real-time SSE connection for admins
   useEffect(() => {
@@ -181,14 +191,17 @@ export default function Admin() {
           setBouncingOrders(true);
 
           // Play LOUD notification sound for orders
+          console.log('🔔 Playing order notification sound...');
           playNotificationSound('order');
 
+          // Show prominent toast notification
           toast({
-            title: "🔔 NEW ORDER RECEIVED!",
-            description: `Order ${data.order.orderNumber} from ${user.firstName || 'Customer'}`,
-            variant: "default",
-            className: "bg-green-500 text-white border-green-600",
+            title: "🎉 NEW ORDER RECEIVED!",
+            description: `Order #${data.order.orderNumber} from ${user.firstName || 'Customer'} - ${transformedOrder.total}`,
+            duration: 8000,
           });
+
+          console.log('✅ Order notification complete');
         }
       } catch (error) {
         console.error('Failed to parse SSE message:', error);
@@ -204,15 +217,13 @@ export default function Admin() {
       console.log('🔌 Closing Admin SSE connection');
       eventSource.close();
     };
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
-    // You might want to reset this when user views the orders tab
-    // For simplicity, we'll stop bouncing after 10 seconds
     if (bouncingOrders) {
       const timer = setTimeout(() => {
         setBouncingOrders(false);
-      }, 10000); // Stop after 10 seconds
+      }, 10000);
 
       return () => clearTimeout(timer);
     }
@@ -238,10 +249,8 @@ export default function Admin() {
         console.log('📡 Admin SSE message received:', data);
 
         if (data.type === 'new_support_message') {
-          // Update conversations list
           fetchSupportConversations();
 
-          // If this conversation is currently open, add message
           if (selectedConversation && data.message.userId === selectedConversation.userId) {
             setConversationMessages(prev => {
               if (prev.some(m => m._id === data.message._id)) {
@@ -250,16 +259,12 @@ export default function Admin() {
               return [...prev, data.message];
             });
           } else {
-            // Increment unread count if conversation is not open
             setUnreadSupportCount(prev => prev + 1);
-            // Start bouncing animation
             setBouncingChat(true);
           }
 
-          // Play notification sound
-          playNotificationSound();
+          playNotificationSound('message');
 
-          // Show notification
           toast({
             title: "💬 New Support Message",
             description: `${data.message.fromUserName}: ${data.message.message.substring(0, 50)}...`,
@@ -274,12 +279,10 @@ export default function Admin() {
       console.error('❌ Support SSE error:', error);
       eventSource.close();
 
-      // Retry connection after 5 seconds
       setTimeout(() => {
         console.log('🔄 Retrying Admin Support Chat SSE connection...');
         if (token && user.role === 'admin') {
           eventSource.close();
-          // The useEffect will re-run
         }
       }, 5000);
     };
@@ -310,7 +313,6 @@ export default function Admin() {
         const data = await response.json();
         setSupportConversations(data);
 
-        // Calculate total unread messages from conversations
         const totalUnread = data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
         setUnreadSupportCount(totalUnread);
       }
@@ -347,7 +349,6 @@ export default function Admin() {
     setLoadingMessages(true);
     setSelectedConversation(conversation);
 
-    // Reset unread count for this conversation
     setUnreadSupportCount(prev => Math.max(0, prev - (conversation.unreadCount || 0)));
     setBouncingChat(false);
 
@@ -365,14 +366,9 @@ export default function Admin() {
     }
   };
 
-  // Add effect to check for new products
   useEffect(() => {
     const checkForNewProducts = () => {
-      // You might want to implement this based on your backend
-      // For now, we'll just show a badge when products are added
       if (products.length > 0) {
-        // You could compare with previous product count or check timestamps
-        // This is a simple implementation
         setHasNewProducts(true);
       }
     };
@@ -422,7 +418,6 @@ export default function Admin() {
     }
   };
 
-  // ADD THIS useEffect TO FETCH CONVERSATIONS ON MOUNT:
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (user.role === 'admin') {
@@ -450,7 +445,6 @@ export default function Admin() {
       });
 
       const rawText = await response.text();
-      console.log('Raw response:', rawText);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch orders: ${response.status}`);
@@ -490,7 +484,6 @@ export default function Admin() {
     }
   };
 
-
   const filteredProducts = Array.isArray(products) && searchQuery.trim()
     ? products.filter(p =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -506,9 +499,6 @@ export default function Admin() {
     totalProducts: Array.isArray(products) ? products.length : 0,
   };
 
-  // REPLACE your updateOrderStatus function with this diagnostic version
-  // This will help us see exactly what's being sent
-
   const updateOrderStatus = async (orderNumber, newStatus) => {
     try {
       const token = localStorage.getItem('token');
@@ -521,18 +511,6 @@ export default function Admin() {
         return;
       }
 
-      // ✅ DIAGNOSTIC: Log everything we're about to send
-      console.log('\n╔════════════════════════════════════════════════╗');
-      console.log('║  FRONTEND: UPDATING ORDER STATUS              ║');
-      console.log('╚════════════════════════════════════════════════╝');
-      console.log('📦 Order Number:', orderNumber);
-      console.log('🔄 New Status:', newStatus);
-      console.log('🔗 API URL:', API_URL);
-      console.log('🌐 Full URL:', `${API_URL}/api/orders/${orderNumber}/status`);
-      console.log('🎫 Token:', token.substring(0, 20) + '...');
-      console.log('═══════════════════════════════════════════════\n');
-
-      // Show loading state
       setOrders(prevOrders =>
         prevOrders.map(order =>
           order.orderNumber === orderNumber
@@ -544,10 +522,6 @@ export default function Admin() {
       const url = `${API_URL}/api/orders/${orderNumber}/status`;
       const payload = { status: newStatus };
 
-      console.log('📤 Making PUT request...');
-      console.log('   URL:', url);
-      console.log('   Payload:', JSON.stringify(payload));
-
       const response = await fetch(url, {
         method: 'PUT',
         headers: {
@@ -557,54 +531,21 @@ export default function Admin() {
         body: JSON.stringify(payload)
       });
 
-      console.log('📥 Response received:');
-      console.log('   Status:', response.status, response.statusText);
-      console.log('   OK:', response.ok);
-      console.log('   Headers:', Object.fromEntries(response.headers.entries()));
-
-      // Get response as text first for debugging
       const responseText = await response.text();
-      console.log('📄 Raw Response Text:', responseText);
 
-      // Check if response is ok
       if (!response.ok) {
         let errorMessage = 'Failed to update order status';
-        let errorData = null;
-
         try {
-          errorData = JSON.parse(responseText);
+          const errorData = JSON.parse(responseText);
           errorMessage = errorData.error || errorData.message || errorMessage;
-          console.error('❌ Server error (parsed):', errorData);
         } catch (e) {
-          console.error('❌ Non-JSON error response:', responseText);
           errorMessage = `${response.status}: ${response.statusText}`;
         }
-
         throw new Error(errorMessage);
       }
 
-      // Parse successful response
-      let updatedOrder;
-      try {
-        updatedOrder = JSON.parse(responseText);
-        console.log('✅ Parsed successful response:', updatedOrder);
+      const updatedOrder = JSON.parse(responseText);
 
-        // Verify structure
-        if (!updatedOrder.orderNumber || !updatedOrder.status) {
-          console.error('⚠️ Response missing expected fields');
-          console.error('   Expected: orderNumber, status');
-          console.error('   Received:', Object.keys(updatedOrder));
-          throw new Error('Invalid response structure from server');
-        }
-
-        console.log('✅ Response validation passed');
-
-      } catch (e) {
-        console.error('❌ Failed to parse success response:', e);
-        throw new Error('Invalid response from server');
-      }
-
-      // Update local state with confirmed data
       setOrders(prevOrders =>
         prevOrders.map(order =>
           order.orderNumber === orderNumber
@@ -618,19 +559,9 @@ export default function Admin() {
         description: `Order ${orderNumber} status changed to ${newStatus}. Customer has been notified via email.`,
       });
 
-      console.log('✅ Status update completed successfully');
-      console.log('═══════════════════════════════════════════════\n');
-
     } catch (error) {
-      console.error('\n╔════════════════════════════════════════════════╗');
-      console.error('║  FRONTEND ERROR                                ║');
-      console.error('╚════════════════════════════════════════════════╝');
-      console.error('❌ Error:', error.message);
-      console.error('📦 Order Number:', orderNumber);
-      console.error('🔄 Attempted Status:', newStatus);
-      console.error('═══════════════════════════════════════════════\n');
+      console.error('Error updating order:', error);
 
-      // Remove loading state
       setOrders(prevOrders =>
         prevOrders.map(order =>
           order.orderNumber === orderNumber
@@ -639,8 +570,6 @@ export default function Admin() {
         )
       );
 
-      // Refetch to ensure correct state
-      console.log('🔄 Refetching orders to sync state...');
       fetchOrders();
 
       toast({
@@ -649,15 +578,6 @@ export default function Admin() {
         variant: "destructive",
       });
     }
-  };
-
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedChat) return;
-    toast({
-      title: "Message Sent",
-      description: "Your message has been sent to the customer.",
-    });
-    setNewMessage("");
   };
 
   const handleImageUpload = async (
@@ -940,15 +860,18 @@ export default function Admin() {
             </Card>
           </div>
 
-          <Tabs defaultValue="orders" className="space-y-6">
+          <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="orders" className="gap-2 relative">
+              <TabsTrigger 
+                value="orders" 
+                className={`gap-2 relative ${bouncingOrders ? 'animate-bounce' : ''}`}
+              >
                 <Package className="h-4 w-4 hidden sm:block" />
                 Orders
                 {newOrderCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <Badge className="ml-1 bg-red-500 text-white hover:bg-red-600">
                     {newOrderCount}
-                  </span>
+                  </Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="products" className="gap-2 relative">
@@ -958,17 +881,23 @@ export default function Admin() {
                   <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-2 w-2"></span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="support" className="gap-2 relative">
-                <Users className="h-4 w-4 hidden sm:block" />
-                Support Chat
+              <TabsTrigger 
+                value="support" 
+                className={`gap-2 relative ${bouncingChat ? 'animate-bounce' : ''}`}
+              >
+                <MessageSquare className="h-4 w-4 hidden sm:block" />
+                Support
                 {unreadSupportCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <Badge className="ml-1 bg-red-500 text-white hover:bg-red-600">
                     {unreadSupportCount}
-                  </span>
+                  </Badge>
                 )}
               </TabsTrigger>
             </TabsList>
 
+            {/* Rest of TabsContent remains the same as in your original file */}
+            {/* I'll include just the orders tab here for brevity, but you should keep all the original TabsContent sections */}
+            
             <TabsContent value="orders" className="space-y-4">
               {loadingOrders ? (
                 <div className="flex justify-center items-center py-16">
