@@ -39,7 +39,6 @@ export const forceUnlockAudio = async (): Promise<boolean> => {
       unlocked = true;
       console.log("✅ Audio UNLOCKED");
 
-      // Play queued sounds
       while (forcePlayQueue.length > 0) {
         const play = forcePlayQueue.shift();
         if (play) play();
@@ -79,7 +78,7 @@ export const requestAllPermissions = async () => {
 };
 
 /**
- * Play 1-minute LOOPING sound
+ * Play 15-second LOOPING sound
  */
 export const playNotificationSound = (type: "message" | "order" = "message") => {
   console.log(`🔔 playNotificationSound called: ${type}`);
@@ -95,12 +94,9 @@ export const playNotificationSound = (type: "message" | "order" = "message") => 
     }
 
     try {
-      const duration = 60; // 🔥 FULL 1 MINUTE
+      const duration = 15; // 🔥 15 seconds
       const volume = type === "order" ? 1.0 : 0.7;
-
-      // Interval speed of repetition
-      const interval = type === "order" ? 800 : 1500; 
-
+      const interval = type === "order" ? 800 : 1500;
       const endTime = audioContext.currentTime + duration;
 
       const loop = () => {
@@ -115,7 +111,6 @@ export const playNotificationSound = (type: "message" | "order" = "message") => 
         gain.gain.setValueAtTime(volume, audioContext.currentTime);
 
         if (type === "order") {
-          // ⚡ LOUD ALARM
           osc.type = "square";
           osc.frequency.setValueAtTime(900, audioContext.currentTime);
           osc.frequency.setValueAtTime(1300, audioContext.currentTime + 0.2);
@@ -124,7 +119,6 @@ export const playNotificationSound = (type: "message" | "order" = "message") => 
           osc.start();
           osc.stop(audioContext.currentTime + 0.4);
         } else {
-          // 🎵 MESSAGE BEEP
           osc.type = "sine";
           osc.frequency.setValueAtTime(800, audioContext.currentTime);
           osc.frequency.exponentialRampToValueAtTime(350, audioContext.currentTime + 0.4);
@@ -138,10 +132,10 @@ export const playNotificationSound = (type: "message" | "order" = "message") => 
       };
 
       loop();
-      console.log("🔁 1-MINUTE SOUND LOOP STARTED");
+      console.log("🔁 15-SECOND SOUND LOOP STARTED");
 
     } catch (error) {
-      console.error("❌ Error playing 1-minute sound:", error);
+      console.error("❌ Error playing 15-second sound:", error);
     }
   };
 
@@ -190,7 +184,7 @@ export const showNotification = (
 };
 
 /**
- * Full combined notification
+ * Combined notification
  */
 export const notifyAdmin = (
   type: "order" | "message",
