@@ -1,21 +1,20 @@
-// Order.tsx - Updated with Dummy Payment System
+// Order.tsx - Fixed with Working Messaging
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { allProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-// ❌ COMMENTED OUT YOCO
-// import { YocoPayment } from "@/components/order/YocoPayment";
-// ✅ NEW DUMMY PAYMENT
 import { DummyPayment } from "@/components/order/DummyPayment";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
 const menuItems = allProducts.slice(0, 20);
 
@@ -32,8 +31,11 @@ const Order = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Messaging states
+  const [customerMessage, setCustomerMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
-  // ✅ CRITICAL: Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       toast({
@@ -45,7 +47,6 @@ const Order = () => {
     }
   }, [isAuthenticated, navigate, toast]);
 
-  // ✅ Don't render anything if not authenticated
   if (!isAuthenticated) {
     return null;
   }
@@ -59,18 +60,7 @@ const Order = () => {
     if (!user?._id) {
       toast({
         title: "Please log in",
-        description: (
-          <div className="flex flex-col gap-2">
-            <p>You must be logged in to add items to your cart.</p>
-            <Button
-              onClick={() => navigate("/login")}
-              className="bg-primary text-white rounded px-3 py-1"
-            >
-              Go to Login
-            </Button>
-          </div>
-        ),
-        duration: 5000,
+        description: "You must be logged in to add items to your cart.",
         variant: "destructive",
       });
       return;
@@ -91,14 +81,26 @@ const Order = () => {
   };
 
   const handleProceedToCheckout = () => {
-    if (!cart.length)
-      return toast({ title: "Cart is empty", description: "Please add items.", variant: "destructive" });
+    if (!cart.length) {
+      toast({ 
+        title: "Cart is empty", 
+        description: "Please add items.", 
+        variant: "destructive" 
+      });
+      return;
+    }
     setOrderStep("checkout");
   };
 
   const handleProceedToPayment = () => {
-    if (!customerEmail.trim() || !customerName.trim())
-      return toast({ title: "Missing information", description: "Please enter your name and email.", variant: "destructive" });
+    if (!customerEmail.trim() || !customerName.trim()) {
+      toast({ 
+        title: "Missing information", 
+        description: "Please enter your name and email.", 
+        variant: "destructive" 
+      });
+      return;
+    }
     setOrderStep("payment");
   };
 
@@ -114,10 +116,8 @@ const Order = () => {
     setIsProcessing(true);
 
     try {
-      // Generate order ID
       const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
 
-      // Send order to backend
       const token = localStorage.getItem("token");
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -126,7 +126,7 @@ const Order = () => {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders`, {
+      const res = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -164,6 +164,54 @@ const Order = () => {
     }
   };
 
+  const handleSendCustomerMessage = async () => {
+    if (!customerMessage.trim() || sendingMessage) return;
+
+    setSendingMessage(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to send messages",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/support/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          message: customerMessage,
+          orderNumber: orderId 
+        })
+      });
+
+      if (response.ok) {
+        setCustomerMessage("");
+        toast({
+          title: "Message sent!",
+          description: "We'll get back to you shortly.",
+        });
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   // --- Render Steps ---
   if (orderStep === "confirmed") {
     return (
@@ -190,12 +238,28 @@ const Order = () => {
                 <MessageSquare className="h-5 w-5 text-primary" />
                 <p className="font-semibold text-foreground">Message the Bakery</p>
               </div>
-              <textarea
+              <Textarea
                 placeholder="Send us a message about your order..."
-                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                value={customerMessage}
+                onChange={(e) => setCustomerMessage(e.target.value)}
+                className="w-full resize-none mb-3"
                 rows={3}
               />
-              <Button variant="outline" className="w-full mt-3">Send Message</Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleSendCustomerMessage}
+                disabled={sendingMessage || !customerMessage.trim()}
+              >
+                {sendingMessage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Message'
+                )}
+              </Button>
             </div>
             <Button
               variant="default"
@@ -327,7 +391,6 @@ const Order = () => {
               Back to Details
             </Button>
 
-            {/* ✅ DUMMY PAYMENT COMPONENT */}
             <DummyPayment
               amountZAR={total}
               onSuccess={handlePaymentComplete}

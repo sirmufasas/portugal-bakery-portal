@@ -15,6 +15,7 @@ import { useProducts } from "@/contexts/ProductsContext";
 import { categories } from "@/data/products";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { uploadImage } from "@/utils/uploadImage";
+import { AdminFloatingMessageButton } from "@/components/admin/AdminFloatingMessageButton";
 
 import {
   Package,
@@ -100,7 +101,7 @@ export default function Admin() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [sendingSupportMessage, setSendingSupportMessage] = useState(false);
   const eventSourceSupportRef = useRef<EventSource | null>(null);
-  
+
   const [newProductForm, setNewProductForm] = useState({
     name: "",
     category: "Pastries",
@@ -774,6 +775,7 @@ export default function Admin() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <FloatingCartButton />
+      <AdminFloatingMessageButton />
       <main className="pt-20 md:pt-24 pb-16">
         <div className="container mx-auto px-4">
           <div className="mb-8">

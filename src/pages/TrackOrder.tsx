@@ -3,10 +3,11 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send } from "lucide-react";
+import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -15,9 +16,10 @@ interface Message {
   fromUserId: string;
   toUserId: string;
   message: string;
-  subject: string;
   createdAt: string;
-  isRead: boolean;
+  isFromAdmin?: boolean;
+  fromUserName?: string;
+  isAutoReply?: boolean;
 }
 
 interface Order {
@@ -50,6 +52,7 @@ const TrackOrder = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   // Real-time SSE connection for order status updates
   useEffect(() => {
@@ -74,9 +77,8 @@ const TrackOrder = () => {
             console.log('🔄 Updating order status in real-time:', data.order.status);
 
             setFoundOrder(prevOrder => ({
-              ...prevOrder,
+              ...prevOrder!,
               status: data.order.status,
-              updatedAt: data.order.updatedAt
             }));
 
             toast({
@@ -100,6 +102,50 @@ const TrackOrder = () => {
       eventSource.close();
     };
   }, [foundOrder?.orderNumber]);
+
+  // Real-time SSE for support chat messages
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !foundOrder) return;
+
+    const eventSource = new EventSource(`${API_URL}/api/sse/support-chat?token=${token}`);
+
+    eventSource.onopen = () => {
+      console.log('✅ Support Chat SSE connected');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 Support message received:', data);
+
+        if (data.type === 'new_support_message') {
+          setMessages(prev => {
+            if (prev.some(m => m._id === data.message._id)) {
+              return prev;
+            }
+            return [...prev, data.message];
+          });
+
+          toast({
+            title: "💬 New Message from Admin",
+            description: data.message.message.substring(0, 50) + '...',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to parse SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ Support SSE error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [foundOrder]);
 
   const handleSearch = async () => {
     if (!orderId.trim()) {
@@ -161,14 +207,12 @@ const TrackOrder = () => {
   };
 
   const fetchMessages = async () => {
-    if (!foundOrder) return;
-
     setMessagesLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`${API_URL}/api/messages/order/${foundOrder.orderNumber}`, {
+      const response = await fetch(`${API_URL}/api/support/messages`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -184,13 +228,59 @@ const TrackOrder = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !foundOrder) return;
+    if (!newMessage.trim() || sendingMessage) return;
 
-    toast({
-      title: "Coming Soon",
-      description: "Customer messaging will be available soon. For now, please contact us directly.",
-    });
-    setNewMessage("");
+    setSendingMessage(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to send messages",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/support/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: newMessage })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Add user message
+        setMessages(prev => [...prev, data.userMessage]);
+        
+        // Add auto-reply after a short delay
+        setTimeout(() => {
+          setMessages(prev => [...prev, data.autoReply]);
+        }, 500);
+
+        setNewMessage("");
+        
+        toast({
+          title: "Message sent",
+          description: "We'll get back to you soon!",
+        });
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   const getStatusIndex = (status: string) => {
@@ -236,7 +326,7 @@ const TrackOrder = () => {
                 />
                 <Button onClick={handleSearch} disabled={loading}>
                   {loading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Search className="h-4 w-4 mr-2" />
                   )}
@@ -347,7 +437,7 @@ const TrackOrder = () => {
                       <h3 className="font-semibold text-foreground dark:text-foreground-dark">Messages</h3>
                       {messagesLoading && (
                         <div className="ml-auto">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         </div>
                       )}
                     </div>
@@ -355,46 +445,86 @@ const TrackOrder = () => {
                     <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
                       {messages.length === 0 ? (
                         <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark text-center py-4">
-                          No messages yet. The bakery will send you updates here.
+                          No messages yet. Send us a message below!
                         </p>
                       ) : (
-                        messages.map((msg) => (
-                          <div
-                            key={msg._id}
-                            className={cn(
-                              "p-3 rounded-lg max-w-[80%]",
-                              msg.fromUserId === foundOrder.userId
-                                ? "bg-primary text-primary-foreground dark:text-primary-foreground-dark ml-auto"
-                                : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
-                            )}
-                          >
-                            {msg.subject && (
-                              <p className="text-xs font-semibold mb-1 opacity-90">{msg.subject}</p>
-                            )}
-                            <p className="text-sm">{msg.message}</p>
-                            <p className={cn(
-                              "text-xs mt-1",
-                              msg.fromUserId === foundOrder.userId
-                                ? "text-primary-foreground/70 dark:text-primary-foreground-dark/70"
-                                : "text-muted-foreground dark:text-muted-foreground-dark"
-                            )}>
-                              {new Date(msg.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        ))
+                        messages.map((msg) => {
+                          const isFromUser = !msg.isFromAdmin;
+                          return (
+                            <div
+                              key={msg._id}
+                              className={cn(
+                                "flex",
+                                isFromUser ? "justify-end" : "justify-start"
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  "max-w-[80%] rounded-lg p-3",
+                                  isFromUser
+                                    ? "bg-primary text-primary-foreground"
+                                    : msg.isAutoReply
+                                    ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
+                                    : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
+                                )}
+                              >
+                                {!isFromUser && msg.fromUserName && (
+                                  <p className="text-xs font-semibold mb-1 opacity-80">
+                                    {msg.fromUserName}
+                                  </p>
+                                )}
+                                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                <p
+                                  className={cn(
+                                    "text-xs mt-1",
+                                    isFromUser
+                                      ? "text-primary-foreground/70"
+                                      : "text-muted-foreground dark:text-muted-foreground-dark"
+                                  )}
+                                >
+                                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
 
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Type a message..."
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Type your message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                        className="bg-white dark:bg-[#2D2416] text-foreground dark:text-white dark:border-[#5C4632] placeholder:text-muted-foreground dark:placeholder:text-gray-400 focus:ring-primary dark:focus:ring-primary-dark"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        className="bg-white dark:bg-[#2D2416] text-foreground dark:text-white dark:border-[#5C4632] placeholder:text-muted-foreground dark:placeholder:text-gray-400 focus:ring-primary dark:focus:ring-primary-dark resize-none"
+                        rows={3}
+                        disabled={sendingMessage}
                       />
-                      <Button onClick={handleSendMessage}>
-                        <Send className="h-4 w-4" />
+                      <Button 
+                        onClick={handleSendMessage} 
+                        className="w-full"
+                        disabled={sendingMessage || !newMessage.trim()}
+                      >
+                        {sendingMessage ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Message
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
