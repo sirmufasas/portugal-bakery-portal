@@ -5,15 +5,15 @@ let unlocked = false;
 let forcePlayQueue: Array<() => void> = [];
 
 /**
- * Initialize AudioContext - this will be called repeatedly until unlocked
+ * Initialize AudioContext
  */
 export const initAudioContext = () => {
   if (!audioContext) {
     try {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('🔊 AudioContext created, state:', audioContext.state);
+      console.log("🔊 AudioContext created, state:", audioContext.state);
     } catch (error) {
-      console.error('❌ Failed to create AudioContext:', error);
+      console.error("❌ Failed to create AudioContext:", error);
       return false;
     }
   }
@@ -21,215 +21,190 @@ export const initAudioContext = () => {
 };
 
 /**
- * Aggressively unlock audio on ANY user interaction
+ * Try to unlock audio
  */
 export const forceUnlockAudio = async (): Promise<boolean> => {
   if (unlocked) return true;
-  
-  if (!audioContext) {
-    initAudioContext();
-  }
-  
+
+  if (!audioContext) initAudioContext();
   if (!audioContext) return false;
 
   try {
-    if (audioContext.state === 'suspended') {
+    if (audioContext.state === "suspended") {
       await audioContext.resume();
-      console.log('🔓 AudioContext resumed, state:', audioContext.state);
+      console.log("🔓 AudioContext resumed");
     }
-    
-    if (audioContext.state === 'running') {
+
+    if (audioContext.state === "running") {
       unlocked = true;
-      console.log('✅ Audio UNLOCKED - notifications will play');
-      
-      // Play any queued sounds
+      console.log("✅ Audio UNLOCKED");
+
+      // Play queued sounds
       while (forcePlayQueue.length > 0) {
         const play = forcePlayQueue.shift();
-        if (play) {
-          console.log('🔊 Playing queued sound...');
-          play();
-        }
+        if (play) play();
       }
-      
+
       return true;
     }
   } catch (error) {
-    console.error('❌ Failed to unlock audio:', error);
+    console.error("❌ Failed to unlock audio:", error);
   }
-  
+
   return false;
 };
 
 /**
- * Request both audio and notification permissions
+ * Request permissions
  */
 export const requestAllPermissions = async () => {
-  console.log('🔔 Requesting permissions...');
-  
-  // Initialize audio
+  console.log("🔔 Requesting permissions...");
+
   initAudioContext();
-  
-  // Request notification permission
-  if ('Notification' in window && Notification.permission === 'default') {
+
+  if ("Notification" in window && Notification.permission === "default") {
     try {
-      const permission = await Notification.requestPermission();
-      console.log('🔔 Notification permission:', permission);
+      await Notification.requestPermission();
     } catch (error) {
-      console.error('❌ Failed to request notification permission:', error);
+      console.error("❌ Failed requesting notification permission:", error);
     }
   }
-  
-  // Try to unlock audio
+
   await forceUnlockAudio();
-  
+
   return {
     audio: unlocked,
-    notifications: 'Notification' in window ? Notification.permission : 'denied'
+    notifications: Notification.permission
   };
 };
 
 /**
- * Play notification sound - WILL PLAY EVEN WITHOUT USER GESTURE
- * If audio is locked, it will queue and play on next user interaction
+ * Play 1-minute LOOPING sound
  */
-export const playNotificationSound = (type: 'message' | 'order' = 'message') => {
+export const playNotificationSound = (type: "message" | "order" = "message") => {
   console.log(`🔔 playNotificationSound called: ${type}`);
-  
+
   const actualPlay = () => {
     if (!audioContext) {
-      console.warn('⚠️ No AudioContext');
       initAudioContext();
       if (!audioContext) return;
     }
 
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
     try {
-      // Force resume if suspended
-      if (audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-          console.log('🔓 AudioContext resumed during play');
-        });
-      }
+      const duration = 60; // 🔥 FULL 1 MINUTE
+      const volume = type === "order" ? 1.0 : 0.7;
 
-      const volume = type === 'order' ? 1.0 : 0.6; // MAX VOLUME for orders
-      console.log(`🔊 Creating sound: ${type} at volume ${volume}`);
+      // Interval speed of repetition
+      const interval = type === "order" ? 800 : 1500; 
 
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+      const endTime = audioContext.currentTime + duration;
 
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
+      const loop = () => {
+        if (!audioContext || audioContext.currentTime >= endTime) return;
 
-      if (type === 'order') {
-        // LOUD three-tone alert for orders
-        osc.type = 'square'; // More aggressive waveform
-        const now = audioContext.currentTime;
-        
-        // Three ascending beeps
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.setValueAtTime(1000, now + 0.15);
-        osc.frequency.setValueAtTime(1200, now + 0.3);
-        
-        gain.gain.setValueAtTime(volume, now);
-        gain.gain.setValueAtTime(volume, now + 0.45);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
 
-        osc.start(now);
-        osc.stop(now + 0.6);
-        
-        console.log('✅ ORDER SOUND PLAYING');
-      } else {
-        // Message beep
-        osc.type = 'sine';
-        const now = audioContext.currentTime;
-        
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.exponentialRampToValueAtTime(400, now + 0.2);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
 
-        osc.start(now);
-        osc.stop(now + 0.2);
-        
-        console.log('✅ MESSAGE SOUND PLAYING');
-      }
+        gain.gain.setValueAtTime(volume, audioContext.currentTime);
+
+        if (type === "order") {
+          // ⚡ LOUD ALARM
+          osc.type = "square";
+          osc.frequency.setValueAtTime(900, audioContext.currentTime);
+          osc.frequency.setValueAtTime(1300, audioContext.currentTime + 0.2);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+
+          osc.start();
+          osc.stop(audioContext.currentTime + 0.4);
+        } else {
+          // 🎵 MESSAGE BEEP
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(800, audioContext.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(350, audioContext.currentTime + 0.4);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+          osc.start();
+          osc.stop(audioContext.currentTime + 0.5);
+        }
+
+        setTimeout(loop, interval);
+      };
+
+      loop();
+      console.log("🔁 1-MINUTE SOUND LOOP STARTED");
+
     } catch (error) {
-      console.error('❌ Error playing sound:', error);
+      console.error("❌ Error playing 1-minute sound:", error);
     }
   };
 
-  // If audio is unlocked, play immediately
-  if (unlocked && audioContext?.state === 'running') {
+  if (unlocked && audioContext?.state === "running") {
     actualPlay();
   } else {
-    // Queue it and try to unlock
-    console.warn('⚠️ Audio locked - queueing sound and attempting unlock');
+    console.warn("⚠️ Audio locked – queueing sound");
     forcePlayQueue.push(actualPlay);
-    forceUnlockAudio().then(success => {
-      if (success) {
-        console.log('✅ Audio unlocked via forced attempt');
-      }
-    });
+    forceUnlockAudio();
   }
 };
 
 /**
  * Show browser notification
  */
-export const showNotification = (title: string, body: string, type: 'order' | 'message' = 'message') => {
-  console.log('🔔 showNotification called:', title);
-  
-  if (!('Notification' in window)) {
-    console.warn('⚠️ Notifications not supported');
-    return;
-  }
+export const showNotification = (
+  title: string,
+  body: string,
+  type: "order" | "message" = "message"
+) => {
+  if (!("Notification" in window)) return;
 
-  if (Notification.permission === 'granted') {
+  if (Notification.permission === "granted") {
     try {
       const notification = new Notification(title, {
         body,
-        icon: type === 'order' ? '📦' : '💬',
-        badge: type === 'order' ? '📦' : '💬',
+        icon: type === "order" ? "📦" : "💬",
+        badge: type === "order" ? "📦" : "💬",
         tag: `${type}-${Date.now()}`,
-        requireInteraction: type === 'order', // Order notifications stay until clicked
-        silent: false // Not silent - let system sound play too
+        requireInteraction: type === "order",
+        silent: false
       });
-      
+
       notification.onclick = () => {
         window.focus();
         notification.close();
       };
-      
-      console.log('✅ Notification shown');
     } catch (error) {
-      console.error('❌ Failed to show notification:', error);
+      console.error("❌ Failed to show notification:", error);
     }
-  } else if (Notification.permission === 'default') {
-    console.warn('⚠️ Notification permission not granted yet');
-    Notification.requestPermission().then(permission => {
-      if (permission === 'granted') {
-        showNotification(title, body, type);
-      }
+  } else if (Notification.permission === "default") {
+    Notification.requestPermission().then(p => {
+      if (p === "granted") showNotification(title, body, type);
     });
   }
 };
 
 /**
- * Combined notification - plays sound AND shows browser notification
+ * Full combined notification
  */
-export const notifyAdmin = (type: 'order' | 'message', title: string, body: string) => {
-  console.log(`📢 NOTIFY ADMIN: ${type} - ${title}`);
-  
-  // Play sound
+export const notifyAdmin = (
+  type: "order" | "message",
+  title: string,
+  body: string
+) => {
   playNotificationSound(type);
-  
-  // Show browser notification
   showNotification(title, body, type);
-  
-  // Vibrate if supported (mobile)
-  if ('vibrate' in navigator) {
-    if (type === 'order') {
-      navigator.vibrate([200, 100, 200, 100, 200]); // Long vibration pattern
+
+  if ("vibrate" in navigator) {
+    if (type === "order") {
+      navigator.vibrate([200, 100, 200, 100, 200]);
     } else {
-      navigator.vibrate(200); // Short vibration
+      navigator.vibrate(150);
     }
   }
 };
