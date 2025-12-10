@@ -404,7 +404,6 @@ const Menu = () => {
                 ) : (
                   <>
                     Showing {filteredProducts.length} products • Click on any product for details
-                                            Products come as they look
                   </>
                 )}
               </p>
