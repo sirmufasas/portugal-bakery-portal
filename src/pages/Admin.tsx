@@ -274,19 +274,25 @@ export default function Admin() {
   };
 
   const fetchConversationMessages = async (userId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/support/conversation/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+    return new Promise<void>(async (resolve, reject) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/api/support/conversation/${userId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setConversationMessages(data);
+        if (response.ok) {
+          const data = await response.json();
+          setConversationMessages(data);
+          resolve();
+        } else {
+          reject(new Error('Failed to fetch messages'));
+        }
+      } catch (error) {
+        console.error('Error fetching conversation messages:', error);
+        reject(error);
       }
-    } catch (error) {
-      console.error('Error fetching conversation messages:', error);
-    }
+    });
   };
 
   const handleSelectConversation = async (conversation) => {
@@ -295,6 +301,13 @@ export default function Admin() {
 
     try {
       await fetchConversationMessages(conversation.userId);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load messages",
+        variant: "destructive",
+      });
     } finally {
       setLoadingMessages(false); // Hide loader
     }
@@ -1505,49 +1518,48 @@ export default function Admin() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    // Update the conversation list rendering to show loader on selected item
-                    {loadingConversations ? (
-                      <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    ) : supportConversations.length === 0 ? (
-                      <div className="p-8 text-center text-muted-foreground">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                        <p className="text-sm">No support conversations yet</p>
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {supportConversations.map((conversation) => (
-                          <button
-                            key={conversation.userId}
-                            onClick={() => handleSelectConversation(conversation)}
-                            disabled={loadingMessages && selectedConversation?.userId === conversation.userId}
-                            className={`w-full p-4 text-left hover:bg-accent transition-colors disabled:opacity-70 ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
-                              }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-foreground truncate">{conversation.userName}</p>
-                                {loadingMessages && selectedConversation?.userId === conversation.userId && (
-                                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                      {loadingConversations ? (
+                        <div className="flex justify-center items-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                      ) : supportConversations.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                          <p className="text-sm">No support conversations yet</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {supportConversations.map((conversation) => (
+                            <button
+                              key={conversation.userId}
+                              onClick={() => handleSelectConversation(conversation)}
+                              disabled={loadingMessages && selectedConversation?.userId === conversation.userId}
+                              className={`w-full p-4 text-left hover:bg-accent transition-colors disabled:opacity-70 ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
+                                }`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                                  {loadingMessages && selectedConversation?.userId === conversation.userId && (
+                                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                  )}
+                                </div>
+                                {conversation.messageCount > 0 && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {conversation.messageCount}
+                                  </Badge>
                                 )}
                               </div>
-                              {conversation.messageCount > 0 && (
-                                <Badge variant="secondary" className="ml-2">
-                                  {conversation.messageCount}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
-                            <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(conversation.lastMessageTime).toLocaleString()}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
+                              <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
+                              <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(conversation.lastMessageTime).toLocaleString()}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
                 </Card>
 
                 {/* Chat Window */}
