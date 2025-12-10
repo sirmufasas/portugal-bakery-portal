@@ -16,6 +16,7 @@ interface Message {
   createdAt: string;
   fromUserName?: string;
   isAutoReply?: boolean;
+  isFromAdmin?: boolean;
 }
 
 export const FloatingMessageButton = () => {
@@ -225,7 +226,11 @@ export const FloatingMessageButton = () => {
             ) : (
               <>
                 {messages.map((msg) => {
-                  const isFromUser = msg.fromUserId === user?._id;
+                  // Check if message is from current user
+                  // If fromUserId is null, it's from admin/system
+                  const isFromUser = msg.fromUserId && msg.fromUserId === user?._id;
+                  const isFromAdmin = !msg.fromUserId || msg.isFromAdmin;
+                  
                   return (
                     <div
                       key={msg._id}
@@ -244,7 +249,7 @@ export const FloatingMessageButton = () => {
                             : "bg-white dark:bg-card border border-border text-foreground"
                         )}
                       >
-                        {!isFromUser && msg.fromUserName && (
+                        {isFromAdmin && msg.fromUserName && (
                           <p className="text-xs font-semibold mb-1 opacity-80">
                             {msg.fromUserName}
                           </p>

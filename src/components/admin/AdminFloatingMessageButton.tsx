@@ -12,8 +12,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onre
 
 interface Message {
   _id: string;
-  fromUserId: string;
-  toUserId: string;
+  fromUserId?: string | null;
+  toUserId?: string | null;
   message: string;
   createdAt: string;
   fromUserName?: string;
@@ -330,7 +330,12 @@ export const AdminFloatingMessageButton = () => {
                   ) : (
                     <>
                       {messages.map((msg) => {
-                        const isFromAdmin = msg.isFromAdmin;
+                        // Check if message is from admin
+                        // If fromUserId is null, it could be an auto-reply
+                        // If isFromAdmin is true, it's from admin
+                        const isFromAdmin = msg.isFromAdmin === true || 
+                                          (msg.fromUserId && msg.fromUserId !== selectedConversation.userId);
+                        
                         return (
                           <div
                             key={msg._id}
@@ -345,7 +350,7 @@ export const AdminFloatingMessageButton = () => {
                                 isFromAdmin
                                   ? "bg-primary text-primary-foreground"
                                   : msg.isAutoReply
-                                  ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200"
+                                  ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
                                   : "bg-white dark:bg-card border border-border text-foreground"
                               )}
                             >
