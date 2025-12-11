@@ -13,6 +13,8 @@ import { DummyPayment } from "@/components/order/DummyPayment";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import packageImg from "@/assets/package.jpg";
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -498,7 +500,7 @@ const Order = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
                       <img
-                        src="https://za.pinterest.com/pin/67202219434642198/"
+                        src={packageImg}
                         alt="Eco-friendly bakery packaging"
                         className="w-full h-40 object-cover"
                       />
