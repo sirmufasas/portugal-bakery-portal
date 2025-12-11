@@ -3,11 +3,11 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2, XCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2, XCircle, ShoppingBag } from "lucide-react"; import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -35,13 +35,24 @@ interface Order {
   totalAmount: number;
   createdAt: string;
   specialInstructions?: string;
+  deliveryMethod?: string;  // ✅ ADDED
+  address?: string;          // ✅ ADDED
+  phone?: string;            // ✅ ADDED
 }
 
-const statusSteps = [
+const getStatusSteps = (deliveryMethod: string) => [
   { key: "pending", label: "Order Received", icon: Package },
   { key: "processing", label: "Processing", icon: ChefHat },
-  { key: "shipped", label: "Shipped", icon: Package },
-  { key: "delivered", label: "Delivered", icon: CheckCircle },
+  {
+    key: "shipped",
+    label: deliveryMethod === 'pickup' ? "Ready for Pickup" : "Shipped",
+    icon: Package
+  },
+  {
+    key: "delivered",
+    label: deliveryMethod === 'pickup' ? "Collected" : "Delivered",
+    icon: CheckCircle
+  },
   { key: "cancelled", label: "Cancelled", icon: XCircle },
 ];
 
@@ -228,7 +239,7 @@ const TrackOrder = () => {
       if (response.ok) {
         const data = await response.json();
         // ✅ FIX: Filter out any invalid messages
-        const validMessages = data.filter((msg: any) => 
+        const validMessages = data.filter((msg: any) =>
           msg && typeof msg === 'object' && msg._id && msg.message
         );
         setMessages(validMessages);
@@ -266,28 +277,28 @@ const TrackOrder = () => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // ✅ FIX: Validate messages before adding to state
         const messagesToAdd: Message[] = [];
-        
+
         if (data.userMessage && typeof data.userMessage === 'object' && data.userMessage._id) {
           messagesToAdd.push(data.userMessage);
         }
-        
+
         if (data.autoReply && typeof data.autoReply === 'object' && data.autoReply._id) {
           // Add auto-reply after a short delay
           setTimeout(() => {
             setMessages(prev => [...prev, data.autoReply]);
           }, 500);
         }
-        
+
         // Add user message immediately
         if (messagesToAdd.length > 0) {
           setMessages(prev => [...prev, ...messagesToAdd]);
         }
 
         setNewMessage("");
-        
+
         toast({
           title: "Message sent",
           description: "We'll get back to you soon!",
@@ -308,7 +319,8 @@ const TrackOrder = () => {
   };
 
   const getStatusIndex = (status: string) => {
-    const index = statusSteps.findIndex(s => s.key === status);
+    const steps = getStatusSteps(foundOrder?.deliveryMethod || 'delivery');
+    const index = steps.findIndex(s => s.key === status);
     return index >= 0 ? index : 0;
   };
 
@@ -373,7 +385,22 @@ const TrackOrder = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Order ID</p>
-                        <p className="text-2xl font-bold text-primary dark:text-primary-dark">{foundOrder.orderNumber}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <p className="text-2xl font-bold text-primary dark:text-primary-dark">{foundOrder.orderNumber}</p>
+
+                          {/* ✅ DELIVERY METHOD BADGE */}
+                          {foundOrder.deliveryMethod === 'pickup' ? (
+                            <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+                              <ShoppingBag className="h-3 w-3 mr-1" />
+                              Store Pickup
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                              <Package className="h-3 w-3 mr-1" />
+                              Delivery
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <div className="text-left sm:text-right">
                         <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">Order Date</p>
@@ -382,12 +409,46 @@ const TrackOrder = () => {
                         </p>
                       </div>
                     </div>
+
+                    {/* ✅ DELIVERY/PICKUP INFO */}
+                    <div className="mt-4">
+                      {foundOrder.deliveryMethod === 'delivery' && foundOrder.address ? (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                          <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-1">
+                            📍 Delivery Address:
+                          </p>
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            {foundOrder.address}
+                          </p>
+                        </div>
+                      ) : foundOrder.deliveryMethod === 'pickup' ? (
+                        <div className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-900">
+                          <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 mb-1 flex items-center gap-1">
+                            🏪 Store Pickup Location:
+                          </p>
+                          <p className="text-sm text-purple-800 dark:text-purple-200">
+                            Portugal Bakery<br />
+                            123 Main Street, Johannesburg<br />
+                            Mon-Sat: 7:00 AM - 6:00 PM | Sun: 8:00 AM - 2:00 PM
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* ✅ PHONE NUMBER */}
+                    {foundOrder.phone && (
+                      <div className="mt-3">
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
+                          📞 Contact: <a href={`tel:${foundOrder.phone}`} className="text-primary dark:text-primary-dark hover:underline">{foundOrder.phone}</a>
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Progress Steps */}
                   <div className="p-6 border-b border-border dark:border-border-dark">
                     <div className="flex items-center justify-between">
-                      {statusSteps.map((step, index) => {
+                      {getStatusSteps(foundOrder.deliveryMethod || 'delivery').map((step, index) => {
                         const currentIndex = getStatusIndex(foundOrder.status);
                         const isCompleted = index <= currentIndex;
                         const isCurrent = index === currentIndex;
@@ -490,8 +551,8 @@ const TrackOrder = () => {
                                     isFromUser
                                       ? "bg-primary text-primary-foreground"
                                       : msg.isAutoReply
-                                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
-                                      : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
+                                        ? "bg-amber-100 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-900"
+                                        : "bg-muted text-foreground dark:bg-muted-dark dark:text-foreground-dark"
                                   )}
                                 >
                                   {!isFromUser && msg.fromUserName && (
@@ -535,8 +596,8 @@ const TrackOrder = () => {
                         rows={3}
                         disabled={sendingMessage}
                       />
-                      <Button 
-                        onClick={handleSendMessage} 
+                      <Button
+                        onClick={handleSendMessage}
                         className="w-full"
                         disabled={sendingMessage || !newMessage.trim()}
                       >
