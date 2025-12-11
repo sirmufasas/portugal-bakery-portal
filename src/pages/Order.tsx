@@ -48,10 +48,20 @@ const Order = () => {
   const [deliveryCalculated, setDeliveryCalculated] = useState(false);
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const [showZoneInfo, setShowZoneInfo] = useState(false);
-
+  
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
-
-
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to place an order.",
+        variant: "destructive",
+      });
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate, toast]);
+  
   const handleCalculateDelivery = () => {
     if (!customerAddress.trim()) {
       toast({
@@ -61,7 +71,7 @@ const Order = () => {
       });
       return;
     }
-
+    
     setCalculatingDelivery(true);
 
     // Simulate a small delay for UX
@@ -89,20 +99,7 @@ const Order = () => {
     }, 500);
   };
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to place an order.",
-        variant: "destructive",
-      });
-      navigate("/login");
-    }
-  }, [isAuthenticated, navigate, toast]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
 
   const handleAddToCart = (product: {
     id: string;
@@ -512,7 +509,7 @@ const Order = () => {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => setShowZoneInfo(!showZoneInfo)}
+                            onClick={() => setShowZoneInfo(true)}
                             className="text-xs"
                           >
                             <Info className="h-3 w-3 mr-1" />
