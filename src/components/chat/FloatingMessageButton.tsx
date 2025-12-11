@@ -258,6 +258,7 @@ export const FloatingMessageButton = () => {
                     {/* Chat Window - z-index: 40 (below toast notifications which are 50) */}
                     {showChat && (
                         <div
+                            data-chat-window="true"
                             className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-white dark:bg-card rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
                             style={{
                                 zIndex: 40,

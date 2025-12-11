@@ -12,8 +12,22 @@ export const FloatingCartButton = () => {
   const { products: allProducts } = useProducts();
   const { isAuthenticated } = useAuth();
 
-  // ✅ Hide button if logged out OR cart is empty
-  if (!isAuthenticated || cart.length === 0) return null;
+  // Check if message chat is open by looking for the chat window in DOM
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  React.useEffect(() => {
+    const checkChatOpen = () => {
+      const chatWindow = document.querySelector('[data-chat-window="true"]');
+      setIsChatOpen(!!chatWindow);
+    };
+
+    checkChatOpen();
+    const interval = setInterval(checkChatOpen, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ Hide button if logged out OR cart is empty OR chat is open
+  if (!isAuthenticated || cart.length === 0 || isChatOpen) return null;
 
   return (
     <>
