@@ -498,16 +498,10 @@ const Order = () => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <Label htmlFor="customerAddress">Delivery Address</Label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowZoneInfo(!showZoneInfo)}
-                            className="text-xs"
-                          >
+                          <div className="text-xs flex items-center">
                             <Info className="h-3 w-3 mr-1" />
                             View Zones
-                          </Button>
+                          </div>
                         </div>
 
                         <Textarea
