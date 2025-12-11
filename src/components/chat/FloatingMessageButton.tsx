@@ -17,13 +17,13 @@ interface Message {
     fromUserName?: string;
     isAutoReply?: boolean;
     isFromAdmin?: boolean;
+    orderNumber?: string;
 }
 
 export const FloatingMessageButton = () => {
     const { user, isAuthenticated, loading: authLoading } = useAuth();
     const { toast } = useToast();
 
-    // 🔍 DEBUG: Log auth state on every render
     console.log("🔍 FloatingMessageButton Render:", {
         authLoading,
         isAuthenticated,
@@ -42,12 +42,10 @@ export const FloatingMessageButton = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
 
-    // Auto scroll
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
     useEffect(() => scrollToBottom(), [messages]);
 
-    // Open chat → fetch messages + SSE
     useEffect(() => {
         if (showChat && isAuthenticated && user) {
             console.log("✅ Chat opened - fetching messages and connecting SSE");
@@ -65,7 +63,6 @@ export const FloatingMessageButton = () => {
         };
     }, [showChat, isAuthenticated, user]);
 
-    // SSE connection
     const connectSSE = () => {
         const token = localStorage.getItem("token");
         if (!token || !user) {
@@ -113,7 +110,6 @@ export const FloatingMessageButton = () => {
         eventSourceRef.current = eventSource;
     };
 
-    // Fetch messages
     const fetchMessages = async () => {
         setChatLoading(true);
         try {
@@ -130,7 +126,7 @@ export const FloatingMessageButton = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log("✅ Messages fetched:", data.length);
+                console.log("✅ Messages fetched:", data.length, data);
                 setMessages(data);
 
                 if (!showChat) {
@@ -163,7 +159,6 @@ export const FloatingMessageButton = () => {
         }
     };
 
-    // Send message
     const handleSendMessage = async () => {
         if (!newMessage.trim() || sending) return;
 
@@ -214,11 +209,6 @@ export const FloatingMessageButton = () => {
         }
     };
 
-    // -----------------------------
-    // UI - VISIBILITY LOGIC
-    // -----------------------------
-
-    // Check if we should hide the button
     const shouldHide = !authLoading && (!isAuthenticated || user?.role === "admin");
 
     console.log("🎯 Visibility Check:", {
@@ -229,7 +219,6 @@ export const FloatingMessageButton = () => {
         willRenderButton: !shouldHide && isAuthenticated && user?.role !== "admin"
     });
 
-    // Don't show for non-authenticated users or admins
     if (shouldHide) {
         console.log("❌ HIDING BUTTON:", {
             authLoading,
@@ -243,27 +232,18 @@ export const FloatingMessageButton = () => {
 
     return (
         <>
-            {/* Only show if authenticated and not admin */}
             {isAuthenticated && user?.role !== "admin" && (
                 <>
-                    {/* Floating Button */}
+                    {/* Floating Button - z-index: 40 (below toast notifications which are 50) */}
                     {!showChat && (
                         <button
                             onClick={() => {
                                 console.log("🖱️ Floating button clicked!");
                                 setShowChat(true);
                             }}
-                            className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all relative"
+                            className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all"
                             style={{
-                                // Force visibility for debugging
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                zIndex: 9999,
-                                position: 'fixed',
-                                backgroundColor: '#3b82f6', // Force blue color
-                                width: '64px',
-                                height: '64px',
+                                zIndex: 40,
                             }}
                         >
                             <MessageSquare className="h-6 w-6" />
@@ -275,9 +255,14 @@ export const FloatingMessageButton = () => {
                         </button>
                     )}
 
-                    {/* Chat Window */}
+                    {/* Chat Window - z-index: 40 (below toast notifications which are 50) */}
                     {showChat && (
-                        <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-white dark:bg-card rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border">
+                        <div
+                            className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-white dark:bg-card rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
+                            style={{
+                                zIndex: 40,
+                            }}
+                        >
                             {/* Header */}
                             <div className="bg-primary text-primary-foreground p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -322,7 +307,7 @@ export const FloatingMessageButton = () => {
                                             return (
                                                 <div
                                                     key={msg._id}
-                                                    className={cn("flex", isFromUser ? "justify-end" : "justify-start")}
+                                                    className={cn("flex flex-col", isFromUser ? "items-end" : "items-start")}
                                                 >
                                                     <div
                                                         className={cn(
@@ -340,6 +325,11 @@ export const FloatingMessageButton = () => {
                                                             </p>
                                                         )}
                                                         <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+                                                        {msg.orderNumber && (
+                                                            <p className="text-xs mt-1 opacity-70">
+                                                                Order: {msg.orderNumber}
+                                                            </p>
+                                                        )}
                                                         <p
                                                             className={cn(
                                                                 "text-xs mt-1",
@@ -384,4 +374,4 @@ export const FloatingMessageButton = () => {
             )}
         </>
     );
-};
+}
