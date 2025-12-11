@@ -501,6 +501,9 @@ export default function Admin() {
             ? `${user.firstName} ${user.lastName}`
             : 'Customer',
           email: user?.email || 'N/A',
+          phone: order.phone || order.customerPhone || 'N/A',
+          address: order.address || order.shippingAddress || '',
+          deliveryMethod: order.deliveryMethod || 'delivery', // ✅ ADDED
           items: order.items.map(item => `${item.quantity}x ${item.name}`),
           total: `R${order.totalAmount.toFixed(2)}`,
           status: order.status,
@@ -852,9 +855,60 @@ export default function Admin() {
                 {statusIcons[order.status]}
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>
+
+              {/* ✅ DELIVERY METHOD BADGE */}
+              {order.deliveryMethod === 'pickup' ? (
+                <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+                  <ShoppingBag className="h-3 w-3 mr-1" />
+                  Store Pickup
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                  <Truck className="h-3 w-3 mr-1" />
+                  Delivery
+                </Badge>
+              )}
             </div>
+
             <p className="font-medium text-foreground">{order.customer}</p>
             <p className="text-sm text-muted-foreground truncate">{order.email}</p>
+
+            {/* PHONE */}
+            {order.phone && order.phone !== 'N/A' && (
+              <p className="text-sm text-muted-foreground mt-1">
+                📞 <a href={`tel:${order.phone}`} className="hover:text-primary">{order.phone}</a>
+              </p>
+            )}
+
+            {/* ADDRESS - Only show for delivery orders */}
+            {order.deliveryMethod === 'delivery' && order.address && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-1">
+                  📍 Delivery Address:
+                </p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-words"
+                >
+                  {order.address}
+                </a>
+              </div>
+            )}
+
+            {/* PICKUP INFO */}
+            {order.deliveryMethod === 'pickup' && (
+              <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-900">
+                <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 mb-1 flex items-center gap-1">
+                  🏪 Store Pickup
+                </p>
+                <p className="text-xs text-purple-700 dark:text-purple-300">
+                  Customer will collect from store
+                </p>
+              </div>
+            )}
+
             <p className="text-sm text-muted-foreground mt-1">{order.date}</p>
           </div>
 
@@ -895,8 +949,12 @@ export default function Admin() {
               <SelectContent>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="shipped">
+                  {order.deliveryMethod === 'pickup' ? 'Ready for Pickup' : 'Shipped'}
+                </SelectItem>
+                <SelectItem value="delivered">
+                  {order.deliveryMethod === 'pickup' ? 'Collected' : 'Delivered'}
+                </SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>

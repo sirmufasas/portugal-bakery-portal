@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +29,17 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
+// ✅ ADD THIS COMPONENT
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
 /** Helper component to avoid context errors */
 const FloatingButtonWrapper = () => {
   const { user } = useAuth();
@@ -43,6 +56,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <ScrollToTop />  {/* ✅ ADD THIS LINE */}
 
                 {/* Floating button is now protected from admin */}
                 <FloatingButtonWrapper />

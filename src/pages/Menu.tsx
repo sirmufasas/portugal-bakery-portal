@@ -1,5 +1,5 @@
 // src/pages/Menu.tsx - Updated with dropdown filter
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
@@ -26,6 +26,28 @@ const Menu = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Force re-login if products don't load within 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!allProducts || allProducts.length === 0) {
+        toast({
+          title: "Session expired",
+          description: "Please log in again to view products.",
+          variant: "destructive",
+        });
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+      }
+    }, 5000);
+
+    // Clear timer if products load
+    if (allProducts && allProducts.length > 0) {
+      clearTimeout(timer);
+    }
+
+    return () => clearTimeout(timer);
+  }, [allProducts, navigate, toast]);
 
   // Filter by category
   let filteredProducts = activeCategory === "All"

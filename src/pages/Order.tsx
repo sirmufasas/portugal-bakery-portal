@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { allProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
@@ -31,10 +31,16 @@ const Order = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // Messaging states
   const [customerMessage, setCustomerMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
+
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -82,10 +88,10 @@ const Order = () => {
 
   const handleProceedToCheckout = () => {
     if (!cart.length) {
-      toast({ 
-        title: "Cart is empty", 
-        description: "Please add items.", 
-        variant: "destructive" 
+      toast({
+        title: "Cart is empty",
+        description: "Please add items.",
+        variant: "destructive"
       });
       return;
     }
@@ -93,14 +99,25 @@ const Order = () => {
   };
 
   const handleProceedToPayment = () => {
-    if (!customerEmail.trim() || !customerName.trim()) {
-      toast({ 
-        title: "Missing information", 
-        description: "Please enter your name and email.", 
-        variant: "destructive" 
+    if (!customerEmail.trim() || !customerName.trim() || !customerPhone.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter your name, email, and phone number.",
+        variant: "destructive"
       });
       return;
     }
+
+    // Only require address if delivery is selected
+    if (deliveryMethod === "delivery" && !customerAddress.trim()) {
+      toast({
+        title: "Missing delivery address",
+        description: "Please enter your delivery address.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setOrderStep("payment");
   };
 
@@ -133,6 +150,9 @@ const Order = () => {
           orderId: newOrderId,
           customerName,
           customerEmail,
+          customerPhone,
+          customerAddress: deliveryMethod === "delivery" ? customerAddress : "", // Only send if delivery
+          deliveryMethod,  // ✅ ADDED
           items: cart,
           totalAmount: total,
           specialInstructions,
@@ -147,10 +167,10 @@ const Order = () => {
       setOrderId(orderData.orderNumber);
       setOrderStep("confirmed");
       clearCart();
-      
-      toast({ 
-        title: "Payment successful!", 
-        description: `Your order ID is ${orderData.orderNumber}. Check your email for confirmation.` 
+
+      toast({
+        title: "Payment successful!",
+        description: `Your order ID is ${orderData.orderNumber}. Check your email for confirmation.`
       });
     } catch (err) {
       console.error(err);
@@ -185,9 +205,9 @@ const Order = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: customerMessage,
-          orderNumber: orderId 
+          orderNumber: orderId
         })
       });
 
@@ -245,9 +265,9 @@ const Order = () => {
                 className="w-full resize-none mb-3"
                 rows={3}
               />
-              <Button 
-                variant="outline" 
-                className="w-full" 
+              <Button
+                variant="outline"
+                className="w-full"
                 onClick={handleSendCustomerMessage}
                 disabled={sendingMessage || !customerMessage.trim()}
               >
@@ -302,7 +322,91 @@ const Order = () => {
                 </Button>
 
                 <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
-                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">Contact Information</h2>
+                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">Delivery Method</h2>
+
+                  {/* Delivery Method Selection */}
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod("delivery")}
+                      className={`p-4 rounded-xl border-2 transition-all ${deliveryMethod === "delivery"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                        }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className={`p-3 rounded-full ${deliveryMethod === "delivery" ? "bg-primary/10" : "bg-muted"
+                          }`}>
+                          <Truck className={`h-6 w-6 ${deliveryMethod === "delivery" ? "text-primary" : "text-muted-foreground"
+                            }`} />
+                        </div>
+                        <span className={`font-medium ${deliveryMethod === "delivery" ? "text-primary" : "text-foreground"
+                          }`}>
+                          Delivery
+                        </span>
+                        <span className="text-xs text-muted-foreground text-center">
+                          We'll deliver to your door
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeliveryMethod("pickup");
+                        setCustomerAddress(""); // Clear address when switching to pickup
+                      }}
+                      className={`p-4 rounded-xl border-2 transition-all ${deliveryMethod === "pickup"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                        }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className={`p-3 rounded-full ${deliveryMethod === "pickup" ? "bg-primary/10" : "bg-muted"
+                          }`}>
+                          <ShoppingBag className={`h-6 w-6 ${deliveryMethod === "pickup" ? "text-primary" : "text-muted-foreground"
+                            }`} />
+                        </div>
+                        <span className={`font-medium ${deliveryMethod === "pickup" ? "text-primary" : "text-foreground"
+                          }`}>
+                          Pickup
+                        </span>
+                        <span className="text-xs text-muted-foreground text-center">
+                          Collect from our store
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Store Location Info for Pickup */}
+                  {deliveryMethod === "pickup" && (
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                            Pickup Location
+                          </p>
+                          <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                            Portugal Bakery<br />
+                            123 Main Street, Johannesburg<br />
+                            Mon-Sat: 7:00 AM - 6:00 PM<br />
+                            Sun: 8:00 AM - 2:00 PM
+                          </p>
+                          <a
+                            href="https://www.google.com/maps/search/?api=1&query=Portugal+Bakery+Johannesburg"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                          >
+                            View on Google Maps →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Contact Information</h3>
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="customerName">Full Name</Label>
@@ -328,6 +432,38 @@ const Order = () => {
                         We'll send your order confirmation and updates here
                       </p>
                     </div>
+                    <div>
+                      <Label htmlFor="customerPhone">Phone Number</Label>
+                      <Input
+                        id="customerPhone"
+                        type="tel"
+                        placeholder="+27 12 345 6789"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="bg-background text-foreground"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        For {deliveryMethod === "delivery" ? "delivery" : "pickup"} updates and order confirmation
+                      </p>
+                    </div>
+
+                    {/* Only show address field if delivery is selected */}
+                    {deliveryMethod === "delivery" && (
+                      <div>
+                        <Label htmlFor="customerAddress">Delivery Address</Label>
+                        <Textarea
+                          id="customerAddress"
+                          placeholder="123 Main Street, Suburb, City, Postal Code"
+                          value={customerAddress}
+                          onChange={(e) => setCustomerAddress(e.target.value)}
+                          className="bg-background text-foreground min-h-[80px] resize-none"
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Full street address including suburb and postal code
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -352,6 +488,59 @@ const Order = () => {
                   <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span className="text-primary">R{total.toFixed(2)}</span>
+                  </div>
+                </div>
+                {/* Packaging Information */}
+                <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
+                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">
+                    📦 Packaging & Presentation
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
+                      <img
+                        src="https://images.unsplash.com/photo-1607349913338-fca6f7fc42d0?w=400&q=80"
+                        alt="Eco-friendly bakery packaging"
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
+                        <div className="text-white">
+                          <p className="font-semibold text-sm">Eco-Friendly Boxes</p>
+                          <p className="text-xs opacity-90">Sustainable & biodegradable</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
+                      <img
+                        src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80"
+                        alt="Premium gift packaging"
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
+                        <div className="text-white">
+                          <p className="font-semibold text-sm">Gift-Ready</p>
+                          <p className="text-xs opacity-90">Beautiful presentation</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                    <div className="flex items-start gap-3">
+                      <svg className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
+                          Care & Quality Guaranteed
+                        </p>
+                        <ul className="text-xs text-green-800 dark:text-green-200 space-y-1">
+                          <li>• All items carefully wrapped for freshness</li>
+                          <li>• Temperature-controlled packaging for delicate items</li>
+                          <li>• Complimentary ribbon & greeting card on request</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
