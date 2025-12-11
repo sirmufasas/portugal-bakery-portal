@@ -192,6 +192,9 @@ export default function Admin() {
               ? `${user.firstName} ${user.lastName}`
               : 'Customer',
             email: user?.email || 'N/A',
+            phone: data.order.phone || data.order.customerPhone || 'N/A', // ✅ ADDED
+            address: data.order.address || data.order.shippingAddress || '', // ✅ ADDED
+            deliveryMethod: data.order.deliveryMethod || 'delivery', // ✅ ADDED
             items: data.order.items.map(item => `${item.quantity}x ${item.name}`),
             total: `R${data.order.totalAmount.toFixed(2)}`,
             status: data.order.status,
