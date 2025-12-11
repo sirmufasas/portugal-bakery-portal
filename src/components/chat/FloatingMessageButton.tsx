@@ -23,13 +23,16 @@ export const FloatingMessageButton = () => {
     const [showChat, setShowChat] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [chatLoading, setChatLoading] = useState(false);
     const [sending, setSending] = useState(false);
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    if (authLoading) return null;
+    if (!isAuthenticated) return null;
 
     // Auto-scroll to bottom when new messages arrive
     const scrollToBottom = () => {
@@ -109,7 +112,7 @@ export const FloatingMessageButton = () => {
     };
 
     const fetchMessages = async () => {
-        setLoading(true);
+        setChatLoading(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
@@ -141,7 +144,7 @@ export const FloatingMessageButton = () => {
         } catch (error) {
             console.error('Error fetching messages:', error);
         } finally {
-            setLoading(false);
+            setChatLoading(false);
         }
     };
 
@@ -247,7 +250,7 @@ export const FloatingMessageButton = () => {
 
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-neutral-50 dark:bg-card">
-                        {loading ? (
+                        {chatLoading ? (
                             <div className="flex justify-center items-center h-full">
                                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                             </div>

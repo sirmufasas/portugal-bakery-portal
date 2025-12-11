@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin, Calculator, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { allProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
-
+import { calculateDeliveryFee, getAllZones } from "@/utils/deliveryZones";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -43,6 +43,51 @@ const Order = () => {
 
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
 
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryZone, setDeliveryZone] = useState("");
+  const [deliveryCalculated, setDeliveryCalculated] = useState(false);
+  const [calculatingDelivery, setCalculatingDelivery] = useState(false);
+  const [showZoneInfo, setShowZoneInfo] = useState(false);
+
+  const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
+
+
+  const handleCalculateDelivery = () => {
+    if (!customerAddress.trim()) {
+      toast({
+        title: "Address required",
+        description: "Please enter your delivery address first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCalculatingDelivery(true);
+
+    // Simulate a small delay for UX
+    setTimeout(() => {
+      const result = calculateDeliveryFee(customerAddress);
+
+      setDeliveryFee(result.fee);
+      setDeliveryZone(result.zone);
+      setDeliveryCalculated(true);
+
+      if (result.found) {
+        toast({
+          title: "Delivery fee calculated!",
+          description: `${result.zone} - Delivery fee: R${result.fee}`,
+        });
+      } else {
+        toast({
+          title: "Area not found",
+          description: "We'll contact you to confirm the delivery fee. Estimated: R400",
+          variant: "default"
+        });
+      }
+
+      setCalculatingDelivery(false);
+    }, 500);
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -145,6 +190,8 @@ const Order = () => {
         headers.Authorization = `Bearer ${token}`;
       }
 
+      const orderTotal = deliveryMethod === "delivery" ? total + deliveryFee : total;
+
       const res = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         headers,
@@ -153,10 +200,12 @@ const Order = () => {
           customerName,
           customerEmail,
           customerPhone,
-          customerAddress: deliveryMethod === "delivery" ? customerAddress : "", // Only send if delivery
-          deliveryMethod,  // ✅ ADDED
+          customerAddress: deliveryMethod === "delivery" ? customerAddress : "",
+          deliveryMethod,
           items: cart,
-          totalAmount: total,
+          totalAmount: orderTotal,
+          deliveryFee: deliveryMethod === "delivery" ? deliveryFee : 0,
+          deliveryZone: deliveryZone,
           specialInstructions,
           paymentID,
         }),
@@ -452,103 +501,207 @@ const Order = () => {
                     {/* Only show address field if delivery is selected */}
                     {deliveryMethod === "delivery" && (
                       <div>
-                        <Label htmlFor="customerAddress">Delivery Address</Label>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label htmlFor="customerAddress">Delivery Address</Label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowZoneInfo(!showZoneInfo)}
+                            className="text-xs"
+                          >
+                            <Info className="h-3 w-3 mr-1" />
+                            View Zones
+                          </Button>
+                        </div>
+
                         <Textarea
                           id="customerAddress"
-                          placeholder="123 Main Street, Suburb, City, Postal Code"
+                          placeholder="Street address, Suburb, Johannesburg"
                           value={customerAddress}
-                          onChange={(e) => setCustomerAddress(e.target.value)}
+                          onChange={(e) => {
+                            setCustomerAddress(e.target.value);
+                            setDeliveryCalculated(false);
+                            setDeliveryFee(0);
+                          }}
                           className="bg-background text-foreground min-h-[80px] resize-none"
                           rows={3}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Full street address including suburb and postal code
+                        <p className="text-xs text-muted-foreground mt-1 mb-3">
+                          💡 Tip: Include your suburb name for accurate delivery fee (e.g., "123 Main St, Rosettenville, Johannesburg")
                         </p>
+
+                        {/* Zone Information Dropdown */}
+                        {showZoneInfo && (
+                          <div className="mb-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 space-y-3">
+                            <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">
+                              Delivery Zones & Fees
+                            </h4>
+                            {getAllZones().map((zone, index) => (
+                              <div key={index} className="text-xs">
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="font-medium text-blue-900 dark:text-blue-100">
+                                    {zone.name}
+                                  </span>
+                                  <span className="font-bold text-blue-700 dark:text-blue-300">
+                                    R{zone.fee}
+                                  </span>
+                                </div>
+                                <p className="text-blue-700 dark:text-blue-300 text-[10px] leading-relaxed">
+                                  {zone.suburbs.slice(0, 8).join(", ")}
+                                  {zone.suburbs.length > 8 && ` +${zone.suburbs.length - 8} more`}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Calculate Delivery Fee Button */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={handleCalculateDelivery}
+                          disabled={!customerAddress.trim() || calculatingDelivery}
+                        >
+                          {calculatingDelivery ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Calculating...
+                            </>
+                          ) : (
+                            <>
+                              <Calculator className="h-4 w-4 mr-2" />
+                              Calculate Delivery Fee
+                            </>
+                          )}
+                        </Button>
+
+                        {/* Delivery Fee Display */}
+                        {deliveryCalculated && (
+                          <div className="mt-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                            <div className="flex items-start gap-3">
+                              <MapPin className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                                  Delivery Fee: R{deliveryFee.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-green-700 dark:text-green-300">
+                                  {deliveryZone}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                </div>
 
-                <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
-                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">Order Summary</h2>
-                  <div className="space-y-3 mb-4">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{item.name} x{item.quantity}</span>
-                        <span className="font-medium">R{(item.price * item.quantity).toFixed(2)}</span>
+                    <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
+                      <h2 className="text-xl font-heading font-bold text-foreground mb-4">Order Summary</h2>
+                      <div className="space-y-3 mb-4">
+                        {cart.map(item => (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{item.name} x{item.quantity}</span>
+                            <span className="font-medium">R{(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+
+                        {/* Subtotal */}
+                        <div className="flex justify-between text-sm border-t border-border pt-3">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span className="font-medium">R{total.toFixed(2)}</span>
+                        </div>
+
+                        {/* Delivery Fee */}
+                        {deliveryMethod === "delivery" && deliveryCalculated && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              Delivery Fee
+                              <span className="block text-xs opacity-75">{deliveryZone}</span>
+                            </span>
+                            <span className="font-medium text-primary">R{deliveryFee.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {/* Pickup - Free */}
+                        {deliveryMethod === "pickup" && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Pickup Fee</span>
+                            <span className="font-medium text-green-600">FREE</span>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                  {specialInstructions && (
-                    <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
-                      <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
-                        Special Instructions:
-                      </p>
-                      <p className="text-sm text-amber-800 dark:text-amber-200">{specialInstructions}</p>
+
+                      {specialInstructions && (
+                        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                          <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                            Special Instructions:
+                          </p>
+                          <p className="text-sm text-amber-800 dark:text-amber-200">{specialInstructions}</p>
+                        </div>
+                      )}
+
                     </div>
-                  )}
-                  <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
-                    <span>Total</span>
-                    <span className="text-primary">R{total.toFixed(2)}</span>
                   </div>
-                </div>
-                {/* Packaging Information */}
-                <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
-                  <h2 className="text-xl font-heading font-bold text-foreground mb-4">
-                    📦 Packaging & Presentation
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
-                      <img
-                        src={packageImg}
-                        alt="Eco-friendly bakery packaging"
-                        className="w-full h-40 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
-                        <div className="text-white">
-                          <p className="font-semibold text-sm">Eco-Friendly Boxes</p>
-                          <p className="text-xs opacity-90">Sustainable & biodegradable</p>
+
+                  {/* Packaging Information */}
+                  <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
+                    <h2 className="text-xl font-heading font-bold text-foreground mb-4">
+                      📦 Packaging & Presentation
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
+                        <img
+                          src={packageImg}
+                          alt="Eco-friendly bakery packaging"
+                          className="w-full h-40 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
+                          <div className="text-white">
+                            <p className="font-semibold text-sm">Eco-Friendly Boxes</p>
+                            <p className="text-xs opacity-90">Sustainable & biodegradable</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
+                        <img
+                          src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80"
+                          alt="Premium gift packaging"
+                          className="w-full h-40 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
+                          <div className="text-white">
+                            <p className="font-semibold text-sm">Gift-Ready</p>
+                            <p className="text-xs opacity-90">Beautiful presentation</p>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
-                      <img
-                        src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80"
-                        alt="Premium gift packaging"
-                        className="w-full h-40 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
-                        <div className="text-white">
-                          <p className="font-semibold text-sm">Gift-Ready</p>
-                          <p className="text-xs opacity-90">Beautiful presentation</p>
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                      <div className="flex items-start gap-3">
+                        <svg className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
+                            Care & Quality Guaranteed
+                          </p>
+                          <ul className="text-xs text-green-800 dark:text-green-200 space-y-1">
+                            <li>• All items carefully wrapped for freshness</li>
+                            <li>• Temperature-controlled packaging for delicate items</li>
+                            <li>• Complimentary ribbon & greeting card on request</li>
+                          </ul>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
-                    <div className="flex items-start gap-3">
-                      <svg className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
-                          Care & Quality Guaranteed
-                        </p>
-                        <ul className="text-xs text-green-800 dark:text-green-200 space-y-1">
-                          <li>• All items carefully wrapped for freshness</li>
-                          <li>• Temperature-controlled packaging for delicate items</li>
-                          <li>• Complimentary ribbon & greeting card on request</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
+                  <Button variant="default" size="lg" className="w-full" onClick={handleProceedToPayment}>
+                    Continue to Payment
+                  </Button>
                 </div>
-
-                <Button variant="default" size="lg" className="w-full" onClick={handleProceedToPayment}>
-                  Continue to Payment
-                </Button>
               </div>
             </div>
           </section>
@@ -583,7 +736,7 @@ const Order = () => {
             </Button>
 
             <DummyPayment
-              amountZAR={total}
+              amountZAR={finalTotal}
               onSuccess={handlePaymentComplete}
               onError={() =>
                 toast({
@@ -647,9 +800,9 @@ const Order = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="border-t border-border pt-3 flex justify-between text-lg font-bold mb-4">
+                    <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary">R{total.toFixed(2)}</span>
+                      <span className="text-primary">R{finalTotal.toFixed(2)}</span>
                     </div>
                   </>
                 )}

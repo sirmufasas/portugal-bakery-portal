@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (user: User, token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem("token");
   });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    const savedToken = localStorage.getItem("token");
+
+    if (savedUser && savedToken) {
+      setUser(JSON.parse(savedUser));
+      setToken(savedToken);
+    }
+
+    setLoading(false);
+  }, []);
 
   // Keep localStorage in sync with state
   useEffect(() => {
@@ -57,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user && !!token;
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated, loading }}>
       {children}
     </AuthContext.Provider>
   );
