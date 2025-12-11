@@ -435,15 +435,34 @@ const TrackOrder = () => {
                       ) : null}
                     </div>
 
-                    {/* ✅ PHONE NUMBER */}
-                    {foundOrder.phone && (
-                      <div className="mt-3">
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-                          📞 Contact: <a href={`tel:${foundOrder.phone}`} className="text-primary dark:text-primary-dark hover:underline">{foundOrder.phone}</a>
-                        </p>
+                    {/* ✅ CONTACT INFORMATION */}
+                    <div className="mt-4 pt-4 border-t border-border dark:border-border-dark">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Customer Phone */}
+                        {foundOrder.phone && (
+                          <div className="p-2 bg-muted/50 dark:bg-muted-dark/50 rounded-lg">
+                            <p className="text-xs text-muted-foreground dark:text-muted-foreground-dark mb-1">
+                              Your Contact:
+                            </p>
+                            <p className="text-sm font-medium text-foreground dark:text-foreground-dark">
+                              📞 <a href={`tel:${foundOrder.phone}`} className="hover:text-primary dark:hover:text-primary-dark">{foundOrder.phone}</a>
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Store Contact */}
+                        <div className="p-2 bg-primary/5 dark:bg-primary-dark/5 rounded-lg">
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground-dark mb-1">
+                            Contact Store:
+                          </p>
+                          <p className="text-sm font-medium text-primary dark:text-primary-dark">
+                            📞 <a href="tel:0114362396" className="hover:underline">011 436 2396</a>
+                          </p>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
+
 
                   {/* Progress Steps */}
                   <div className="p-6 border-b border-border dark:border-border-dark">
