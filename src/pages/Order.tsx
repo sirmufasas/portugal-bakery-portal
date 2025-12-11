@@ -1,4 +1,4 @@
-// Order.tsx - Fixed with Working Messaging
+// Order.tsx - Fixed Hooks Order
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -23,12 +23,13 @@ const menuItems = allProducts.slice(0, 20);
 type OrderStep = "menu" | "checkout" | "payment" | "confirmed";
 
 const Order = () => {
+  // ✅ ALL HOOKS FIRST - Context hooks
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { cart, addToCart, updateQuantity, removeItem, clearCart, total } = useCart();
-  
-  // ✅ ALL state declarations FIRST - before any effects
+
+  // ✅ ALL STATE HOOKS
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [orderStep, setOrderStep] = useState<OrderStep>("menu");
   const [orderId, setOrderId] = useState("");
@@ -45,10 +46,11 @@ const Order = () => {
   const [deliveryCalculated, setDeliveryCalculated] = useState(false);
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const [showZoneInfo, setShowZoneInfo] = useState(false);
-  
+
+  // ✅ COMPUTED VALUES
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
-  
-  // ✅ NOW the effect - AFTER all state declarations
+
+  // ✅ ALL useEffect HOOKS - BEFORE ANY CONDITIONAL LOGIC
   useEffect(() => {
     if (!isAuthenticated) {
       toast({
@@ -59,7 +61,8 @@ const Order = () => {
       navigate("/login");
     }
   }, [isAuthenticated, navigate, toast]);
-  
+
+  // ✅ NOW FUNCTIONS CAN COME (they don't affect hook order)
   const handleCalculateDelivery = () => {
     if (!customerAddress.trim()) {
       toast({
@@ -69,10 +72,9 @@ const Order = () => {
       });
       return;
     }
-    
+
     setCalculatingDelivery(true);
 
-    // Simulate a small delay for UX
     setTimeout(() => {
       const result = calculateDeliveryFee(customerAddress);
 
@@ -96,8 +98,6 @@ const Order = () => {
       setCalculatingDelivery(false);
     }, 500);
   };
-
-
 
   const handleAddToCart = (product: {
     id: string;
@@ -150,7 +150,6 @@ const Order = () => {
       return;
     }
 
-    // Only require address if delivery is selected
     if (deliveryMethod === "delivery" && !customerAddress.trim()) {
       toast({
         title: "Missing delivery address",
@@ -189,7 +188,6 @@ const Order = () => {
         method: "POST",
         headers,
         body: JSON.stringify({
-          // ❌ REMOVE orderId - backend generates orderNumber
           customerPhone,
           customerAddress: deliveryMethod === "delivery" ? customerAddress : "",
           deliveryMethod,
@@ -375,7 +373,6 @@ const Order = () => {
                 <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
                   <h2 className="text-xl font-heading font-bold text-foreground mb-4">Delivery Method</h2>
 
-                  {/* Delivery Method Selection */}
                   <div className="grid grid-cols-2 gap-3 mb-6">
                     <button
                       type="button"
@@ -405,7 +402,7 @@ const Order = () => {
                       type="button"
                       onClick={() => {
                         setDeliveryMethod("pickup");
-                        setCustomerAddress(""); // Clear address when switching to pickup
+                        setCustomerAddress("");
                       }}
                       className={`p-4 rounded-xl border-2 transition-all ${deliveryMethod === "pickup"
                         ? "border-primary bg-primary/5"
@@ -429,7 +426,6 @@ const Order = () => {
                     </button>
                   </div>
 
-                  {/* Store Location Info for Pickup */}
                   {deliveryMethod === "pickup" && (
                     <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                       <div className="flex items-start gap-3">
@@ -498,7 +494,6 @@ const Order = () => {
                       </p>
                     </div>
 
-                    {/* Only show address field if delivery is selected */}
                     {deliveryMethod === "delivery" && (
                       <div>
                         <div className="flex items-center justify-between mb-2">
@@ -507,7 +502,7 @@ const Order = () => {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => setShowZoneInfo(true)}
+                            onClick={() => setShowZoneInfo(!showZoneInfo)}
                             className="text-xs"
                           >
                             <Info className="h-3 w-3 mr-1" />
@@ -531,7 +526,6 @@ const Order = () => {
                           💡 Tip: Include your suburb name for accurate delivery fee (e.g., "123 Main St, Rosettenville, Johannesburg")
                         </p>
 
-                        {/* Zone Information Dropdown */}
                         {showZoneInfo && (
                           <div className="mb-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 space-y-3">
                             <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">
@@ -556,7 +550,6 @@ const Order = () => {
                           </div>
                         )}
 
-                        {/* Calculate Delivery Fee Button */}
                         <Button
                           type="button"
                           variant="outline"
@@ -577,7 +570,6 @@ const Order = () => {
                           )}
                         </Button>
 
-                        {/* Delivery Fee Display */}
                         {deliveryCalculated && (
                           <div className="mt-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
                             <div className="flex items-start gap-3">
@@ -606,13 +598,11 @@ const Order = () => {
                           </div>
                         ))}
 
-                        {/* Subtotal */}
                         <div className="flex justify-between text-sm border-t border-border pt-3">
                           <span className="text-muted-foreground">Subtotal</span>
                           <span className="font-medium">R{total.toFixed(2)}</span>
                         </div>
 
-                        {/* Delivery Fee */}
                         {deliveryMethod === "delivery" && deliveryCalculated && (
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">
@@ -623,7 +613,6 @@ const Order = () => {
                           </div>
                         )}
 
-                        {/* Pickup - Free */}
                         {deliveryMethod === "pickup" && (
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Pickup Fee</span>
@@ -644,7 +633,6 @@ const Order = () => {
                     </div>
                   </div>
 
-                  {/* Packaging Information */}
                   <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
                     <h2 className="text-xl font-heading font-bold text-foreground mb-4">
                       📦 Packaging & Presentation
