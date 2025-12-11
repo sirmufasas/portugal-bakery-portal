@@ -29,6 +29,7 @@ export const FloatingMessageButton = () => {
     const { toast } = useToast();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     // Auto-scroll to bottom when new messages arrive
     const scrollToBottom = () => {
@@ -42,6 +43,7 @@ export const FloatingMessageButton = () => {
     // Fetch messages when chat opens
     useEffect(() => {
         if (showChat && isAuthenticated) {
+            setUnreadCount(0);
             fetchMessages();
             connectSSE();
         }
@@ -80,6 +82,11 @@ export const FloatingMessageButton = () => {
                         return [...prev, data.message];
                     });
 
+                    // ✅ INCREMENT UNREAD COUNT if chat is closed and message is from admin
+                    if (!showChat && data.message.isFromAdmin) {
+                        setUnreadCount(prev => prev + 1);
+                    }
+
                     // Show notification if chat is closed
                     if (!showChat) {
                         toast({
@@ -114,6 +121,22 @@ export const FloatingMessageButton = () => {
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data);
+
+                // ✅ COUNT UNREAD MESSAGES (messages from admin that came after the last user message)
+                if (!showChat) {
+                    const adminMessages = data.filter((m: Message) => m.isFromAdmin && !m.isAutoReply);
+                    const lastUserMessage = [...data].reverse().find((m: Message) => m.fromUserId === user?._id);
+
+                    if (lastUserMessage) {
+                        const unread = adminMessages.filter((m: Message) =>
+                            new Date(m.createdAt) > new Date(lastUserMessage.createdAt)
+                        ).length;
+                        setUnreadCount(unread);
+                    } else {
+                        // If no user messages yet, count all admin messages
+                        setUnreadCount(adminMessages.length);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error fetching messages:', error);
@@ -186,10 +209,17 @@ export const FloatingMessageButton = () => {
             {!showChat && (
                 <button
                     onClick={() => setShowChat(true)}
-                    className="fixed bottom-24 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+                    className="fixed bottom-24 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 relative"
                     title="Chat with us"
                 >
                     <MessageSquare className="h-6 w-6" />
+
+                    {/* ✅ UNREAD BADGE */}
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
                 </button>
             )}
 

@@ -389,9 +389,9 @@ const Order = () => {
                           </p>
                           <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
                             Portugal Bakery<br />
-                            123 Main Street, Johannesburg<br />
-                            Mon-Sat: 7:00 AM - 6:00 PM<br />
-                            Sun: 8:00 AM - 2:00 PM
+                            245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190<br />
+                            Mon-Fri: 6:45 AM - 16:00 PM<br />
+                            Sat: 6:45 AM - 2:00 PM
                           </p>
                           <a
                             href="https://www.google.com/maps/search/?api=1&query=Portugal+Bakery+Johannesburg"
@@ -498,7 +498,7 @@ const Order = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative group overflow-hidden rounded-xl border-2 border-border hover:border-primary transition-all">
                       <img
-                        src="https://images.unsplash.com/photo-1607349913338-fca6f7fc42d0?w=400&q=80"
+                        src="https://za.pinterest.com/pin/67202219434642198/"
                         alt="Eco-friendly bakery packaging"
                         className="w-full h-40 object-cover"
                       />
