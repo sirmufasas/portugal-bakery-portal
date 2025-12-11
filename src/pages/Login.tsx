@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -24,11 +24,28 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Forgot password state
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
+
+  // Add this useEffect in Login component
+  useEffect(() => {
+    // Check if redirected due to token expiration
+    const params = new URLSearchParams(window.location.search);
+    const expired = params.get('expired');
+
+    if (expired === 'true') {
+      toast({
+        title: "Session Expired",
+        description: "Your session has expired. Please log in again.",
+        variant: "destructive",
+      });
+      // Clear the URL parameter
+      window.history.replaceState({}, '', '/login');
+    }
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +110,7 @@ const Login = () => {
 
     try {
       const url = `${import.meta.env.VITE_API_URL}/api/auth/request-password-reset`;
-      
+
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,13 +119,13 @@ const Login = () => {
 
       if (!response.ok) {
         let errorMessage = 'Failed to send reset email';
-        
+
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -195,11 +212,11 @@ const Login = () => {
                   <input type="checkbox" className="rounded border-border dark:bg-background" />
                   <span className="text-muted-foreground dark:text-muted-foreground">Remember me</span>
                 </label>
-                
+
                 <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
                   <DialogTrigger asChild>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="text-primary hover:underline"
                     >
                       Forgot password?

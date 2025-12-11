@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   _id: string;
@@ -21,7 +22,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    // Load user from localStorage initially
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
@@ -32,16 +32,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [loading, setLoading] = useState(true);
 
+  // Verify token validity on mount and periodically
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedToken = localStorage.getItem("token");
+    const verifyToken = async () => {
+      const savedUser = localStorage.getItem("user");
+      const savedToken = localStorage.getItem("token");
 
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
+      if (savedUser && savedToken) {
+        try {
+          // Verify token with backend
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${savedToken}`
+            }
+          });
 
-    setLoading(false);
+          if (response.ok) {
+            setUser(JSON.parse(savedUser));
+            setToken(savedToken);
+          } else {
+            // Token is invalid or expired
+            console.log('Token expired or invalid - logging out');
+            handleLogout();
+          }
+        } catch (error) {
+          console.error('Token verification failed:', error);
+          handleLogout();
+        }
+      }
+
+      setLoading(false);
+    };
+
+    verifyToken();
+
+    // Check token validity every 5 minutes
+    const interval = setInterval(verifyToken, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Keep localStorage in sync with state
@@ -55,18 +83,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, token]);
 
-  const login = (userData: User, authToken: string) => {
-    setUser(userData);
-    setToken(authToken);
-  };
-
-  const logout = () => {
+  const handleLogout = () => {
     setUser(null);
     setToken(null);
     localStorage.clear();
     sessionStorage.clear();
     window.dispatchEvent(new Event("user-logout"));
-    window.location.href = "/login"; // redirect to login page
+  };
+
+  const logout = () => {
+    handleLogout();
+    window.location.href = "/login?expired=true";
+  };
+
+  const login = (userData: User, authToken: string) => {
+    setUser(userData);
+    setToken(authToken);
   };
 
   const isAuthenticated = !!user && !!token;
