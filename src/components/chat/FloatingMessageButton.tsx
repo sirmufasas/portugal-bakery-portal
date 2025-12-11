@@ -34,11 +34,6 @@ export const FloatingMessageButton = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
 
-    // ✅ NOW YOU CAN DO EARLY RETURNS (AFTER ALL HOOKS)
-    if (authLoading) return null;
-    if (!isAuthenticated || !user) return null;
-    if (user.role === "admin") return null; // ✅ Don't show for admins
-
     // -----------------------------
     // AUTO SCROLL
     // -----------------------------
@@ -46,15 +41,14 @@ export const FloatingMessageButton = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    // ✅ ALL useEffect HOOKS BEFORE EARLY RETURNS
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    // -----------------------------
-    // OPEN CHAT → FETCH MESSAGES + SSE
-    // -----------------------------
+    // ✅ OPEN CHAT → FETCH MESSAGES + SSE
     useEffect(() => {
-        if (showChat) {
+        if (showChat && isAuthenticated && user) {
             setUnreadCount(0);
             fetchMessages();
             connectSSE();
@@ -66,7 +60,12 @@ export const FloatingMessageButton = () => {
                 eventSourceRef.current = null;
             }
         };
-    }, [showChat]);
+    }, [showChat, isAuthenticated, user]);
+
+    // ✅ NOW YOU CAN DO EARLY RETURNS (AFTER ALL HOOKS)
+    if (authLoading) return null;
+    if (!isAuthenticated || !user) return null;
+    if (user.role === "admin") return null;
 
     // -----------------------------
     // SSE CONNECTION
