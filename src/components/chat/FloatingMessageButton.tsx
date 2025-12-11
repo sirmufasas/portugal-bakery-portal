@@ -253,12 +253,17 @@ export const FloatingMessageButton = () => {
                                 console.log("🖱️ Floating button clicked!");
                                 setShowChat(true);
                             }}
-                            className="fixed bottom-24 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all relative"
+                            className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all relative"
                             style={{
                                 // Force visibility for debugging
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                zIndex: 9999,
+                                position: 'fixed',
+                                backgroundColor: '#3b82f6', // Force blue color
+                                width: '64px',
+                                height: '64px',
                             }}
                         >
                             <MessageSquare className="h-6 w-6" />
