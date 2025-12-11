@@ -890,9 +890,12 @@ export default function Admin() {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-words"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors break-words inline-flex items-center gap-1"
                 >
                   {order.address}
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
                 </a>
               </div>
             )}
@@ -961,7 +964,7 @@ export default function Admin() {
           </div>
         </div>
       </CardContent>
-    </Card>
+    </Card >
   );
 
   return (
@@ -1641,23 +1644,31 @@ export default function Admin() {
                             <button
                               key={conversation.userId}
                               onClick={() => handleSelectConversation(conversation)}
-                              className="w-full p-4 text-left hover:bg-accent transition-colors"
+                              className={`w-full p-4 text-left hover:bg-accent transition-all relative ${conversation.unreadCount > 0
+                                ? "ring-2 ring-green-400 dark:ring-green-600 shadow-[0_0_15px_rgba(34,197,94,0.3)] dark:shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                                : ""
+                                }`}
                             >
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                              {conversation.unreadCount > 0 && (
+                                <div className="absolute inset-0 bg-green-50 dark:bg-green-950/20 rounded-lg pointer-events-none" />
+                              )}
+                              <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                                  </div>
+                                  {conversation.unreadCount > 0 && (
+                                    <Badge className="ml-2 bg-green-500 text-white hover:bg-green-600 animate-pulse">
+                                      {conversation.unreadCount}
+                                    </Badge>
+                                  )}
                                 </div>
-                                {conversation.unreadCount > 0 && (
-                                  <Badge className="ml-2 bg-red-500 text-white hover:bg-red-600">
-                                    {conversation.unreadCount}
-                                  </Badge>
-                                )}
+                                <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
+                                <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(conversation.lastMessageTime).toLocaleString()}
+                                </p>
                               </div>
-                              <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
-                              <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(conversation.lastMessageTime).toLocaleString()}
-                              </p>
                             </button>
                           ))}
                         </div>
@@ -1783,27 +1794,35 @@ export default function Admin() {
                             key={conversation.userId}
                             onClick={() => handleSelectConversation(conversation)}
                             disabled={loadingMessages && selectedConversation?.userId === conversation.userId}
-                            className={`w-full p-4 text-left hover:bg-accent transition-colors disabled:opacity-70 ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
+                            className={`w-full p-4 text-left hover:bg-accent transition-all relative ${selectedConversation?.userId === conversation.userId ? "bg-accent" : ""
+                              } ${conversation.unreadCount > 0
+                                ? "ring-2 ring-green-400 dark:ring-green-600 shadow-[0_0_15px_rgba(34,197,94,0.3)] dark:shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                                : ""
                               }`}
                           >
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-foreground truncate">{conversation.userName}</p>
-                                {loadingMessages && selectedConversation?.userId === conversation.userId && (
-                                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                            {conversation.unreadCount > 0 && (
+                              <div className="absolute inset-0 bg-green-50 dark:bg-green-950/20 rounded-lg pointer-events-none" />
+                            )}
+                            <div className="relative z-10">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-foreground truncate">{conversation.userName}</p>
+                                  {loadingMessages && selectedConversation?.userId === conversation.userId && (
+                                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                  )}
+                                </div>
+                                {conversation.unreadCount > 0 && (
+                                  <Badge className="ml-2 bg-green-500 text-white hover:bg-green-600 animate-pulse">
+                                    {conversation.unreadCount} new
+                                  </Badge>
                                 )}
                               </div>
-                              {conversation.unreadCount > 0 && (
-                                <Badge className="ml-2 bg-red-500 text-white hover:bg-red-600">
-                                  {conversation.unreadCount}
-                                </Badge>
-                              )}
+                              <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
+                              <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(conversation.lastMessageTime).toLocaleString()}
+                              </p>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate mb-1">{conversation.userEmail}</p>
-                            <p className="text-xs text-muted-foreground truncate">{conversation.lastMessage}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(conversation.lastMessageTime).toLocaleString()}
-                            </p>
                           </button>
                         ))}
                       </div>
