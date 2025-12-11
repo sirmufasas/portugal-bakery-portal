@@ -27,22 +27,19 @@ const Order = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { cart, addToCart, updateQuantity, removeItem, clearCart, total } = useCart();
+  
+  // ✅ ALL state declarations FIRST - before any effects
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [orderStep, setOrderStep] = useState<OrderStep>("menu");
   const [orderId, setOrderId] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Messaging states
   const [customerMessage, setCustomerMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
-
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
-
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
-
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryZone, setDeliveryZone] = useState("");
   const [deliveryCalculated, setDeliveryCalculated] = useState(false);
@@ -51,6 +48,7 @@ const Order = () => {
   
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
   
+  // ✅ NOW the effect - AFTER all state declarations
   useEffect(() => {
     if (!isAuthenticated) {
       toast({
