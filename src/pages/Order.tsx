@@ -182,7 +182,10 @@ const Order = () => {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const orderTotal = deliveryMethod === "delivery" ? total + deliveryFee : total;
+      // ✅ FIXED: Use finalTotal which already includes delivery fee when calculated
+      const orderTotal = deliveryMethod === "delivery" && deliveryCalculated
+        ? total + deliveryFee
+        : total;
 
       const res = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
@@ -199,8 +202,8 @@ const Order = () => {
             quantity: item.quantity
           })),
           totalAmount: orderTotal,
-          deliveryFee: deliveryMethod === "delivery" ? deliveryFee : 0,
-          deliveryZone: deliveryMethod === "delivery" ? deliveryZone : "",
+          deliveryFee: deliveryMethod === "delivery" && deliveryCalculated ? deliveryFee : 0,
+          deliveryZone: deliveryMethod === "delivery" && deliveryCalculated ? deliveryZone : "",
           specialInstructions,
           paymentID,
         }),
