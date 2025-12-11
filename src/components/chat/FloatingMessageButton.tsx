@@ -234,14 +234,14 @@ export const FloatingMessageButton = () => {
         <>
             {isAuthenticated && user?.role !== "admin" && (
                 <>
-                    {/* Floating Button - z-index: 40 (below toast notifications which are 50) */}
+                    {/* Floating Button - Positioned to left of cart button on mobile */}
                     {!showChat && (
                         <button
                             onClick={() => {
                                 console.log("🖱️ Floating button clicked!");
                                 setShowChat(true);
                             }}
-                            className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all"
+                            className="fixed bottom-6 right-24 sm:right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all"
                             style={{
                                 zIndex: 40,
                             }}
