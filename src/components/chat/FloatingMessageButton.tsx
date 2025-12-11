@@ -185,12 +185,17 @@ export const FloatingMessageButton = () => {
     };
 
     // -----------------------------
-    // UI
+    // UI - FIXED: Don't return null while loading, check authentication first
     // -----------------------------
-    if (authLoading) return null;
+
+    // Don't show for non-authenticated users or admins
+    if (!authLoading && (!isAuthenticated || user?.role === "admin")) {
+        return null;
+    }
 
     return (
         <>
+            {/* Only show if authenticated and not admin */}
             {isAuthenticated && user?.role !== "admin" && (
                 <>
                     {/* Floating Button */}
