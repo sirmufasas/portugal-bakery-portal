@@ -16,7 +16,6 @@ import { useAuth } from "@/contexts/AuthContext";
 const navLinks = [
   { name: "Home", path: "/" },
   { name: "Menu", path: "/menu" },
-  { name: "About", path: "/about" },
   { name: "Testimonials", path: "/testimonials" },
 ];
 
@@ -64,6 +63,27 @@ export function Navbar() {
                 {link.name}
               </Link>
             ))}
+            
+            {/* Us Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
+                  location.pathname === "/about" || location.pathname === "/story" ? "text-primary" : "text-muted-foreground"
+                )}>
+                  Us
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32 border border-border shadow-lg bg-background text-foreground">
+                <DropdownMenuItem asChild>
+                  <Link to="/about" className="cursor-pointer">About</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/story" className="cursor-pointer">Story</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Desktop Actions */}
@@ -158,6 +178,27 @@ export function Navbar() {
                   {link.name}
                 </Link>
               ))}
+              
+              {/* Us Dropdown for Mobile */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="text-lg font-medium py-3 px-4 bg-muted/20">
+                  Us
+                </div>
+                <Link
+                  to="/about"
+                  onClick={() => setIsOpen(false)}
+                  className="text-base font-medium py-3 px-6 block hover:bg-muted/30 transition-colors"
+                >
+                  About
+                </Link>
+                <Link
+                  to="/story"
+                  onClick={() => setIsOpen(false)}
+                  className="text-base font-medium py-3 px-6 block hover:bg-muted/30 transition-colors"
+                >
+                  Story
+                </Link>
+              </div>
 
               <div className="border-t border-border my-2"></div>
 
@@ -194,7 +235,6 @@ export function Navbar() {
                   )}
                 </>
               )}
-
 
               <div className="border-t border-border my-2"></div>
 

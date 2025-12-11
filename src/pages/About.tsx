@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Heart, Award, Users, Clock, MapPin, Phone, Mail } from "lucide-react";
-import man from "@/assets/man.jpg";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
-
 
 const values = [
   { icon: Heart, title: "Made with Love", description: "Every product is crafted with passion and care, using recipes passed down through generations." },
@@ -56,42 +54,17 @@ const About = () => {
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <img src={man} alt="Our bakery" className="w-full h-full object-cover opacity-20" />
             <div className="absolute inset-0 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/95 dark:via-background/95 to-neutral-50 dark:to-background transition-colors duration-300" />
           </div>
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">Our Story</span>
+              <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">About Us</span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-foreground dark:text-foreground mb-6 animate-fade-in-up">
                 A Tradition of <span className="text-primary">Excellence</span>
               </h1>
               <p className="text-muted-foreground dark:text-muted-foreground text-lg md:text-xl leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                 Since 1985, Portugal Bakery has been bringing the authentic flavors of Portuguese baking to our community.
               </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Story Section */}
-        <section className="py-16 md:py-24 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="animate-fade-in-up">
-                <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground dark:text-foreground mb-6">From Lisbon to Your Table</h2>
-                <div className="space-y-4 text-muted-foreground dark:text-muted-foreground leading-relaxed">
-                  <p>Our founder, António Silva, brought his family's baking traditions from the cobblestone streets of Lisbon to establish Portugal Bakery in 1985.</p>
-                  <p>Today, António's grandchildren continue the legacy, blending time-honored techniques with modern innovation. Every morning at 4 AM, our bakers begin their craft.</p>
-                </div>
-              </div>
-              <div className="relative animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                <div className="aspect-square rounded-2xl overflow-hidden shadow-elevated">
-                  <img src={man} alt="Inside our bakery" className="w-full h-full object-cover" />
-                </div>
-                <div className="absolute -bottom-6 -right-6 bg-primary text-primary-foreground rounded-2xl p-6 shadow-elevated">
-                  <p className="text-4xl font-heading font-bold">38+</p>
-                  <p className="text-sm opacity-90">Years of Excellence</p>
-                </div>
-              </div>
             </div>
           </div>
         </section>

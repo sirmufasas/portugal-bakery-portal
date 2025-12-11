@@ -14,6 +14,7 @@ import { FloatingMessageButton } from "@/components/chat/FloatingMessageButton";
 
 import Index from "./pages/Index";
 import About from "./pages/About";
+import Story from "./pages/Story";
 import Menu from "./pages/Menu";
 import Testimonials from "./pages/Testimonials";
 import Login from "./pages/Login";
@@ -65,6 +66,7 @@ const App = () => (
                   {/* Public Routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/story" element={<Story />} />
                   <Route path="/menu" element={<Menu />} />
                   <Route path="/testimonials" element={<Testimonials />} />
                   <Route path="/login" element={<Login />} />
