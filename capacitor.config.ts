@@ -4,10 +4,12 @@ const config: CapacitorConfig = {
   appId: 'app.netlify.portubakery',
   appName: 'Portugal Bakery',
   webDir: 'dist',
-  server: {
-    url: 'https://portubakery.netlify.app', // live website
-    cleartext: true // allows HTTP if needed (not required for HTTPS)
-  }
+  // Only use `server` for live reload during development.
+  // For production, comment this out so the app uses the local `dist` build.
+  // server: {
+  //   url: 'https://portubakery.netlify.app',
+  //   cleartext: true
+  // }
 };
 
 export default config;
