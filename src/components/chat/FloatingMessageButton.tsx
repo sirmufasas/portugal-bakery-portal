@@ -23,6 +23,15 @@ export const FloatingMessageButton = () => {
     const { user, isAuthenticated, loading: authLoading } = useAuth();
     const { toast } = useToast();
 
+    // 🔍 DEBUG: Log auth state on every render
+    console.log("🔍 FloatingMessageButton Render:", {
+        authLoading,
+        isAuthenticated,
+        userRole: user?.role,
+        userId: user?._id,
+        userExists: !!user,
+    });
+
     const [showChat, setShowChat] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -41,6 +50,7 @@ export const FloatingMessageButton = () => {
     // Open chat → fetch messages + SSE
     useEffect(() => {
         if (showChat && isAuthenticated && user) {
+            console.log("✅ Chat opened - fetching messages and connecting SSE");
             setUnreadCount(0);
             fetchMessages();
             connectSSE();
@@ -48,6 +58,7 @@ export const FloatingMessageButton = () => {
 
         return () => {
             if (eventSourceRef.current) {
+                console.log("🔌 Closing SSE connection");
                 eventSourceRef.current.close();
                 eventSourceRef.current = null;
             }
@@ -57,13 +68,18 @@ export const FloatingMessageButton = () => {
     // SSE connection
     const connectSSE = () => {
         const token = localStorage.getItem("token");
-        if (!token || !user) return;
+        if (!token || !user) {
+            console.log("❌ SSE: No token or user");
+            return;
+        }
 
+        console.log("🔌 Connecting SSE...");
         const eventSource = new EventSource(`${API_URL}/api/sse/support-chat?token=${token}`);
 
         eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log("📨 SSE Message received:", data);
                 if (data.type === "new_support_message") {
                     setMessages((prev) => {
                         if (prev.some((m) => m._id === data.message._id)) return prev;
@@ -85,12 +101,12 @@ export const FloatingMessageButton = () => {
                     }
                 }
             } catch (error) {
-                console.error("SSE Parse Error:", error);
+                console.error("❌ SSE Parse Error:", error);
             }
         };
 
         eventSource.onerror = (error) => {
-            console.error("SSE Error:", error);
+            console.error("❌ SSE Error:", error);
             eventSource.close();
         };
 
@@ -102,14 +118,19 @@ export const FloatingMessageButton = () => {
         setChatLoading(true);
         try {
             const token = localStorage.getItem("token");
-            if (!token) return;
+            if (!token) {
+                console.log("❌ No token for fetching messages");
+                return;
+            }
 
+            console.log("📥 Fetching messages...");
             const response = await fetch(`${API_URL}/api/support/messages`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
                 const data = await response.json();
+                console.log("✅ Messages fetched:", data.length);
                 setMessages(data);
 
                 if (!showChat) {
@@ -126,13 +147,17 @@ export const FloatingMessageButton = () => {
                                 new Date(m.createdAt) > new Date(lastUserMessage.createdAt)
                         ).length;
                         setUnreadCount(unread);
+                        console.log("📬 Unread count:", unread);
                     } else {
                         setUnreadCount(adminMessages.length);
+                        console.log("📬 Unread count (no user messages):", adminMessages.length);
                     }
                 }
+            } else {
+                console.log("❌ Fetch messages failed:", response.status);
             }
         } catch (error) {
-            console.error("Fetch messages failed:", error);
+            console.error("❌ Fetch messages error:", error);
         } finally {
             setChatLoading(false);
         }
@@ -142,10 +167,12 @@ export const FloatingMessageButton = () => {
     const handleSendMessage = async () => {
         if (!newMessage.trim() || sending) return;
 
+        console.log("📤 Sending message:", newMessage);
         setSending(true);
         try {
             const token = localStorage.getItem("token");
             if (!token) {
+                console.log("❌ No token for sending");
                 toast({
                     title: "Authentication required",
                     description: "Please log in to send messages",
@@ -165,15 +192,18 @@ export const FloatingMessageButton = () => {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log("✅ Message sent:", data);
                 if (data.userMessage) setMessages((prev) => [...prev, data.userMessage]);
                 if (data.autoReply) {
                     setTimeout(() => setMessages((prev) => [...prev, data.autoReply]), 500);
                 }
                 setNewMessage("");
             } else {
+                console.log("❌ Send failed:", response.status);
                 throw new Error("Failed to send message");
             }
         } catch (error) {
+            console.error("❌ Send error:", error);
             toast({
                 title: "Error",
                 description: "Failed to send message. Try again.",
@@ -185,13 +215,31 @@ export const FloatingMessageButton = () => {
     };
 
     // -----------------------------
-    // UI - FIXED: Don't return null while loading, check authentication first
+    // UI - VISIBILITY LOGIC
     // -----------------------------
 
+    // Check if we should hide the button
+    const shouldHide = !authLoading && (!isAuthenticated || user?.role === "admin");
+
+    console.log("🎯 Visibility Check:", {
+        shouldHide,
+        reason: shouldHide
+            ? (!isAuthenticated ? "Not authenticated" : "User is admin")
+            : "Should be visible",
+        willRenderButton: !shouldHide && isAuthenticated && user?.role !== "admin"
+    });
+
     // Don't show for non-authenticated users or admins
-    if (!authLoading && (!isAuthenticated || user?.role === "admin")) {
+    if (shouldHide) {
+        console.log("❌ HIDING BUTTON:", {
+            authLoading,
+            isAuthenticated,
+            userRole: user?.role
+        });
         return null;
     }
+
+    console.log("✅ RENDERING BUTTON - User should see the floating icon!");
 
     return (
         <>
@@ -201,8 +249,17 @@ export const FloatingMessageButton = () => {
                     {/* Floating Button */}
                     {!showChat && (
                         <button
-                            onClick={() => setShowChat(true)}
+                            onClick={() => {
+                                console.log("🖱️ Floating button clicked!");
+                                setShowChat(true);
+                            }}
                             className="fixed bottom-24 right-6 z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:scale-110 transition-all relative"
+                            style={{
+                                // Force visibility for debugging
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
                         >
                             <MessageSquare className="h-6 w-6" />
                             {unreadCount > 0 && (
@@ -228,7 +285,10 @@ export const FloatingMessageButton = () => {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => setShowChat(false)}
+                                    onClick={() => {
+                                        console.log("❌ Closing chat");
+                                        setShowChat(false);
+                                    }}
                                     className="text-primary-foreground hover:bg-primary-foreground/20"
                                 >
                                     <X className="h-5 w-5" />
