@@ -180,8 +180,6 @@ const Order = () => {
     setIsProcessing(true);
 
     try {
-      const newOrderId = `PB-${Date.now().toString(36).toUpperCase()}`;
-
       const token = localStorage.getItem("token");
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -196,22 +194,29 @@ const Order = () => {
         method: "POST",
         headers,
         body: JSON.stringify({
-          orderId: newOrderId,
-          customerName,
-          customerEmail,
+          // ❌ REMOVE orderId - backend generates orderNumber
           customerPhone,
           customerAddress: deliveryMethod === "delivery" ? customerAddress : "",
           deliveryMethod,
-          items: cart,
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            imageUrl: item.imageUrl,
+            quantity: item.quantity
+          })),
           totalAmount: orderTotal,
           deliveryFee: deliveryMethod === "delivery" ? deliveryFee : 0,
-          deliveryZone: deliveryZone,
+          deliveryZone: deliveryMethod === "delivery" ? deliveryZone : "",
           specialInstructions,
           paymentID,
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to save order");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to save order");
+      }
 
       const orderData = await res.json();
 
@@ -224,10 +229,10 @@ const Order = () => {
         description: `Your order ID is ${orderData.orderNumber}. Check your email for confirmation.`
       });
     } catch (err) {
-      console.error(err);
+      console.error("Order error:", err);
       toast({
         title: "Order failed",
-        description: "Could not save your order. Try again.",
+        description: err instanceof Error ? err.message : "Could not save your order. Try again.",
         variant: "destructive",
       });
     } finally {
