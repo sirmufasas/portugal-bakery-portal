@@ -192,9 +192,11 @@ export default function Admin() {
               ? `${user.firstName} ${user.lastName}`
               : 'Customer',
             email: user?.email || 'N/A',
-            phone: data.order.phone || data.order.customerPhone || 'N/A', // ✅ ADDED
-            address: data.order.address || data.order.shippingAddress || '', // ✅ ADDED
-            deliveryMethod: data.order.deliveryMethod || 'delivery', // ✅ ADDED
+            phone: data.order.phone || data.order.customerPhone || 'N/A',
+            address: data.order.address || data.order.shippingAddress || '',
+            deliveryMethod: data.order.deliveryMethod || 'delivery',
+            deliveryFee: data.order.deliveryFee || 0, // ✅ ADDED
+            deliveryZone: data.order.deliveryZone || '', // ✅ ADDED
             items: data.order.items.map(item => `${item.quantity}x ${item.name}`),
             total: `R${data.order.totalAmount.toFixed(2)}`,
             status: data.order.status,
@@ -506,7 +508,9 @@ export default function Admin() {
           email: user?.email || 'N/A',
           phone: order.phone || order.customerPhone || 'N/A',
           address: order.address || order.shippingAddress || '',
-          deliveryMethod: order.deliveryMethod || 'delivery', // ✅ ADDED
+          deliveryMethod: order.deliveryMethod || 'delivery',
+          deliveryFee: order.deliveryFee || 0, // ✅ ADDED
+          deliveryZone: order.deliveryZone || '', // ✅ ADDED
           items: order.items.map(item => `${item.quantity}x ${item.name}`),
           total: `R${order.totalAmount.toFixed(2)}`,
           status: order.status,
@@ -859,7 +863,7 @@ export default function Admin() {
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>
 
-              {/* ✅ DELIVERY METHOD BADGE */}
+              {/* DELIVERY METHOD BADGE */}
               {order.deliveryMethod === 'pickup' ? (
                 <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
                   <ShoppingBag className="h-3 w-3 mr-1" />
@@ -900,6 +904,25 @@ export default function Admin() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
+
+                {/* ✅ DELIVERY FEE & ZONE */}
+                {order.deliveryFee !== undefined && order.deliveryFee > 0 && (
+                  <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-900">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-blue-700 dark:text-blue-300">
+                        Delivery Fee:
+                      </span>
+                      <span className="text-xs font-bold text-blue-900 dark:text-blue-100">
+                        R{order.deliveryFee.toFixed(2)}
+                      </span>
+                    </div>
+                    {order.deliveryZone && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Zone: {order.deliveryZone}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -944,7 +967,24 @@ export default function Admin() {
           </div>
 
           <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-3">
-            <p className="text-xl font-bold text-primary">{order.total}</p>
+            {/* ✅ TOTAL WITH BREAKDOWN */}
+            <div className="text-right">
+              <p className="text-xl font-bold text-primary">{order.total}</p>
+              {order.deliveryMethod === 'delivery' && order.deliveryFee > 0 && (
+                <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                  <p>Subtotal: R{(parseFloat(order.total.replace('R', '')) - order.deliveryFee).toFixed(2)}</p>
+                  <p className="text-blue-600 dark:text-blue-400">
+                    + Delivery: R{order.deliveryFee.toFixed(2)}
+                  </p>
+                </div>
+              )}
+              {order.deliveryMethod === 'pickup' && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  No delivery fee
+                </p>
+              )}
+            </div>
+
             <Select
               value={order.status}
               onValueChange={(value) => updateOrderStatus(order.orderNumber, value)}
@@ -967,7 +1007,7 @@ export default function Admin() {
           </div>
         </div>
       </CardContent>
-    </Card >
+    </Card>
   );
 
   return (
