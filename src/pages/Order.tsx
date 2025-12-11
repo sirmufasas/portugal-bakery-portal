@@ -90,7 +90,7 @@ const Order = () => {
       } else {
         toast({
           title: "Area not found",
-          description: "We'll contact you to confirm the delivery fee. Estimated: R400",
+          description: "We'll contact you to confirm the delivery fee. Estimated: R500",
           variant: "default"
         });
       }
