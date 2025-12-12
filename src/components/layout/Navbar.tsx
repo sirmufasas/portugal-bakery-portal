@@ -41,7 +41,7 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="relative w-10 h-10">
-              <img src="/favicon.ico" alt="Logo" className="w-full h-full object-contain" />
+              <img src="./favicon.ico" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="text-xl md:text-2xl font-heading font-bold text-primary leading-none">Portugal</span>
@@ -63,7 +63,7 @@ export function Navbar() {
                 {link.name}
               </Link>
             ))}
-            
+
             {/* Us Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -178,7 +178,7 @@ export function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              
+
               {/* Us Dropdown for Mobile */}
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="text-lg font-medium py-3 px-4 bg-muted/20">
