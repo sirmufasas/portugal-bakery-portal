@@ -105,19 +105,22 @@ const Profile = () => {
         orders.forEach(order => {
             order.items.forEach(item => {
                 const productName = item.product?.name || "Unknown Product";
+                const image = item.product?.image;
                 const existing = itemCounts.get(productName);
+
                 if (existing) {
                     existing.count += item.quantity;
                 } else {
                     itemCounts.set(productName, {
                         name: productName,
                         count: item.quantity,
-                        image: item.product?.image
+                        image
                     });
                 }
             });
         });
 
+        // Find the item with highest count
         let maxItem: { name: string; count: number; image?: string } | null = null;
         itemCounts.forEach(item => {
             if (!maxItem || item.count > maxItem.count) {
@@ -125,18 +128,18 @@ const Profile = () => {
             }
         });
 
-        return maxItem && maxItem.count > 0 ? maxItem : null;
-    }, [orders]);
-
-    const totalItemsPurchased = useMemo(() => {
-        return orders.reduce((sum, order) =>
-            sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
-        );
+        return maxItem;
     }, [orders]);
 
     const totalItemsInCart = useMemo(() => {
         return cart.reduce((sum, c) => sum + c.quantity, 0);
     }, [cart]);
+
+    const totalItemsPurchased = useMemo(() => {
+        return orders.reduce((total, order) =>
+            total + order.items.reduce((sum, item) => sum + item.quantity, 0), 0
+        );
+    }, [orders]);
 
     const handleViewReceipt = (order: Order) => {
         setSelectedOrder(order);
@@ -449,7 +452,7 @@ const Profile = () => {
                                                             Order #{order.orderNumber}
                                                         </p>
                                                         <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
-                                                            {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                                                            {order.items.reduce((sum, item) => sum + item.quantity, 0)} item{order.items.reduce((sum, item) => sum + item.quantity, 0) !== 1 ? 's' : ''}
                                                         </p>
                                                         <Badge
                                                             variant="outline"
@@ -537,32 +540,34 @@ const Profile = () => {
                                 <div className="h-2 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400"></div>
                                 <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-4 sm:p-6">
                                     <CardTitle className="flex items-center gap-2 text-neutral-900 dark:text-neutral-50 text-lg sm:text-xl">
-                                        <Award className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
-                                        Most Ordered
+                                        <Award className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                                        Most Ordered Item
                                     </CardTitle>
                                     <CardDescription className="dark:text-neutral-400 text-sm">
-                                        Your favorite item
+                                        Your all-time favorite
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
-                                    <div className="text-center">
+                                <CardContent className="p-4 sm:p-6">
+                                    <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                                         {favoriteItem.image ? (
                                             <img
                                                 src={favoriteItem.image}
                                                 alt={favoriteItem.name}
-                                                className="h-24 w-24 sm:h-28 sm:w-28 mx-auto rounded-full object-cover mb-3 shadow-lg border-4 border-amber-400 dark:border-amber-600"
+                                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-lg border-4 border-amber-400 dark:border-amber-600 flex-shrink-0"
                                             />
                                         ) : (
-                                            <div className="h-14 w-14 sm:h-16 sm:w-16 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center mb-3 shadow-lg">
-                                                <Award className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
+                                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                                                <Award className="h-10 w-10 sm:h-12 sm:w-12 text-white" />
                                             </div>
                                         )}
-                                        <p className="font-bold text-base sm:text-lg text-neutral-900 dark:text-neutral-50 mb-1 break-words">
-                                            {favoriteItem.name}
-                                        </p>
-                                        <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-                                            Ordered {favoriteItem.count} time{favoriteItem.count !== 1 ? 's' : ''}
-                                        </p>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-lg sm:text-xl text-neutral-900 dark:text-neutral-50 break-words">
+                                                {favoriteItem.name}
+                                            </p>
+                                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                                                Ordered <span className="font-bold text-amber-600 dark:text-amber-500">{favoriteItem.count}</span> time{favoriteItem.count !== 1 ? 's' : ''}
+                                            </p>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
