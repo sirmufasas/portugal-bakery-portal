@@ -97,6 +97,7 @@ const Profile = () => {
         fetchOrders();
     }, [user, token, navigate, toast]);
 
+    // FIXED: Properly wrapped useMemo with correct syntax and deps
     const favoriteItem = useMemo(() => {
         if (orders.length === 0) return null;
 
@@ -120,7 +121,6 @@ const Profile = () => {
             });
         });
 
-        // Find the item with highest count
         let maxItem: { name: string; count: number; image?: string } | null = null;
         itemCounts.forEach(item => {
             if (!maxItem || item.count > maxItem.count) {
@@ -275,9 +275,9 @@ const Profile = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {/* Left Column */}
-                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-                        {/* Personal Information Card */}
+                    {/* Left Column - Now takes full width on mobile & tablet */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Personal Info + Purchase History */}
                         <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-neutral-200 dark:border-neutral-800">
                             <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-b border-neutral-200 dark:border-neutral-800 p-4 sm:p-6">
                                 <CardTitle className="flex items-center gap-2 text-neutral-900 dark:text-neutral-50 text-lg sm:text-xl">
@@ -495,9 +495,9 @@ const Profile = () => {
                         </Card>
                     </div>
 
-                    {/* Right Column */}
-                    <div className="space-y-4 sm:space-y-6">
-                        {/* Stats Card */}
+                    {/* Right Column - Stats only */}
+                    <div className="space-y-6">
+                        {/* Stats Card only */}
                         <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-neutral-200 dark:border-neutral-800">
                             <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-b border-neutral-200 dark:border-neutral-800 p-4 sm:p-6">
                                 <CardTitle className="text-neutral-900 dark:text-neutral-50 text-lg sm:text-xl">
@@ -533,157 +533,86 @@ const Profile = () => {
                                 </div>
                             </CardContent>
                         </Card>
-
-                        {/* Favorite Item Card */}
-                        {favoriteItem && (
-                            <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                                <div className="h-2 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400"></div>
-                                <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-4 sm:p-6">
-                                    <CardTitle className="flex items-center gap-2 text-neutral-900 dark:text-neutral-50 text-lg sm:text-xl">
-                                        <Award className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-                                        Most Ordered Item
-                                    </CardTitle>
-                                    <CardDescription className="dark:text-neutral-400 text-sm">
-                                        Your all-time favorite
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="p-4 sm:p-6">
-                                    <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                                        {favoriteItem.image ? (
-                                            <img
-                                                src={favoriteItem.image}
-                                                alt={favoriteItem.name}
-                                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-lg border-4 border-amber-400 dark:border-amber-600 flex-shrink-0"
-                                            />
-                                        ) : (
-                                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center shadow-lg flex-shrink-0">
-                                                <Award className="h-10 w-10 sm:h-12 sm:w-12 text-white" />
-                                            </div>
-                                        )}
-                                        <div className="flex-1">
-                                            <p className="font-bold text-lg sm:text-xl text-neutral-900 dark:text-neutral-50 break-words">
-                                                {favoriteItem.name}
-                                            </p>
-                                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                                Ordered <span className="font-bold text-amber-600 dark:text-amber-500">{favoriteItem.count}</span> time{favoriteItem.count !== 1 ? 's' : ''}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
                     </div>
                 </div>
             </main>
 
             {/* Receipt Dialog */}
             <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
-                <DialogContent className="w-[calc(100vw-2rem)] max-w-[500px] mx-auto max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <div className="flex items-center justify-between">
-                            <DialogTitle className="text-xl sm:text-2xl">Order Receipt</DialogTitle>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setReceiptDialogOpen(false)}
-                                className="h-8 w-8"
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        {selectedOrder && (
-                            <DialogDescription className="text-left">
-                                Order #{selectedOrder.orderNumber}
-                            </DialogDescription>
-                        )}
+                <DialogContent className="w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-2xl">
+                    <DialogHeader className="border-b pb-4">
+                        <DialogTitle className="text-2xl font-bold text-center sm:text-left">
+                            Order Receipt #{selectedOrder?.orderNumber}
+                        </DialogTitle>
+                        <DialogDescription className="text-center sm:text-left">
+                            {selectedOrder && new Date(selectedOrder.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                hour12: true,
+                                minute: '2-digit'
+                            })}
+                        </DialogDescription>
                     </DialogHeader>
 
                     {selectedOrder && (
-                        <div className="space-y-6 py-4">
-                            {/* Order Info */}
-                            <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm text-neutral-600 dark:text-neutral-400">Order Date:</span>
-                                    <span className="text-sm font-medium">
-                                        {new Date(selectedOrder.createdAt).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-neutral-600 dark:text-neutral-400">Status:</span>
-                                    <Badge variant="outline" className="capitalize">
-                                        {selectedOrder.status}
-                                    </Badge>
-                                </div>
-                            </div>
-
-                            {/* Delivery Method */}
-                            <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
-                                <div className="flex items-center gap-2 mb-2">
+                        <div className="py-6 space-y-6">
+                            {/* Status & Delivery */}
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <Badge variant="outline" className="text-sm px-3 py-1 capitalize">
+                                    {selectedOrder.status}
+                                </Badge>
+                                <div className="flex items-center gap-2 text-sm">
                                     {selectedOrder.deliveryMethod === 'pickup' ? (
-                                        <>
-                                            <ShoppingBag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                                            <span className="font-medium">Store Pickup</span>
-                                        </>
+                                        <>Store Pickup</>
                                     ) : (
-                                        <>
-                                            <Truck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                            <span className="font-medium">Delivery</span>
-                                        </>
+                                        <>Delivery</>
                                     )}
                                 </div>
-
-                                {selectedOrder.deliveryMethod === 'delivery' && selectedOrder.address && (
-                                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                                        <div className="flex items-start gap-2">
-                                            <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                            <div className="flex-1">
-                                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                                                    Delivery Address:
-                                                </p>
-                                                <p className="text-sm text-blue-800 dark:text-blue-200">
-                                                    {selectedOrder.address}
-                                                </p>
-                                                {selectedOrder.deliveryZone && (
-                                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                                        Zone: {selectedOrder.deliveryZone}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
 
-                            {/* Items Ordered */}
-                            <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
-                                <h3 className="font-semibold mb-3 text-neutral-900 dark:text-neutral-50">
-                                    Items Ordered
-                                </h3>
-                                <div className="space-y-3">
-                                    {selectedOrder.items.map((item, index) => (
-                                        <div key={index} className="flex items-center gap-3">
-                                            {item.product?.image && (
+                            {/* Delivery Address */}
+                            {selectedOrder.deliveryMethod === 'delivery' && selectedOrder.address && (
+                                <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-xl border">
+                                    <p className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                                        Delivery Address
+                                    </p>
+                                    <p className="text-sm mt-1">{selectedOrder.address}</p>
+                                    {selectedOrder.deliveryZone && (
+                                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                            Zone: {selectedOrder.deliveryZone}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Items List */}
+                            <div>
+                                <h3 className="font-semibold text-lg mb-4">Items Ordered</h3>
+                                <div className="space-y-4">
+                                    {selectedOrder.items.map((item, i) => (
+                                        <div key={i} className="flex gap-4 items-start">
+                                            {item.product?.image ? (
                                                 <img
                                                     src={item.product.image}
                                                     alt={item.product.name}
-                                                    className="h-12 w-12 rounded object-cover flex-shrink-0"
+                                                    className="w-16 h-16 rounded-lg object-cover border"
                                                 />
+                                            ) : (
+                                                <div className="w-16 h-16 bg-gray-200 dark:bg-gray-800 rounded-lg border flex items-center justify-center">
+                                                    <ShoppingBag className="h-8 w-8 text-gray-400" />
+                                                </div>
                                             )}
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm text-neutral-900 dark:text-neutral-50 truncate">
-                                                    {item.product?.name || "Product"}
+                                            <div className="flex-1">
+                                                <p className="font-medium text-base">
+                                                    {item.product?.name || "Unknown Product"}
                                                 </p>
-                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                <p className="text-sm text-neutral-600 dark:text-neutral-400">
                                                     Qty: {item.quantity} × R{item.price.toFixed(2)}
                                                 </p>
                                             </div>
-                                            <p className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
+                                            <p className="font-semibold text-right">
                                                 R{(item.quantity * item.price).toFixed(2)}
                                             </p>
                                         </div>
@@ -693,49 +622,36 @@ const Profile = () => {
 
                             {/* Special Instructions */}
                             {selectedOrder.specialInstructions && (
-                                <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
-                                    <h3 className="font-semibold mb-2 text-neutral-900 dark:text-neutral-50">
-                                        Special Instructions
-                                    </h3>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
-                                        {selectedOrder.specialInstructions}
-                                    </p>
+                                <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-xl border">
+                                    <p className="font-medium text-amber-900 dark:text-amber-100">Special Instructions</p>
+                                    <p className="text-sm mt-1">{selectedOrder.specialInstructions}</p>
                                 </div>
                             )}
 
-                            {/* Order Total */}
-                            <div className="space-y-2">
+                            {/* Total */}
+                            <div className="border-t pt-4 space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-neutral-600 dark:text-neutral-400">Subtotal:</span>
-                                    <span className="font-medium">
-                                        R{selectedOrder.deliveryFee
-                                            ? (selectedOrder.totalAmount - selectedOrder.deliveryFee).toFixed(2)
-                                            : selectedOrder.totalAmount.toFixed(2)
-                                        }
-                                    </span>
+                                    <span>Subtotal</span>
+                                    <span>R{(selectedOrder.totalAmount - (selectedOrder.deliveryFee || 0)).toFixed(2)}</span>
                                 </div>
-
-                                {selectedOrder.deliveryFee && selectedOrder.deliveryFee > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-neutral-600 dark:text-neutral-400">Delivery Fee:</span>
-                                        <span className="font-medium text-blue-600 dark:text-blue-400">
-                                            R{selectedOrder.deliveryFee.toFixed(2)}
-                                        </span>
+                                {selectedOrder.deliveryFee > 0 && (
+                                    <div className="flex justify-between text-sm text-blue-600 dark:text-blue-400">
+                                        <span>Delivery Fee</span>
+                                        <span>R{selectedOrder.deliveryFee.toFixed(2)}</span>
                                     </div>
                                 )}
-
-                                <div className="flex justify-between text-lg font-bold pt-2 border-t border-neutral-200 dark:border-neutral-800">
-                                    <span className="text-neutral-900 dark:text-neutral-50">Total:</span>
+                                <div className="flex justify-between text-xl font-bold pt-3 border-t">
+                                    <span>Total</span>
                                     <span className="text-amber-600 dark:text-amber-500">
                                         R{selectedOrder.totalAmount.toFixed(2)}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Action Button */}
                             <Button
                                 onClick={() => setReceiptDialogOpen(false)}
-                                className="w-full bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
+                                className="w-full bg-amber-600 hover:bg-amber-700"
+                                size="lg"
                             >
                                 Close Receipt
                             </Button>
