@@ -183,13 +183,13 @@ export function FeaturedProducts() {
                     {product.category}
                   </span>
                 </div>
-                
+
                 {/* Christmas ornament on image */}
                 <div className="absolute bottom-4 right-4 text-2xl opacity-70 group-hover:scale-125 transition-transform duration-300">
                   {index % 4 === 0 ? '🎁' : index % 4 === 1 ? '⭐' : index % 4 === 2 ? '🎅' : '🔔'}
                 </div>
               </div>
-              
+
               <div className="p-5 bg-gradient-to-b from-white to-amber-50/30 dark:from-neutral-900 dark:to-amber-950/10">
                 <h3 className="font-heading font-semibold text-lg text-neutral-900 dark:text-neutral-50 mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">
                   {product.name}
@@ -202,7 +202,16 @@ export function FeaturedProducts() {
                     {product.price}
                   </span>
                   <Link to="/menu">
-                    <Button size="sm" variant="outline" className="border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white dark:border-amber-500 dark:text-amber-500 dark:hover:bg-amber-500">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="
+                                  border-amber-600 text-amber-600 
+                                  hover:bg-amber-600 hover:text-white 
+                                  dark:border-amber-500 dark:text-amber-500 
+                                  dark:hover:bg-amber-500 dark:hover:text-white
+                                "
+                    >
                       Order
                     </Button>
                   </Link>
@@ -218,9 +227,9 @@ export function FeaturedProducts() {
             ⭐
           </div>
           <Link to="/menu">
-            <Button 
-              variant="default" 
-              size="lg" 
+            <Button
+              variant="default"
+              size="lg"
               className="gap-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 shadow-lg hover:shadow-xl transition-all duration-300 group"
             >
               View Full Menu
