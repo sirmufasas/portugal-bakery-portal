@@ -20,12 +20,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 interface OrderItem {
-    product: {
+    product?: {
         _id: string;
         name: string;
         price: number;
         image?: string;
     };
+    name?: string;
+    imageUrl?: string;
+    image?: string;
     quantity: number;
     price: number;
 }
@@ -591,32 +594,40 @@ const Profile = () => {
                             <div>
                                 <h3 className="font-semibold text-lg mb-4">Items Ordered</h3>
                                 <div className="space-y-4">
-                                    {selectedOrder.items.map((item, i) => (
-                                        <div key={i} className="flex gap-4 items-start">
-                                            {item.product?.image ? (
-                                                <img
-                                                    src={item.product.image}
-                                                    alt={item.product.name}
-                                                    className="w-16 h-16 rounded-lg object-cover border"
-                                                />
-                                            ) : (
-                                                <div className="w-16 h-16 bg-gray-200 dark:bg-gray-800 rounded-lg border flex items-center justify-center">
-                                                    <ShoppingBag className="h-8 w-8 text-gray-400" />
+                                    {selectedOrder.items.map((item, i) => {
+                                        // Extract product info - handle both nested and flat structures
+                                        const productName = item.product?.name || item.name || "Unknown Product";
+                                        const productImage = item.product?.image || item.imageUrl || item.image;
+                                        const itemPrice = item.price || item.product?.price || 0;
+                                        const itemQuantity = item.quantity || 1;
+
+                                        return (
+                                            <div key={i} className="flex gap-4 items-start">
+                                                {productImage ? (
+                                                    <img
+                                                        src={productImage}
+                                                        alt={productName}
+                                                        className="w-16 h-16 rounded-lg object-cover border flex-shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-800 rounded-lg border flex items-center justify-center flex-shrink-0">
+                                                        <ShoppingBag className="h-8 w-8 text-gray-400" />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-base break-words">
+                                                        {productName}
+                                                    </p>
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                        Qty: {itemQuantity} × R{itemPrice.toFixed(2)}
+                                                    </p>
                                                 </div>
-                                            )}
-                                            <div className="flex-1">
-                                                <p className="font-medium text-base">
-                                                    {item.product?.name || "Unknown Product"}
-                                                </p>
-                                                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                                    Qty: {item.quantity} × R{item.price.toFixed(2)}
+                                                <p className="font-semibold text-right whitespace-nowrap">
+                                                    R{(itemQuantity * itemPrice).toFixed(2)}
                                                 </p>
                                             </div>
-                                            <p className="font-semibold text-right">
-                                                R{(item.quantity * item.price).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 
