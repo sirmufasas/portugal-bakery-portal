@@ -416,8 +416,8 @@ const Profile = () => {
                         </Card>
 
                         {/* Purchase History Card */}
-                        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-neutral-200 dark:border-neutral-800 flex flex-col">
-                            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-b border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 flex-shrink-0">
+                        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-neutral-200 dark:border-neutral-800">
+                            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-b border-neutral-200 dark:border-neutral-800 p-4 sm:p-6">
                                 <CardTitle className="flex items-center gap-2 text-neutral-900 dark:text-neutral-50 text-lg sm:text-xl">
                                     <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
                                     Purchase History
@@ -432,16 +432,14 @@ const Profile = () => {
                                     )}
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 flex-1 flex flex-col">
+                            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
                                 {fetchingOrders ? (
-                                    <div className="text-center py-8 sm:py-12 flex-1 flex items-center justify-center">
-                                        <div>
-                                            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-amber-600 mx-auto mb-3"></div>
-                                            <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400">Loading orders...</p>
-                                        </div>
+                                    <div className="text-center py-8 sm:py-12">
+                                        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-amber-600 mx-auto mb-3"></div>
+                                        <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400">Loading orders...</p>
                                     </div>
                                 ) : orders.length ? (
-                                    <div className="grid grid-cols-1 gap-2 sm:gap-3 auto-rows-fr">
+                                    <div className="space-y-2 sm:space-y-3">
                                         {orders.map((order) => (
                                             <div
                                                 key={order._id}
@@ -482,20 +480,18 @@ const Profile = () => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8 sm:py-12 flex-1 flex items-center justify-center">
-                                        <div>
-                                            <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-neutral-300 dark:text-neutral-700 mb-3" />
-                                            <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400">No purchases yet</p>
-                                            <p className="text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 mt-1">
-                                                Start shopping to see your order history here
-                                            </p>
-                                            <Button
-                                                onClick={() => navigate("/menu")}
-                                                className="mt-4 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-sm"
-                                            >
-                                                Start Shopping
-                                            </Button>
-                                        </div>
+                                    <div className="text-center py-8 sm:py-12">
+                                        <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-neutral-300 dark:text-neutral-700 mb-3" />
+                                        <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400">No purchases yet</p>
+                                        <p className="text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 mt-1">
+                                            Start shopping to see your order history here
+                                        </p>
+                                        <Button
+                                            onClick={() => navigate("/menu")}
+                                            className="mt-4 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-sm"
+                                        >
+                                            Start Shopping
+                                        </Button>
                                     </div>
                                 )}
                             </CardContent>
