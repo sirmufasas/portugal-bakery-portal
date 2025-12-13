@@ -8,7 +8,25 @@ const InstallPrompt = () => {
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowModal(true);
+      
+      // Check if user previously dismissed and if 10 minutes have passed
+      const lastDismissed = localStorage.getItem("pwa-prompt-dismissed");
+      const now = Date.now();
+      
+      if (lastDismissed) {
+        const timeSinceDismissed = now - parseInt(lastDismissed);
+        const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+        
+        if (timeSinceDismissed >= fiveMinutes) {
+          // 5 minutes have passed, show the modal again
+          setShowModal(true);
+          localStorage.removeItem("pwa-prompt-dismissed");
+        }
+      } else {
+        // First time, show the modal
+        setShowModal(true);
+      }
+      
       console.log("📥 PWA install prompt ready");
     };
 
@@ -24,6 +42,14 @@ const InstallPrompt = () => {
     console.log("User choice:", choice.outcome);
     setShowModal(false);
     setDeferredPrompt(null);
+    // Clear the dismissed timestamp since they installed
+    localStorage.removeItem("pwa-prompt-dismissed");
+  };
+
+  const handleMaybeLater = () => {
+    setShowModal(false);
+    // Store the current timestamp when user dismisses
+    localStorage.setItem("pwa-prompt-dismissed", Date.now().toString());
   };
 
   if (!showModal) return null;
@@ -58,7 +84,7 @@ const InstallPrompt = () => {
           </button>
           <button
             className="w-full px-6 py-3 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all duration-200 font-medium rounded-xl border border-amber-300 dark:border-amber-700"
-            onClick={() => setShowModal(false)}
+            onClick={handleMaybeLater}
           >
             Maybe Later
           </button>
