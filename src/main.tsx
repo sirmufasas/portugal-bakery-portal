@@ -17,11 +17,19 @@ const Root = () => {
   );
 };
 
-// Register Service Worker
+// ✅ Register Service Worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js");
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then(registration => {
+        console.log("✅ Service Worker registered:", registration);
+      })
+      .catch(err => {
+        console.error("❌ Service Worker registration failed:", err);
+      });
   });
 }
 
+// Render React app
 createRoot(document.getElementById("root")!).render(<Root />);
