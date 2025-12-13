@@ -8,7 +8,7 @@ const Root = () => {
   const [appKey, setAppKey] = useState(0);
 
   // Expose global reset function
-  window.resetApp = () => setAppKey(prev => prev + 1);
+  (window as any).resetApp = () => setAppKey(prev => prev + 1);
 
   return (
     <AuthProvider>
@@ -16,5 +16,12 @@ const Root = () => {
     </AuthProvider>
   );
 };
+
+// Register Service Worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js");
+  });
+}
 
 createRoot(document.getElementById("root")!).render(<Root />);
