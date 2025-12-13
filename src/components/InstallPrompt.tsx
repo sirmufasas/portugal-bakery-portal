@@ -9,8 +9,8 @@ const InstallPrompt = () => {
       e.preventDefault();
       setDeferredPrompt(e);
       
-      // Check if user previously dismissed and if 10 minutes have passed
-      const lastDismissed = localStorage.getItem("pwa-prompt-dismissed");
+      // Check if user previously dismissed and if 5 minutes have passed
+      const lastDismissed = sessionStorage.getItem("pwa-prompt-dismissed");
       const now = Date.now();
       
       if (lastDismissed) {
@@ -20,10 +20,10 @@ const InstallPrompt = () => {
         if (timeSinceDismissed >= fiveMinutes) {
           // 5 minutes have passed, show the modal again
           setShowModal(true);
-          localStorage.removeItem("pwa-prompt-dismissed");
+          sessionStorage.removeItem("pwa-prompt-dismissed");
         }
       } else {
-        // First time, show the modal
+        // First time or after hard refresh, show the modal
         setShowModal(true);
       }
       
@@ -43,13 +43,13 @@ const InstallPrompt = () => {
     setShowModal(false);
     setDeferredPrompt(null);
     // Clear the dismissed timestamp since they installed
-    localStorage.removeItem("pwa-prompt-dismissed");
+    sessionStorage.removeItem("pwa-prompt-dismissed");
   };
 
   const handleMaybeLater = () => {
     setShowModal(false);
     // Store the current timestamp when user dismisses
-    localStorage.setItem("pwa-prompt-dismissed", Date.now().toString());
+    sessionStorage.setItem("pwa-prompt-dismissed", Date.now().toString());
   };
 
   if (!showModal) return null;
