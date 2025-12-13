@@ -11,6 +11,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
 
 import { FloatingMessageButton } from "@/components/chat/FloatingMessageButton";
+import InstallPrompt from "@/components/InstallPrompt"; // ✅ IMPORT
 
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -30,18 +31,16 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-// ✅ ADD THIS COMPONENT
+// ✅ Scroll to top helper
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-
   return null;
 };
 
-/** Helper component to avoid context errors */
+// ✅ Floating button only for non-admin users
 const FloatingButtonWrapper = () => {
   const { user } = useAuth();
   return user?.role !== "admin" ? <FloatingMessageButton /> : null;
@@ -56,11 +55,15 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />  {/* ✅ ADD THIS LINE */}
 
-                {/* Floating button is now protected from admin */}
+              <BrowserRouter>
+                <ScrollToTop />
+
+                {/* Floating button */}
                 <FloatingButtonWrapper />
+
+                {/* ✅ PWA Install Modal */}
+                <InstallPrompt />
 
                 <Routes>
                   {/* Public Routes */}
@@ -83,7 +86,6 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
-
                   <Route
                     path="/track-order"
                     element={
@@ -92,7 +94,6 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
-
                   <Route
                     path="/admin"
                     element={
