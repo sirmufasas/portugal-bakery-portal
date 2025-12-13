@@ -29,24 +29,40 @@ const InstallPrompt = () => {
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-cream dark:bg-espresso p-6 rounded-2xl shadow-glow max-w-sm w-full text-center">
-        <h2 className="text-2xl font-heading mb-4 text-amber">Install Portugal Bakery</h2>
-        <p className="mb-6 text-foreground dark:text-foreground">
-          Add our bakery app to your home screen for the full experience!
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 p-8 rounded-3xl shadow-2xl max-w-md w-full border-2 border-amber-200 dark:border-amber-800">
+        {/* Icon */}
+        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-3xl font-bold mb-3 text-amber-900 dark:text-amber-100 text-center">
+          Install Portugal Bakery
+        </h2>
+
+        {/* Description */}
+        <p className="mb-8 text-amber-800 dark:text-amber-200 text-center leading-relaxed">
+          Add our bakery app to your home screen for quick access and the full experience!
         </p>
-        <button
-          className="px-6 py-3 bg-amber text-espresso font-bold rounded-xl hover:bg-amber-light transition"
-          onClick={handleInstall}
-        >
-          Install
-        </button>
-        <button
-          className="mt-3 text-sm text-muted hover:text-foreground transition"
-          onClick={() => setShowModal(false)}
-        >
-          Maybe Later
-        </button>
+
+        {/* Buttons */}
+        <div className="space-y-3">
+          <button
+            className="w-full px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            onClick={handleInstall}
+          >
+            Install Now
+          </button>
+          <button
+            className="w-full px-6 py-3 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all duration-200 font-medium rounded-xl border border-amber-300 dark:border-amber-700"
+            onClick={() => setShowModal(false)}
+          >
+            Maybe Later
+          </button>
+        </div>
       </div>
     </div>
   );
