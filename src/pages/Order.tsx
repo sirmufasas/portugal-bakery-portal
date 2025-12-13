@@ -559,42 +559,44 @@ const Order = () => {
                           💡 Tip: Include your suburb name for accurate delivery fee (e.g., "123 Main St, Rosettenville, Johannesburg")
                         </p>
 
-                        <div className="mb-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 space-y-3">
-                          <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">
-                            Delivery Zones & Fees - Click to Select Your Zone
-                          </h4>
-                          {getAllZones().map((zone, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => {
-                                setDeliveryZone(zone.name);
-                                setDeliveryFee(zone.fee);
-                                setDeliveryCalculated(true);
-                                setSelectedZone(zone);
-                                setMatchingZones([]);
-                                toast({
-                                  title: "Zone selected!",
-                                  description: `${zone.name} - Delivery fee: R${zone.fee}`,
-                                });
-                              }}
-                              className="w-full text-left p-3 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-transparent hover:border-blue-300 dark:hover:border-blue-700"
-                            >
-                              <div className="flex justify-between items-start mb-1">
-                                <span className="font-medium text-blue-900 dark:text-blue-100 text-sm">
-                                  {zone.name}
-                                </span>
-                                <span className="font-bold text-blue-700 dark:text-blue-300 text-sm">
-                                  R{zone.fee}
-                                </span>
-                              </div>
-                              <p className="text-blue-700 dark:text-blue-300 text-[10px] leading-relaxed">
-                                {zone.suburbs.slice(0, 8).join(", ")}
-                                {zone.suburbs.length > 8 && ` +${zone.suburbs.length - 8} more`}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
+                        {!deliveryCalculated && (
+                          <div className="mb-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 space-y-3">
+                            <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">
+                              Delivery Zones & Fees - Click to Select Your Zone
+                            </h4>
+                            {getAllZones().map((zone, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => {
+                                  setDeliveryZone(zone.name);
+                                  setDeliveryFee(zone.fee);
+                                  setDeliveryCalculated(true);
+                                  setSelectedZone(zone);
+                                  setMatchingZones([]);
+                                  toast({
+                                    title: "Zone selected!",
+                                    description: `${zone.name} - Delivery fee: R${zone.fee}`,
+                                  });
+                                }}
+                                className="w-full text-left p-3 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-transparent hover:border-blue-300 dark:hover:border-blue-700"
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="font-medium text-blue-900 dark:text-blue-100 text-sm">
+                                    {zone.name}
+                                  </span>
+                                  <span className="font-bold text-blue-700 dark:text-blue-300 text-sm">
+                                    R{zone.fee}
+                                  </span>
+                                </div>
+                                <p className="text-blue-700 dark:text-blue-300 text-[10px] leading-relaxed">
+                                  {zone.suburbs.slice(0, 8).join(", ")}
+                                  {zone.suburbs.length > 8 && ` +${zone.suburbs.length - 8} more`}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
                         {!deliveryCalculated && (
                           <Button
