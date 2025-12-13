@@ -555,10 +555,14 @@ const Order = () => {
                           value={customerAddress}
                           onChange={(e) => {
                             setCustomerAddress(e.target.value);
-                            setDeliveryCalculated(false);
-                            setDeliveryFee(0);
-                            setMatchingZones([]);
-                            setSelectedZone(null);
+                            // Only reset if user starts typing a new address
+                            if (deliveryCalculated) {
+                              setDeliveryCalculated(false);
+                              setDeliveryFee(0);
+                              setMatchingZones([]);
+                              setSelectedZone(null);
+                              setDeliveryZone("");
+                            }
                           }}
                           className="bg-background text-foreground min-h-[80px] resize-none"
                           rows={3}
@@ -570,15 +574,31 @@ const Order = () => {
                         {showZoneInfo && (
                           <div className="mb-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 space-y-3">
                             <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">
-                              Delivery Zones & Fees
+                              Delivery Zones & Fees - Click to Select Your Zone
                             </h4>
                             {getAllZones().map((zone, index) => (
-                              <div key={index} className="text-xs">
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => {
+                                  setDeliveryZone(zone.name);
+                                  setDeliveryFee(zone.fee);
+                                  setDeliveryCalculated(true);
+                                  setSelectedZone(zone);
+                                  setMatchingZones([]);
+                                  setShowZoneInfo(false);
+                                  toast({
+                                    title: "Zone selected!",
+                                    description: `${zone.name} - Delivery fee: R${zone.fee}`,
+                                  });
+                                }}
+                                className="w-full text-left p-3 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-transparent hover:border-blue-300 dark:hover:border-blue-700"
+                              >
                                 <div className="flex justify-between items-start mb-1">
-                                  <span className="font-medium text-blue-900 dark:text-blue-100">
+                                  <span className="font-medium text-blue-900 dark:text-blue-100 text-sm">
                                     {zone.name}
                                   </span>
-                                  <span className="font-bold text-blue-700 dark:text-blue-300">
+                                  <span className="font-bold text-blue-700 dark:text-blue-300 text-sm">
                                     R{zone.fee}
                                   </span>
                                 </div>
@@ -586,30 +606,32 @@ const Order = () => {
                                   {zone.suburbs.slice(0, 8).join(", ")}
                                   {zone.suburbs.length > 8 && ` +${zone.suburbs.length - 8} more`}
                                 </p>
-                              </div>
+                              </button>
                             ))}
                           </div>
                         )}
 
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          onClick={handleCalculateDelivery}
-                          disabled={!customerAddress.trim() || calculatingDelivery}
-                        >
-                          {calculatingDelivery ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Calculating...
-                            </>
-                          ) : (
-                            <>
-                              <Calculator className="h-4 w-4 mr-2" />
-                              Calculate Delivery Fee
-                            </>
-                          )}
-                        </Button>
+                        {!deliveryCalculated && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={handleCalculateDelivery}
+                            disabled={!customerAddress.trim() || calculatingDelivery}
+                          >
+                            {calculatingDelivery ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Calculating...
+                              </>
+                            ) : (
+                              <>
+                                <Calculator className="h-4 w-4 mr-2" />
+                                Calculate Delivery Fee
+                              </>
+                            )}
+                          </Button>
+                        )}
 
                         {deliveryCalculated && (
                           <div className="mt-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
@@ -651,9 +673,22 @@ const Order = () => {
                                     <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
                                       Delivery Fee: R{deliveryFee.toFixed(2)}
                                     </p>
-                                    <p className="text-xs text-green-700 dark:text-green-300">
+                                    <p className="text-xs text-green-700 dark:text-green-300 mb-2">
                                       {deliveryZone}
                                     </p>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeliveryCalculated(false);
+                                        setDeliveryZone("");
+                                        setDeliveryFee(0);
+                                      }}
+                                      className="text-xs"
+                                    >
+                                      Change Zone
+                                    </Button>
                                   </>
                                 )}
                               </div>
