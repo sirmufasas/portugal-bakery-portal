@@ -57,7 +57,6 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
       "springs",
       "edenvale",
       "bedfordview",
-      "kensington",
       "observatory",
       "yeoville",
       "berea",
@@ -251,23 +250,37 @@ function normalizeSuburb(suburb: string): string {
     .replace(/\s+/g, ' ');   // Normalize spaces
 }
 
-// Find delivery zone for a given address
-export function findDeliveryZone(address: string): DeliveryZone | null {
+// Find all matching zones for a given address
+function findAllMatchingZones(address: string): DeliveryZone[] {
   const normalizedAddress = normalizeSuburb(address);
+  const matchingZones: DeliveryZone[] = [];
   
-  // Search through all zones
+  // Search through all zones and collect matches
   for (const zone of DELIVERY_ZONES) {
     for (const suburb of zone.suburbs) {
       const normalizedSuburb = normalizeSuburb(suburb);
       
       // Check if address contains the suburb name
       if (normalizedAddress.includes(normalizedSuburb)) {
-        return zone;
+        matchingZones.push(zone);
+        break; // Only add zone once even if multiple suburbs match
       }
     }
   }
   
-  return null; // No matching zone found
+  return matchingZones;
+}
+
+// Find delivery zone for a given address (returns closest/cheapest zone)
+export function findDeliveryZone(address: string): DeliveryZone | null {
+  const matchingZones = findAllMatchingZones(address);
+  
+  if (matchingZones.length === 0) {
+    return null;
+  }
+  
+  // Return the first match (closest zone since array is ordered from nearest to farthest)
+  return matchingZones[0];
 }
 
 // Get delivery fee from address
@@ -275,22 +288,39 @@ export function calculateDeliveryFee(address: string): {
   fee: number;
   zone: string;
   found: boolean;
+  multipleMatches?: boolean;
+  allMatches?: string[];
 } {
-  const zone = findDeliveryZone(address);
+  const allMatches = findAllMatchingZones(address);
   
-  if (zone) {
+  if (allMatches.length === 0) {
+    // No matching zone found
     return {
-      fee: zone.fee,
-      zone: zone.name,
-      found: true
+      fee: 500,
+      zone: "Outside delivery area - Please contact us",
+      found: false
     };
   }
   
-  // Default to highest zone if not found
+  // Get the closest (first) match
+  const closestZone = allMatches[0];
+  
+  if (allMatches.length > 1) {
+    // Multiple zones matched - inform user we're using the closest
+    return {
+      fee: closestZone.fee,
+      zone: `${closestZone.name} (closest match)`,
+      found: true,
+      multipleMatches: true,
+      allMatches: allMatches.map(z => z.name)
+    };
+  }
+  
+  // Single match found
   return {
-    fee: 500,
-    zone: "Outside delivery area - Please contact us",
-    found: false
+    fee: closestZone.fee,
+    zone: closestZone.name,
+    found: true
   };
 }
 

@@ -14,7 +14,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
-import { calculateDeliveryFee, getAllZones } from "@/utils/deliveryZones";
+import { calculateDeliveryFee, getAllZones, DELIVERY_ZONES, type DeliveryZone } from "@/utils/deliveryZones";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -46,6 +46,8 @@ const Order = () => {
   const [deliveryCalculated, setDeliveryCalculated] = useState(false);
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const [showZoneInfo, setShowZoneInfo] = useState(false);
+  const [matchingZones, setMatchingZones] = useState<DeliveryZone[]>([]);
+  const [selectedZone, setSelectedZone] = useState<DeliveryZone | null>(null);
 
   // ✅ COMPUTED VALUES
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
@@ -78,16 +80,43 @@ const Order = () => {
     setTimeout(() => {
       const result = calculateDeliveryFee(customerAddress);
 
-      setDeliveryFee(result.fee);
-      setDeliveryZone(result.zone);
-      setDeliveryCalculated(true);
+      // Get all matching zones
+      const allMatches = result.allMatches
+        ? DELIVERY_ZONES.filter(z => result.allMatches!.includes(z.name))
+        : [];
 
-      if (result.found) {
+      if (allMatches.length > 1) {
+        // Multiple zones found - show dropdown
+        setMatchingZones(allMatches);
+        setSelectedZone(allMatches[0]); // Select the closest by default
+        setDeliveryFee(allMatches[0].fee);
+        setDeliveryZone(allMatches[0].name);
+        setDeliveryCalculated(true);
+
+        toast({
+          title: "Multiple zones found!",
+          description: "Please select the correct delivery zone from the dropdown",
+        });
+      } else if (result.found) {
+        // Single zone found
+        setMatchingZones([]);
+        setSelectedZone(null);
+        setDeliveryFee(result.fee);
+        setDeliveryZone(result.zone);
+        setDeliveryCalculated(true);
+
         toast({
           title: "Delivery fee calculated!",
           description: `${result.zone} - Delivery fee: R${result.fee}`,
         });
       } else {
+        // No zone found
+        setMatchingZones([]);
+        setSelectedZone(null);
+        setDeliveryFee(result.fee);
+        setDeliveryZone(result.zone);
+        setDeliveryCalculated(true);
+
         toast({
           title: "Area not found",
           description: "We'll contact you to confirm the delivery fee. Estimated: R500",
@@ -531,6 +560,8 @@ const Order = () => {
                             setCustomerAddress(e.target.value);
                             setDeliveryCalculated(false);
                             setDeliveryFee(0);
+                            setMatchingZones([]);
+                            setSelectedZone(null);
                           }}
                           className="bg-background text-foreground min-h-[80px] resize-none"
                           rows={3}
@@ -588,12 +619,46 @@ const Order = () => {
                             <div className="flex items-start gap-3">
                               <MapPin className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
-                                <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
-                                  Delivery Fee: R{deliveryFee.toFixed(2)}
-                                </p>
-                                <p className="text-xs text-green-700 dark:text-green-300">
-                                  {deliveryZone}
-                                </p>
+                                {matchingZones.length > 1 ? (
+                                  <>
+                                    <p className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                                      Multiple zones found - Select yours:
+                                    </p>
+                                    <select
+                                      value={selectedZone?.name || ''}
+                                      onChange={(e) => {
+                                        const zone = matchingZones.find(z => z.name === e.target.value);
+                                        if (zone) {
+                                          setSelectedZone(zone);
+                                          setDeliveryFee(zone.fee);
+                                          setDeliveryZone(zone.name);
+                                        }
+                                      }}
+                                      className="w-full p-2 rounded-lg border border-green-300 dark:border-green-700 bg-white dark:bg-green-950 text-green-900 dark:text-green-100 mb-2"
+                                    >
+                                      {matchingZones.map((zone, idx) => (
+                                        <option key={idx} value={zone.name}>
+                                          {zone.name} - R{zone.fee}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <p className="font-semibold text-green-900 dark:text-green-100">
+                                      Delivery Fee: R{deliveryFee.toFixed(2)}
+                                    </p>
+                                    <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                                      {deliveryZone}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                                      Delivery Fee: R{deliveryFee.toFixed(2)}
+                                    </p>
+                                    <p className="text-xs text-green-700 dark:text-green-300">
+                                      {deliveryZone}
+                                    </p>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
