@@ -254,12 +254,12 @@ function normalizeSuburb(suburb: string): string {
 function findAllMatchingZones(address: string): DeliveryZone[] {
   const normalizedAddress = normalizeSuburb(address);
   const matchingZones: DeliveryZone[] = [];
-  
+
   // Search through all zones and collect matches
   for (const zone of DELIVERY_ZONES) {
     for (const suburb of zone.suburbs) {
       const normalizedSuburb = normalizeSuburb(suburb);
-      
+
       // Check if address contains the suburb name
       if (normalizedAddress.includes(normalizedSuburb)) {
         matchingZones.push(zone);
@@ -267,18 +267,18 @@ function findAllMatchingZones(address: string): DeliveryZone[] {
       }
     }
   }
-  
+
   return matchingZones;
 }
 
 // Find delivery zone for a given address (returns closest/cheapest zone)
 export function findDeliveryZone(address: string): DeliveryZone | null {
   const matchingZones = findAllMatchingZones(address);
-  
+
   if (matchingZones.length === 0) {
     return null;
   }
-  
+
   // Return the first match (closest zone since array is ordered from nearest to farthest)
   return matchingZones[0];
 }
@@ -289,10 +289,10 @@ export function calculateDeliveryFee(address: string): {
   zone: string;
   found: boolean;
   multipleMatches?: boolean;
-  allMatches?: string[];
+  allMatches?: DeliveryZone[];  // ← CHANGED: Return zone objects, not strings
 } {
   const allMatches = findAllMatchingZones(address);
-  
+
   if (allMatches.length === 0) {
     // No matching zone found
     return {
@@ -301,10 +301,10 @@ export function calculateDeliveryFee(address: string): {
       found: false
     };
   }
-  
+
   // Get the closest (first) match
   const closestZone = allMatches[0];
-  
+
   if (allMatches.length > 1) {
     // Multiple zones matched - inform user we're using the closest
     return {
@@ -312,10 +312,10 @@ export function calculateDeliveryFee(address: string): {
       zone: `${closestZone.name} (closest match)`,
       found: true,
       multipleMatches: true,
-      allMatches: allMatches.map(z => z.name)
+      allMatches: allMatches  // ← CHANGED: Return full zone objects
     };
   }
-  
+
   // Single match found
   return {
     fee: closestZone.fee,

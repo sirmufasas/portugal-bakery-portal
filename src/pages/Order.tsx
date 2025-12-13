@@ -64,7 +64,6 @@ const Order = () => {
     }
   }, [isAuthenticated, navigate, toast]);
 
-  // ✅ NOW FUNCTIONS CAN COME (they don't affect hook order)
   const handleCalculateDelivery = () => {
     if (!customerAddress.trim()) {
       toast({
@@ -80,15 +79,13 @@ const Order = () => {
     setTimeout(() => {
       const result = calculateDeliveryFee(customerAddress);
 
-      // Get all matching zones
-      const allMatches = result.allMatches
-        ? DELIVERY_ZONES.filter(z => result.allMatches!.includes(z.name))
-        : [];
+      // Get all matching zones - now they're already DeliveryZone objects
+      const allMatches = result.allMatches || [];
 
       if (allMatches.length > 1) {
         // Multiple zones found - show dropdown
         setMatchingZones(allMatches);
-        setSelectedZone(allMatches[0]); // Select the closest by default
+        setSelectedZone(allMatches[0]);
         setDeliveryFee(allMatches[0].fee);
         setDeliveryZone(allMatches[0].name);
         setDeliveryCalculated(true);
