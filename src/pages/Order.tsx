@@ -159,6 +159,16 @@ const Order = () => {
       return;
     }
 
+    // ✅ NEW VALIDATION: Check if delivery fee has been calculated
+    if (deliveryMethod === "delivery" && !deliveryCalculated) {
+      toast({
+        title: "Delivery fee not calculated",
+        description: "Please click 'Calculate Delivery Fee' to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setOrderStep("payment");
   };
 
