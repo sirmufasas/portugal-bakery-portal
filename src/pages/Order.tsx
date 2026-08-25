@@ -14,7 +14,10 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
-import { calculateDeliveryFee, getAllZones, DELIVERY_ZONES, type DeliveryZone } from "@/utils/deliveryZones";
+// Delivery fees are now calculated server-side by the delivery engine
+// (see POST /api/delivery/quotes) so every provider - including the
+// existing zone-based own_delivery - is compared consistently and can't be
+// tampered with client-side.
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -45,9 +48,18 @@ const Order = () => {
   const [deliveryZone, setDeliveryZone] = useState("");
   const [deliveryCalculated, setDeliveryCalculated] = useState(false);
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
-  // const [showZoneInfo, setShowZoneInfo] = useState(false);
-  const [matchingZones, setMatchingZones] = useState<DeliveryZone[]>([]);
-  const [selectedZone, setSelectedZone] = useState<DeliveryZone | null>(null);
+  const [deliveryQuotes, setDeliveryQuotes] = useState<Array<{
+    providerId: string;
+    providerName: string;
+    fee: number;
+    currency: string;
+    etaMinutesMin?: number;
+    etaMinutesMax?: number;
+    zone?: string;
+    labels?: string[];
+  }>>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [deliveryQuoteId, setDeliveryQuoteId] = useState<string | null>(null);
 
   // ✅ COMPUTED VALUES
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
@@ -64,7 +76,7 @@ const Order = () => {
     }
   }, [isAuthenticated, navigate, toast]);
 
-  const handleCalculateDelivery = () => {
+  const handleCalculateDelivery = async () => {
     if (!customerAddress.trim()) {
       toast({
         title: "Address required",
@@ -76,53 +88,78 @@ const Order = () => {
 
     setCalculatingDelivery(true);
 
-    setTimeout(() => {
-      const result = calculateDeliveryFee(customerAddress);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/delivery/quotes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          address: customerAddress,
+          items: cart.map(item => ({ name: item.name })),
+          subtotal: total
+        })
+      });
 
-      // Get all matching zones - now they're already DeliveryZone objects
-      const allMatches = result.allMatches || [];
-
-      if (allMatches.length > 1) {
-        // Multiple zones found - show dropdown
-        setMatchingZones(allMatches);
-        setSelectedZone(allMatches[0]);
-        setDeliveryFee(allMatches[0].fee);
-        setDeliveryZone(allMatches[0].name);
-        setDeliveryCalculated(true);
-
-        toast({
-          title: "Multiple zones found!",
-          description: "Please select the correct delivery zone from the dropdown",
-        });
-      } else if (result.found) {
-        // Single zone found
-        setMatchingZones([]);
-        setSelectedZone(null);
-        setDeliveryFee(result.fee);
-        setDeliveryZone(result.zone);
-        setDeliveryCalculated(true);
-
-        toast({
-          title: "Delivery fee calculated!",
-          description: `${result.zone} - Delivery fee: R${result.fee}`,
-        });
-      } else {
-        // No zone found
-        setMatchingZones([]);
-        setSelectedZone(null);
-        setDeliveryFee(result.fee);
-        setDeliveryZone(result.zone);
-        setDeliveryCalculated(true);
-
-        toast({
-          title: "Area not found",
-          description: "We'll contact you to confirm the delivery fee. Estimated: R500",
-          variant: "default"
-        });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to get delivery options");
       }
 
+      const data = await res.json();
+      const quotes = data.quotes || [];
+      setDeliveryQuotes(quotes);
+
+      if (quotes.length === 0) {
+        toast({
+          title: "No delivery options available",
+          description: "We couldn't find a delivery option for this address. Please contact us to confirm delivery.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Auto-select when there's only one option (today, that's own_delivery).
+      if (quotes.length === 1) {
+        selectDeliveryQuote(quotes[0]);
+        toast({
+          title: "Delivery fee calculated!",
+          description: `${quotes[0].zone || quotes[0].providerName} - Delivery fee: R${quotes[0].fee}`,
+        });
+      } else {
+        toast({
+          title: "Delivery options found!",
+          description: "Compare and select the delivery option that works for you.",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Couldn't calculate delivery",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setCalculatingDelivery(false);
-    }, 500);
+    }
+  };
+
+  const selectDeliveryQuote = (quote: { providerId: string; fee: number; zone?: string; providerName: string; quoteId?: string | null }) => {
+    setSelectedProviderId(quote.providerId);
+    setDeliveryFee(quote.fee);
+    setDeliveryZone(quote.zone || quote.providerName);
+    setDeliveryQuoteId((quote as any).quoteId || null);
+    setDeliveryCalculated(true);
+  };
+
+  const resetDeliverySelection = () => {
+    setDeliveryCalculated(false);
+    setDeliveryFee(0);
+    setDeliveryZone("");
+    setSelectedProviderId(null);
+    setDeliveryQuoteId(null);
+    setDeliveryQuotes([]);
   };
 
   const handleAddToCart = (product: {
@@ -240,6 +277,8 @@ const Order = () => {
           totalAmount: orderTotal,
           deliveryFee: deliveryMethod === "delivery" && deliveryCalculated ? deliveryFee : 0,
           deliveryZone: deliveryMethod === "delivery" && deliveryCalculated ? deliveryZone : "",
+          deliveryProvider: deliveryMethod === "delivery" ? (selectedProviderId || "own_delivery") : null,
+          deliveryQuoteId: deliveryMethod === "delivery" ? deliveryQuoteId : null,
           specialInstructions,
           paymentID,
         }),
@@ -545,11 +584,7 @@ const Order = () => {
                             setCustomerAddress(e.target.value);
                             // Only reset if user starts typing a new address
                             if (deliveryCalculated) {
-                              setDeliveryCalculated(false);
-                              setDeliveryFee(0);
-                              setMatchingZones([]);
-                              setSelectedZone(null);
-                              setDeliveryZone("");
+                              resetDeliverySelection();
                             }
                           }}
                           className="bg-background text-foreground min-h-[80px] resize-none"
@@ -559,46 +594,7 @@ const Order = () => {
                           💡 Tip: Include your suburb name for accurate delivery fee (e.g., "123 Main St, Rosettenville, Johannesburg")
                         </p>
 
-                        {!deliveryCalculated && (
-                          <div className="mb-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 space-y-3">
-                            <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">
-                              Delivery Zones & Fees - Click to Select Your Zone
-                            </h4>
-                            {getAllZones().map((zone, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                onClick={() => {
-                                  setDeliveryZone(zone.name);
-                                  setDeliveryFee(zone.fee);
-                                  setDeliveryCalculated(true);
-                                  setSelectedZone(zone);
-                                  setMatchingZones([]);
-                                  toast({
-                                    title: "Zone selected!",
-                                    description: `${zone.name} - Delivery fee: R${zone.fee}`,
-                                  });
-                                }}
-                                className="w-full text-left p-3 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-transparent hover:border-blue-300 dark:hover:border-blue-700"
-                              >
-                                <div className="flex justify-between items-start mb-1">
-                                  <span className="font-medium text-blue-900 dark:text-blue-100 text-sm">
-                                    {zone.name}
-                                  </span>
-                                  <span className="font-bold text-blue-700 dark:text-blue-300 text-sm">
-                                    R{zone.fee}
-                                  </span>
-                                </div>
-                                <p className="text-blue-700 dark:text-blue-300 text-[10px] leading-relaxed">
-                                  {zone.suburbs.slice(0, 8).join(", ")}
-                                  {zone.suburbs.length > 8 && ` +${zone.suburbs.length - 8} more`}
-                                </p>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {!deliveryCalculated && (
+                        {!deliveryCalculated && deliveryQuotes.length === 0 && (
                           <Button
                             type="button"
                             variant="outline"
@@ -609,15 +605,58 @@ const Order = () => {
                             {calculatingDelivery ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Calculating...
+                                Finding delivery options...
                               </>
                             ) : (
                               <>
                                 <Calculator className="h-4 w-4 mr-2" />
-                                Calculate Delivery Fee
+                                Get Delivery Options
                               </>
                             )}
                           </Button>
+                        )}
+
+                        {!deliveryCalculated && deliveryQuotes.length > 1 && (
+                          <div className="mb-3 space-y-2">
+                            <h4 className="font-semibold text-foreground text-sm mb-1">
+                              Choose your delivery option
+                            </h4>
+                            {deliveryQuotes.map((quote) => (
+                              <button
+                                key={quote.providerId}
+                                type="button"
+                                onClick={() => selectDeliveryQuote(quote)}
+                                className="w-full text-left p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <div>
+                                    <span className="font-medium text-foreground text-sm">
+                                      {quote.providerName}
+                                    </span>
+                                    {quote.labels && quote.labels.length > 0 && (
+                                      <span className="ml-2 inline-flex gap-1">
+                                        {quote.labels.map(label => (
+                                          <span key={label} className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                                            {label}
+                                          </span>
+                                        ))}
+                                      </span>
+                                    )}
+                                    {quote.etaMinutesMax && (
+                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                        Estimated {quote.etaMinutesMin === quote.etaMinutesMax
+                                          ? `${quote.etaMinutesMax} min`
+                                          : `${quote.etaMinutesMin}–${quote.etaMinutesMax} min`}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <span className="font-bold text-primary text-sm">
+                                    R{quote.fee}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         )}
 
                         {deliveryCalculated && (
@@ -625,58 +664,25 @@ const Order = () => {
                             <div className="flex items-start gap-3">
                               <MapPin className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
-                                {matchingZones.length > 1 ? (
-                                  <>
-                                    <p className="font-semibold text-green-900 dark:text-green-100 mb-2">
-                                      Multiple zones found - Select yours:
-                                    </p>
-                                    <select
-                                      value={selectedZone?.name || ''}
-                                      onChange={(e) => {
-                                        const zone = matchingZones.find(z => z.name === e.target.value);
-                                        if (zone) {
-                                          setSelectedZone(zone);
-                                          setDeliveryFee(zone.fee);
-                                          setDeliveryZone(zone.name);
-                                        }
-                                      }}
-                                      className="w-full p-2 rounded-lg border border-green-300 dark:border-green-700 bg-white dark:bg-green-950 text-green-900 dark:text-green-100 mb-2"
-                                    >
-                                      {matchingZones.map((zone, idx) => (
-                                        <option key={idx} value={zone.name}>
-                                          {zone.name} - R{zone.fee}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <p className="font-semibold text-green-900 dark:text-green-100">
-                                      Delivery Fee: R{deliveryFee.toFixed(2)}
-                                    </p>
-                                    <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                                      {deliveryZone}
-                                    </p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
-                                      Delivery Fee: R{deliveryFee.toFixed(2)}
-                                    </p>
-                                    <p className="text-xs text-green-700 dark:text-green-300 mb-2">
-                                      {deliveryZone}
-                                    </p>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setDeliveryCalculated(false);
-                                        setDeliveryZone("");
-                                        setDeliveryFee(0);
-                                      }}
-                                      className="text-xs"
-                                    >
-                                      Change Zone
-                                    </Button>
-                                  </>
+                                <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                                  Delivery Fee: R{deliveryFee.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-green-700 dark:text-green-300 mb-2">
+                                  {deliveryZone}
+                                </p>
+                                {deliveryQuotes.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setDeliveryCalculated(false);
+                                      setSelectedProviderId(null);
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    Change Option
+                                  </Button>
                                 )}
                               </div>
                             </div>
