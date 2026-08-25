@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductsContext";
 import { categories } from "@/data/products";
@@ -1226,7 +1227,7 @@ export default function Admin() {
           </div>
 
           <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
               <TabsTrigger
                 value="orders"
                 className={`gap-2 relative ${bouncingOrders ? 'animate-bounce' : ''}`}
@@ -1257,6 +1258,10 @@ export default function Admin() {
                     {unreadSupportCount}
                   </Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="delivery" className="gap-2 relative">
+                <Truck className="h-4 w-4 hidden sm:block" />
+                Delivery
               </TabsTrigger>
             </TabsList>
 
@@ -2107,10 +2112,167 @@ export default function Admin() {
                 </Card>
               </div>
             </TabsContent>
+
+            <TabsContent value="delivery" className="space-y-4">
+              <DeliverySettingsPanel authedFetch={authedFetch} toast={toast} />
+            </TabsContent>
           </Tabs>
         </div>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+// ==================== DELIVERY SETTINGS PANEL ====================
+// Lets bakery staff enable/disable providers and set delivery business
+// rules (free delivery threshold). Providers that aren't configured with
+// real credentials are shown but disabled, never silently offered.
+
+const ALL_PROVIDERS = [
+  { id: "own_delivery", name: "Portugal Bakery Delivery" },
+  { id: "uber_direct", name: "Uber Direct" },
+  { id: "courier_guy", name: "The Courier Guy" },
+  { id: "pargo", name: "Pargo" },
+  { id: "pudo", name: "PUDO" },
+  { id: "local_courier", name: "Local Motorbike Courier" },
+];
+
+function DeliverySettingsPanel({ authedFetch, toast }: {
+  authedFetch: (path: string, options?: RequestInit) => Promise<any>;
+  toast: (opts: any) => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [enabledProviders, setEnabledProviders] = useState<string[]>([]);
+  const [configuredProviders, setConfiguredProviders] = useState<Record<string, boolean>>({});
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [settings, providersRes] = await Promise.all([
+          authedFetch('/api/admin/delivery-settings'),
+          authedFetch('/api/delivery/providers'),
+        ]);
+        setEnabledProviders(settings.enabledProviders || []);
+        setFreeDeliveryThreshold(settings.freeDeliveryThreshold != null ? String(settings.freeDeliveryThreshold) : "");
+        const configured: Record<string, boolean> = {};
+        (providersRes.providers || []).forEach((p: any) => { configured[p.id] = p.configured; });
+        setConfiguredProviders(configured);
+      } catch (error) {
+        toast({ title: "Failed to load delivery settings", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const toggleProvider = (id: string, checked: boolean) => {
+    setEnabledProviders(prev => checked ? [...new Set([...prev, id])] : prev.filter(p => p !== id));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await authedFetch('/api/admin/delivery-settings', {
+        method: 'PUT',
+        body: JSON.stringify({
+          enabledProviders,
+          freeDeliveryThreshold: freeDeliveryThreshold.trim() === "" ? null : Number(freeDeliveryThreshold),
+        }),
+      });
+      toast({ title: "Delivery settings saved" });
+    } catch (error) {
+      toast({ title: "Failed to save", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Truck className="h-5 w-5" />
+            Delivery Providers
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <p className="text-sm text-muted-foreground mb-3">
+            Only enabled AND configured providers are offered to customers at checkout.
+            Providers without credentials are shown for reference but can't be turned on yet.
+          </p>
+          {ALL_PROVIDERS.map(provider => {
+            const configured = !!configuredProviders[provider.id];
+            const enabled = enabledProviders.includes(provider.id);
+            return (
+              <div key={provider.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                <div>
+                  <p className="font-medium text-foreground">{provider.name}</p>
+                  {!configured && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">Awaiting credentials</p>
+                  )}
+                </div>
+                <Switch
+                  checked={enabled}
+                  disabled={!configured}
+                  onCheckedChange={(checked) => toggleProvider(provider.id, checked)}
+                />
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Delivery Business Rules</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-sm font-medium text-foreground mb-1 block">
+              Free delivery threshold (R)
+            </label>
+            <Input
+              type="number"
+              min={0}
+              placeholder="Leave empty to disable"
+              value={freeDeliveryThreshold}
+              onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
+              className="max-w-xs"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Orders at or above this subtotal get free delivery, applied automatically at checkout.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button onClick={handleSave} disabled={saving}>
+        {saving ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Save className="h-4 w-4 mr-2" />
+            Save Delivery Settings
+          </>
+        )}
+      </Button>
     </div>
   );
 }
