@@ -197,6 +197,11 @@ export default function Admin() {
             deliveryMethod: data.order.deliveryMethod || 'delivery',
             deliveryFee: data.order.deliveryFee || 0, // ✅ ADDED
             deliveryZone: data.order.deliveryZone || '', // ✅ ADDED
+            deliveryProvider: data.order.deliveryProvider || null,
+            providerDeliveryId: data.order.providerDeliveryId || null,
+            trackingUrl: data.order.trackingUrl || null,
+            driverAssignedAt: data.order.driverAssignedAt || null,
+            deliveryFailureReason: data.order.deliveryFailureReason || null,
             items: data.order.items.map(item => `${item.quantity}x ${item.name}`),
             total: `R${data.order.totalAmount.toFixed(2)}`,
             status: data.order.status,
@@ -511,6 +516,11 @@ export default function Admin() {
           deliveryMethod: order.deliveryMethod || 'delivery',
           deliveryFee: order.deliveryFee || 0, // ✅ ADDED
           deliveryZone: order.deliveryZone || '', // ✅ ADDED
+          deliveryProvider: order.deliveryProvider || null,
+          providerDeliveryId: order.providerDeliveryId || null,
+          trackingUrl: order.trackingUrl || null,
+          driverAssignedAt: order.driverAssignedAt || null,
+          deliveryFailureReason: order.deliveryFailureReason || null,
           items: order.items.map(item => `${item.quantity}x ${item.name}`),
           total: `R${order.totalAmount.toFixed(2)}`,
           status: order.status,
@@ -851,6 +861,70 @@ export default function Admin() {
     }
   };
 
+  const authedFetch = async (path, options = {}) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast({ title: "Authentication required", description: "Please log in as admin", variant: "destructive" });
+      throw new Error('No token');
+    }
+    const response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...(options.headers || {})
+      }
+    });
+    const text = await response.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+    if (!response.ok) {
+      throw new Error(data.error || data.message || `${response.status}: ${response.statusText}`);
+    }
+    return data;
+  };
+
+  const markReadyForDelivery = async (orderNumber) => {
+    try {
+      const updated = await authedFetch(`/api/orders/${orderNumber}/ready-for-delivery`, { method: 'PUT' });
+      setOrders(prev => prev.map(o => o.orderNumber === orderNumber ? { ...o, status: updated.status } : o));
+      toast({ title: "Order ready", description: `Order ${orderNumber} marked ready for delivery.` });
+    } catch (error) {
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const requestCourier = async (orderNumber, providerId) => {
+    try {
+      const updated = await authedFetch(`/api/orders/${orderNumber}/request-courier`, {
+        method: 'POST',
+        body: JSON.stringify(providerId ? { providerId } : {})
+      });
+      setOrders(prev => prev.map(o => o.orderNumber === orderNumber
+        ? { ...o, status: updated.status, providerDeliveryId: updated.providerDeliveryId, trackingUrl: updated.trackingUrl }
+        : o));
+      toast({ title: "Courier requested", description: `Courier requested for order ${orderNumber}.` });
+    } catch (error) {
+      toast({ title: "Courier request failed", description: error.message, variant: "destructive" });
+      fetchOrders();
+    }
+  };
+
+  const switchProvider = async (orderNumber, providerId) => {
+    try {
+      const updated = await authedFetch(`/api/orders/${orderNumber}/switch-provider`, {
+        method: 'POST',
+        body: JSON.stringify({ providerId })
+      });
+      setOrders(prev => prev.map(o => o.orderNumber === orderNumber
+        ? { ...o, status: updated.status, deliveryProvider: updated.deliveryProvider, providerDeliveryId: null, trackingUrl: null }
+        : o));
+      toast({ title: "Provider switched", description: `Order ${orderNumber} will now use ${providerId}.` });
+    } catch (error) {
+      toast({ title: "Switch failed", description: error.message, variant: "destructive" });
+    }
+  };
+
   const renderOrderCard = (order) => (
     <Card key={order.id} className={order.status === 'delivered' ? 'border-2 border-green-500 dark:border-green-700' : ''}>
       <CardContent className="p-4 md:p-6">
@@ -1018,6 +1092,62 @@ export default function Admin() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* DELIVERY ENGINE WORKFLOW - only for delivery orders */}
+            {order.deliveryMethod === 'delivery' && (
+              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                {['pending', 'processing', 'confirmed', 'preparing'].includes(order.status) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => markReadyForDelivery(order.orderNumber)}
+                  >
+                    Mark Ready for Delivery
+                  </Button>
+                )}
+
+                {order.status === 'ready_for_delivery' && (
+                  <Button
+                    size="sm"
+                    onClick={() => requestCourier(order.orderNumber, order.deliveryProvider)}
+                  >
+                    Request Courier{order.deliveryProvider ? ` (${order.deliveryProvider.replace('_', ' ')})` : ''}
+                  </Button>
+                )}
+
+                {['courier_requested', 'driver_assigned', 'delivery_failed'].includes(order.status) && !order.driverAssignedAt && (
+                  <Select onValueChange={(value) => switchProvider(order.orderNumber, value)}>
+                    <SelectTrigger className="w-full sm:w-44">
+                      <SelectValue placeholder="Switch provider..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="own_delivery">Portugal Bakery Delivery</SelectItem>
+                      <SelectItem value="uber_direct">Uber Direct</SelectItem>
+                      <SelectItem value="courier_guy">The Courier Guy</SelectItem>
+                      <SelectItem value="pargo">Pargo</SelectItem>
+                      <SelectItem value="pudo">PUDO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {order.trackingUrl && (
+                  <a
+                    href={order.trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline text-center"
+                  >
+                    Track Delivery →
+                  </a>
+                )}
+
+                {order.deliveryFailureReason && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    ⚠ {order.deliveryFailureReason}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
