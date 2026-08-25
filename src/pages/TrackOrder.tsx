@@ -38,23 +38,61 @@ interface Order {
   deliveryMethod?: string;  // ✅ ADDED
   address?: string;          // ✅ ADDED
   phone?: string;            // ✅ ADDED
+  deliveryProvider?: string | null;
+  trackingUrl?: string | null;
+  driverDetails?: { name?: string; phone?: string; vehicle?: string } | null;
+  deliveryFailureReason?: string | null;
 }
 
-const getStatusSteps = (deliveryMethod: string) => [
-  { key: "pending", label: "Order Received", icon: Package },
-  { key: "processing", label: "Processing", icon: ChefHat },
-  {
-    key: "shipped",
-    label: deliveryMethod === 'pickup' ? "Ready for Pickup" : "Shipped",
-    icon: Package
-  },
-  {
-    key: "delivered",
-    label: deliveryMethod === 'pickup' ? "Collected" : "Delivered",
-    icon: CheckCircle
-  },
-  { key: "cancelled", label: "Cancelled", icon: XCircle },
-];
+// Maps every backend status to a position in the customer-facing step
+// track. Several backend statuses can share one visible step (e.g.
+// courier_requested/driver_assigned/driver_arriving all show as "Courier
+// Assigned") so the tracker doesn't need a step per internal state.
+const DELIVERY_STEP_MAP: Record<string, number> = {
+  pending: 0,
+  payment_failed: 0,
+  confirmed: 1,
+  processing: 1,
+  preparing: 1,
+  ready_for_delivery: 2,
+  ready_for_pickup: 2,
+  courier_requested: 3,
+  driver_assigned: 3,
+  driver_arriving: 3,
+  out_for_delivery: 4,
+  shipped: 4,
+  delivered: 5,
+  completed: 5,
+};
+
+const PICKUP_STEP_MAP: Record<string, number> = {
+  pending: 0,
+  payment_failed: 0,
+  confirmed: 1,
+  processing: 1,
+  preparing: 1,
+  ready_for_pickup: 2,
+  shipped: 2,
+  delivered: 3,
+  completed: 3,
+};
+
+const getStatusSteps = (deliveryMethod: string) =>
+  deliveryMethod === 'pickup'
+    ? [
+        { key: "pending", label: "Order Received", icon: Package },
+        { key: "processing", label: "Preparing", icon: ChefHat },
+        { key: "ready_for_pickup", label: "Ready for Pickup", icon: Package },
+        { key: "delivered", label: "Collected", icon: CheckCircle },
+      ]
+    : [
+        { key: "pending", label: "Order Received", icon: Package },
+        { key: "processing", label: "Being Prepared", icon: ChefHat },
+        { key: "ready_for_delivery", label: "Ready for Delivery", icon: Package },
+        { key: "courier_requested", label: "Courier Assigned", icon: Package },
+        { key: "out_for_delivery", label: "Out for Delivery", icon: Package },
+        { key: "delivered", label: "Delivered", icon: CheckCircle },
+      ];
 
 const TrackOrder = () => {
   const { toast } = useToast();
@@ -91,6 +129,8 @@ const TrackOrder = () => {
             setFoundOrder(prevOrder => ({
               ...prevOrder!,
               status: data.order.status,
+              trackingUrl: data.order.trackingUrl ?? prevOrder?.trackingUrl,
+              deliveryFailureReason: data.order.deliveryFailureReason ?? prevOrder?.deliveryFailureReason,
             }));
 
             toast({
@@ -319,9 +359,8 @@ const TrackOrder = () => {
   };
 
   const getStatusIndex = (status: string) => {
-    const steps = getStatusSteps(foundOrder?.deliveryMethod || 'delivery');
-    const index = steps.findIndex(s => s.key === status);
-    return index >= 0 ? index : 0;
+    const map = (foundOrder?.deliveryMethod || 'delivery') === 'pickup' ? PICKUP_STEP_MAP : DELIVERY_STEP_MAP;
+    return map[status] ?? 0;
   };
 
   return (
@@ -463,8 +502,55 @@ const TrackOrder = () => {
                     </div>
                   </div>
 
+                  {/* Cancelled / Failed banner - these statuses aren't part of the linear step track */}
+                  {['cancelled', 'delivery_failed', 'payment_failed'].includes(foundOrder.status) && (
+                    <div className="p-4 mx-6 mt-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900 flex items-start gap-3">
+                      <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold text-red-900 dark:text-red-100 text-sm">
+                          {foundOrder.status === 'cancelled' && 'Order Cancelled'}
+                          {foundOrder.status === 'delivery_failed' && 'Delivery Issue'}
+                          {foundOrder.status === 'payment_failed' && 'Payment Failed'}
+                        </p>
+                        {foundOrder.deliveryFailureReason && (
+                          <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                            {foundOrder.deliveryFailureReason}
+                          </p>
+                        )}
+                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                          Please contact us using the details below if you have any questions.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Progress Steps */}
+                  {/* Courier tracking - only shown once a courier has actually been assigned */}
+                  {foundOrder.deliveryMethod === 'delivery' && (foundOrder.trackingUrl || foundOrder.driverDetails) && (
+                    <div className="p-4 mx-6 mt-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                      <p className="text-xs font-semibold text-green-900 dark:text-green-100 mb-2">
+                        🚴 Delivery in progress
+                        {foundOrder.deliveryProvider && ` · ${foundOrder.deliveryProvider.replace('_', ' ')}`}
+                      </p>
+                      {foundOrder.driverDetails?.name && (
+                        <p className="text-sm text-green-800 dark:text-green-200">
+                          Driver: {foundOrder.driverDetails.name}
+                          {foundOrder.driverDetails.vehicle && ` · ${foundOrder.driverDetails.vehicle}`}
+                        </p>
+                      )}
+                      {foundOrder.trackingUrl && (
+                        <a
+                          href={foundOrder.trackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-2 text-sm font-medium text-green-700 dark:text-green-300 hover:underline"
+                        >
+                          Track Delivery →
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+
                   <div className="p-6 border-b border-border dark:border-border-dark">
                     <div className="flex items-center justify-between">
                       {getStatusSteps(foundOrder.deliveryMethod || 'delivery').map((step, index) => {
