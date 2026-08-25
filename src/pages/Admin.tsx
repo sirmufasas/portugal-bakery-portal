@@ -1124,6 +1124,7 @@ export default function Admin() {
                     <SelectContent>
                       <SelectItem value="own_delivery">Portugal Bakery Delivery</SelectItem>
                       <SelectItem value="uber_direct">Uber Direct</SelectItem>
+                      <SelectItem value="indrive">inDrive</SelectItem>
                       <SelectItem value="courier_guy">The Courier Guy</SelectItem>
                       <SelectItem value="pargo">Pargo</SelectItem>
                       <SelectItem value="pudo">PUDO</SelectItem>
@@ -2132,6 +2133,7 @@ export default function Admin() {
 const ALL_PROVIDERS = [
   { id: "own_delivery", name: "Portugal Bakery Delivery" },
   { id: "uber_direct", name: "Uber Direct" },
+  { id: "indrive", name: "inDrive" },
   { id: "courier_guy", name: "The Courier Guy" },
   { id: "pargo", name: "Pargo" },
   { id: "pudo", name: "PUDO" },
