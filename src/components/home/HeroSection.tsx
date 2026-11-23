@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-bakery.jpg";
 import logoImage from "@/assets/268fcf8f-7821-40a6-bd4b-029f7983a83d-removebg-preview (1).png";
+import { getCurrentSASeason } from "@/utils/seasons";
 
 export function HeroSection() {
+  const season = getCurrentSASeason();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -23,16 +26,22 @@ export function HeroSection() {
           src={logoImage}
           alt="Portugal Bakery Logo"
           className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-105"
-          style={{ imageRendering: '-webkit-optimize-contrast', backfaceVisibility: 'hidden' }}
+          style={{ imageRendering: "-webkit-optimize-contrast", backfaceVisibility: "hidden" }}
         />
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10 pt-20">
         <div className="max-w-2xl text-center sm:text-left">
-          <span className="inline-block text-amber font-medium text-sm tracking-wider uppercase mb-4 animate-fade-in">
-            Since 1985
-          </span>
+          <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4 animate-fade-in">
+            <span className="text-amber font-medium text-sm tracking-wider uppercase">
+              Since 1985
+            </span>
+            <span className="text-cream/40">•</span>
+            <span className="text-xs font-medium tracking-wide px-2.5 py-0.5 rounded-full bg-amber/20 text-amber border border-amber/30">
+              {season.heroBadge}
+            </span>
+          </div>
           <h1
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-cream leading-tight mb-6 animate-fade-in-up"
             style={{ animationDelay: "0.1s" }}
@@ -50,7 +59,6 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row gap-4 animate-fade-in-up"
             style={{ animationDelay: "0.3s" }}
           >
-            {/* Make Link take full width */}
             <Link to="/menu" className="w-full sm:w-auto">
               <Button variant="hero" size="xl" className="w-full flex items-center justify-center gap-2">
                 Explore Our Menu
@@ -62,8 +70,7 @@ export function HeroSection() {
               <Button
                 variant="heroOutline"
                 size="xl"
-                className="w-full border border-amber text-white hover:bg-amber hover:text-cream 
-dark:border-amber/70 dark:text-white dark:hover:bg-amber/80 dark:hover:text-cream"
+                className="w-full border border-amber text-white hover:bg-amber hover:text-cream dark:border-amber/70 dark:text-white dark:hover:bg-amber/80 dark:hover:text-cream"
               >
                 Order Online
               </Button>

@@ -18,6 +18,12 @@ import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { uploadImage } from "@/utils/uploadImage";
 import { AdminFloatingMessageButton } from "@/components/admin/AdminFloatingMessageButton";
 import { notifyAdmin, requestAllPermissions, forceUnlockAudio } from "@/utils/sounds";
+import {
+  CATEGORY_LABELS,
+  DeliveryCategory,
+  getProviderMeta,
+  SA_DELIVERY_PROVIDERS,
+} from "@/utils/deliveryProviders";
 
 import {
   Package,
@@ -43,25 +49,50 @@ import {
   Bell,
   Volume2,
   Truck,
-  ArrowLeft
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Link2
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
+  confirmed: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
   processing: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800",
+  preparing: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800",
+  ready_for_delivery: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800",
+  ready_for_pickup: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800",
+  courier_requested: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/20 dark:text-sky-400 dark:border-sky-800",
+  driver_assigned: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
+  driver_arriving: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
+  out_for_delivery: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
   shipped: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
   delivered: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
+  completed: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
   cancelled: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+  delivery_failed: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+  payment_failed: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
 };
 
-const statusIcons = {
+const statusIcons: Record<string, JSX.Element> = {
   pending: <Clock className="h-3 w-3" />,
+  confirmed: <Clock className="h-3 w-3" />,
   processing: <ChefHat className="h-3 w-3" />,
+  preparing: <ChefHat className="h-3 w-3" />,
+  ready_for_delivery: <Package className="h-3 w-3" />,
+  ready_for_pickup: <Package className="h-3 w-3" />,
+  courier_requested: <Truck className="h-3 w-3" />,
+  driver_assigned: <Truck className="h-3 w-3" />,
+  driver_arriving: <Truck className="h-3 w-3" />,
+  out_for_delivery: <Truck className="h-3 w-3" />,
   shipped: <Truck className="h-3 w-3" />,
   delivered: <CheckCircle className="h-3 w-3" />,
+  completed: <CheckCircle className="h-3 w-3" />,
   cancelled: <XCircle className="h-3 w-3" />,
+  delivery_failed: <AlertCircle className="h-3 w-3" />,
+  payment_failed: <AlertCircle className="h-3 w-3" />,
 };
 
 export default function Admin() {
@@ -201,6 +232,7 @@ export default function Admin() {
             deliveryProvider: data.order.deliveryProvider || null,
             providerDeliveryId: data.order.providerDeliveryId || null,
             trackingUrl: data.order.trackingUrl || null,
+            driverDetails: data.order.driverDetails || null,
             driverAssignedAt: data.order.driverAssignedAt || null,
             deliveryFailureReason: data.order.deliveryFailureReason || null,
             items: data.order.items.map(item => `${item.quantity}x ${item.name}`),
@@ -520,6 +552,7 @@ export default function Admin() {
           deliveryProvider: order.deliveryProvider || null,
           providerDeliveryId: order.providerDeliveryId || null,
           trackingUrl: order.trackingUrl || null,
+          driverDetails: order.driverDetails || null,
           driverAssignedAt: order.driverAssignedAt || null,
           deliveryFailureReason: order.deliveryFailureReason || null,
           items: order.items.map(item => `${item.quantity}x ${item.name}`),
@@ -556,17 +589,26 @@ export default function Admin() {
   const stats = {
     totalOrders: orders.length,
     pendingOrders: orders.filter(o => o.status === "pending").length,
-    readyOrders: orders.filter(o => o.status === "delivered").length,
+    readyOrders: orders.filter(o => ["delivered", "completed"].includes(o.status)).length,
     totalProducts: Array.isArray(products) ? products.length : 0,
   };
 
-  // Group orders by status
+  // Group orders by status — including full delivery lifecycle states so orders
+  // never disappear when marked ready_for_delivery or dispatched to a courier.
   const ordersByStatus = {
     pending: orders.filter(o => o.status === "pending"),
-    processing: orders.filter(o => o.status === "processing"),
-    shipped: orders.filter(o => o.status === "shipped"),
-    delivered: orders.filter(o => o.status === "delivered"),
-    cancelled: orders.filter(o => o.status === "cancelled"),
+    processing: orders.filter(o => ["processing", "confirmed", "preparing"].includes(o.status)),
+    shipped: orders.filter(o => [
+      "shipped",
+      "ready_for_pickup",
+      "ready_for_delivery",
+      "courier_requested",
+      "driver_assigned",
+      "driver_arriving",
+      "out_for_delivery"
+    ].includes(o.status)),
+    delivered: orders.filter(o => ["delivered", "completed"].includes(o.status)),
+    cancelled: orders.filter(o => ["cancelled", "delivery_failed", "payment_failed"].includes(o.status)),
   };
 
   const updateOrderStatus = async (orderNumber, newStatus) => {
@@ -938,17 +980,24 @@ export default function Admin() {
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>
 
-              {/* DELIVERY METHOD BADGE */}
+              {/* DELIVERY METHOD & PROVIDER BADGES */}
               {order.deliveryMethod === 'pickup' ? (
                 <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
                   <ShoppingBag className="h-3 w-3 mr-1" />
                   Store Pickup
                 </Badge>
               ) : (
-                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                  <Truck className="h-3 w-3 mr-1" />
-                  Delivery
-                </Badge>
+                <>
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                    <Truck className="h-3 w-3 mr-1" />
+                    Delivery
+                  </Badge>
+                  {order.deliveryProvider && (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${getProviderMeta(order.deliveryProvider).badgeClass}`}>
+                      {getProviderMeta(order.deliveryProvider).name}
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
@@ -964,10 +1013,37 @@ export default function Admin() {
 
             {/* ADDRESS - Only show for delivery orders */}
             {order.deliveryMethod === 'delivery' && order.address && (
-              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-1">
-                  📍 Delivery Address:
-                </p>
+              <div className="mt-2 p-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                  <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-1">
+                    📍 Delivery Address:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const details = `Order ${order.orderNumber}\nCustomer: ${order.customer}\nPhone: ${order.phone}\nDrop-off: ${order.address}`;
+                        navigator.clipboard.writeText(details);
+                        toast({ title: "Drop-off copied!", description: "Ready to paste into your courier app." });
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-white/80 dark:bg-neutral-900/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-white"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Copy Drop-off
+                    </button>
+                    {order.deliveryProvider && getProviderMeta(order.deliveryProvider).bookingUrl && (
+                      <a
+                        href={getProviderMeta(order.deliveryProvider).bookingUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-90"
+                      >
+                        Open {getProviderMeta(order.deliveryProvider).shortTag}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`}
                   target="_blank"
@@ -1078,12 +1154,20 @@ export default function Admin() {
               value={order.status}
               onValueChange={(value) => updateOrderStatus(order.orderNumber, value)}
             >
-              <SelectTrigger className="w-full sm:w-36">
+              <SelectTrigger className="w-full sm:w-44">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="processing">Processing / Baking</SelectItem>
+                {order.deliveryMethod === 'delivery' && (
+                  <>
+                    <SelectItem value="ready_for_delivery">Ready for Delivery</SelectItem>
+                    <SelectItem value="courier_requested">Courier Requested</SelectItem>
+                    <SelectItem value="driver_assigned">Driver Assigned</SelectItem>
+                    <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                  </>
+                )}
                 <SelectItem value="shipped">
                   {order.deliveryMethod === 'pickup' ? 'Ready for Pickup' : 'Shipped'}
                 </SelectItem>
@@ -1096,7 +1180,7 @@ export default function Admin() {
 
             {/* DELIVERY ENGINE WORKFLOW - only for delivery orders */}
             {order.deliveryMethod === 'delivery' && (
-              <div className="flex flex-col gap-2 w-full sm:w-auto">
+              <div className="flex flex-col gap-2 w-full sm:w-52">
                 {['pending', 'processing', 'confirmed', 'preparing'].includes(order.status) && (
                   <Button
                     size="sm"
@@ -1112,34 +1196,55 @@ export default function Admin() {
                     size="sm"
                     onClick={() => requestCourier(order.orderNumber, order.deliveryProvider)}
                   >
-                    Request Courier{order.deliveryProvider ? ` (${order.deliveryProvider.replace('_', ' ')})` : ''}
+                    Dispatch {getProviderMeta(order.deliveryProvider).shortTag}
                   </Button>
                 )}
 
-                {['courier_requested', 'driver_assigned', 'delivery_failed'].includes(order.status) && !order.driverAssignedAt && (
+                {['ready_for_delivery', 'courier_requested', 'delivery_failed'].includes(order.status) && !order.driverAssignedAt && (
                   <Select onValueChange={(value) => switchProvider(order.orderNumber, value)}>
-                    <SelectTrigger className="w-full sm:w-44">
-                      <SelectValue placeholder="Switch provider..." />
+                    <SelectTrigger className="w-full h-8 text-xs">
+                      <SelectValue placeholder="Switch courier..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="own_delivery">Portugal Bakery Delivery</SelectItem>
-                      <SelectItem value="uber_direct">Uber Direct</SelectItem>
-                      <SelectItem value="indrive">inDrive</SelectItem>
-                      <SelectItem value="courier_guy">The Courier Guy</SelectItem>
-                      <SelectItem value="pargo">Pargo</SelectItem>
-                      <SelectItem value="pudo">PUDO</SelectItem>
+                      {SA_DELIVERY_PROVIDERS.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
+
+                <OrderTrackingEditor
+                  order={order}
+                  authedFetch={authedFetch}
+                  toast={toast}
+                  onUpdated={(updated) => {
+                    setOrders((prev) =>
+                      prev.map((o) =>
+                        o.orderNumber === order.orderNumber
+                          ? {
+                              ...o,
+                              status: updated.status,
+                              trackingUrl: updated.trackingUrl || null,
+                              providerDeliveryId: updated.providerDeliveryId || null,
+                              driverDetails: updated.driverDetails || null,
+                              driverAssignedAt: updated.driverAssignedAt || o.driverAssignedAt,
+                            }
+                          : o
+                      )
+                    );
+                  }}
+                />
 
                 {order.trackingUrl && (
                   <a
                     href={order.trackingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline text-center"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline text-center font-medium"
                   >
-                    Track Delivery →
+                    Live Tracking Link →
                   </a>
                 )}
 
@@ -1308,12 +1413,12 @@ export default function Admin() {
                     </div>
                   )}
 
-                  {/* Shipped Orders */}
+                  {/* Ready & In-Transit Orders */}
                   {ordersByStatus.shipped.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-4">
                         <Truck className="h-5 w-5 text-blue-500" />
-                        <h2 className="text-xl font-bold text-foreground">Shipped Orders</h2>
+                        <h2 className="text-xl font-bold text-foreground">Ready & In Transit</h2>
                         <Badge variant="secondary">{ordersByStatus.shipped.length}</Badge>
                       </div>
                       <div className="space-y-4">
@@ -2125,20 +2230,121 @@ export default function Admin() {
   );
 }
 
-// ==================== DELIVERY SETTINGS PANEL ====================
-// Lets bakery staff enable/disable providers and set delivery business
-// rules (free delivery threshold). Providers that aren't configured with
-// real credentials are shown but disabled, never silently offered.
+// ==================== ORDER TRACKING & DRIVER EDITOR ====================
+function OrderTrackingEditor({
+  order,
+  authedFetch,
+  toast,
+  onUpdated,
+}: {
+  order: any;
+  authedFetch: (path: string, options?: RequestInit) => Promise<any>;
+  toast: (opts: any) => void;
+  onUpdated: (updated: any) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [trackingUrl, setTrackingUrl] = useState(order.trackingUrl || "");
+  const [waybillNumber, setWaybillNumber] = useState(order.providerDeliveryId || "");
+  const [driverName, setDriverName] = useState(order.driverDetails?.name || "");
+  const [driverPhone, setDriverPhone] = useState(order.driverDetails?.phone || "");
+  const [driverVehicle, setDriverVehicle] = useState(order.driverDetails?.vehicle || "");
 
-const ALL_PROVIDERS = [
-  { id: "own_delivery", name: "Portugal Bakery Delivery" },
-  { id: "uber_direct", name: "Uber Direct" },
-  { id: "indrive", name: "inDrive" },
-  { id: "courier_guy", name: "The Courier Guy" },
-  { id: "pargo", name: "Pargo" },
-  { id: "pudo", name: "PUDO" },
-  { id: "local_courier", name: "Local Motorbike Courier" },
-];
+  const handleSaveTracking = async () => {
+    setSaving(true);
+    try {
+      const updated = await authedFetch(`/api/orders/${order.orderNumber}/delivery-tracking`, {
+        method: "PUT",
+        body: JSON.stringify({
+          trackingUrl,
+          waybillNumber,
+          driverName,
+          driverPhone,
+          driverVehicle,
+        }),
+      });
+      onUpdated(updated);
+      setOpen(false);
+      toast({
+        title: "Tracking updated",
+        description: "Customer can now see live tracking & driver details.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Failed to save tracking",
+        description: err?.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-8 text-xs gap-1 border border-dashed border-border"
+        onClick={() => setOpen(true)}
+      >
+        <Link2 className="h-3.5 w-3.5" />
+        {order.trackingUrl || order.driverDetails?.name ? "Edit Tracking / Driver" : "Add Tracking / Driver"}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="p-2.5 rounded-lg border border-border bg-muted/40 space-y-2 text-left">
+      <p className="text-[11px] font-semibold text-foreground">
+        Attach {getProviderMeta(order.deliveryProvider).shortTag} Tracking / Driver
+      </p>
+      <Input
+        placeholder="Live trip URL (Uber/Bolt/inDrive/Courier)"
+        value={trackingUrl}
+        onChange={(e) => setTrackingUrl(e.target.value)}
+        className="h-7 text-xs"
+      />
+      <Input
+        placeholder="Waybill / Trip Ref (optional)"
+        value={waybillNumber}
+        onChange={(e) => setWaybillNumber(e.target.value)}
+        className="h-7 text-xs"
+      />
+      <Input
+        placeholder="Driver Name (optional)"
+        value={driverName}
+        onChange={(e) => setDriverName(e.target.value)}
+        className="h-7 text-xs"
+      />
+      <Input
+        placeholder="Driver Phone (optional)"
+        value={driverPhone}
+        onChange={(e) => setDriverPhone(e.target.value)}
+        className="h-7 text-xs"
+      />
+      <Input
+        placeholder="Vehicle / Reg Plate (optional)"
+        value={driverVehicle}
+        onChange={(e) => setDriverVehicle(e.target.value)}
+        className="h-7 text-xs"
+      />
+      <div className="flex gap-1.5 pt-1">
+        <Button size="sm" className="h-7 text-xs flex-1" onClick={handleSaveTracking} disabled={saving}>
+          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ==================== DELIVERY SETTINGS PANEL ====================
+// Lets bakery staff enable/disable all South African delivery providers
+// (Uber, Bolt, inDrive, Yassir, Mr D, Droppa, The Courier Guy, RAM, Fastway,
+// Aramex, PUDO, Pargo & Portugal Bakery Delivery) and configure free delivery rules.
 
 function DeliverySettingsPanel({ authedFetch, toast }: {
   authedFetch: (path: string, options?: RequestInit) => Promise<any>;
@@ -2147,7 +2353,7 @@ function DeliverySettingsPanel({ authedFetch, toast }: {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enabledProviders, setEnabledProviders] = useState<string[]>([]);
-  const [configuredProviders, setConfiguredProviders] = useState<Record<string, boolean>>({});
+  const [providerDispatchModes, setProviderDispatchModes] = useState<Record<string, string>>({});
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<string>("");
 
   useEffect(() => {
@@ -2157,13 +2363,26 @@ function DeliverySettingsPanel({ authedFetch, toast }: {
           authedFetch('/api/admin/delivery-settings'),
           authedFetch('/api/delivery/providers'),
         ]);
-        setEnabledProviders(settings.enabledProviders || []);
+        const apiProviders = providersRes.providers || [];
+        const modes: Record<string, string> = {};
+        apiProviders.forEach((p: any) => {
+          modes[p.id] = p.dispatchMode || (p.id === "own_delivery" ? "in_house" : "managed_dispatch");
+        });
+        setProviderDispatchModes(modes);
+
+        if (Array.isArray(settings.enabledProviders) && settings.enabledProviders.length > 0) {
+          setEnabledProviders(settings.enabledProviders);
+        } else {
+          setEnabledProviders(
+            SA_DELIVERY_PROVIDERS.filter((p) => p.enabledByDefault !== false).map((p) => p.id)
+          );
+        }
         setFreeDeliveryThreshold(settings.freeDeliveryThreshold != null ? String(settings.freeDeliveryThreshold) : "");
-        const configured: Record<string, boolean> = {};
-        (providersRes.providers || []).forEach((p: any) => { configured[p.id] = p.configured; });
-        setConfiguredProviders(configured);
-      } catch (error) {
-        toast({ title: "Failed to load delivery settings", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+      } catch {
+        // Graceful fallback if backend is still deploying new provider endpoints
+        setEnabledProviders(
+          SA_DELIVERY_PROVIDERS.filter((p) => p.enabledByDefault !== false).map((p) => p.id)
+        );
       } finally {
         setLoading(false);
       }
@@ -2184,7 +2403,7 @@ function DeliverySettingsPanel({ authedFetch, toast }: {
           freeDeliveryThreshold: freeDeliveryThreshold.trim() === "" ? null : Number(freeDeliveryThreshold),
         }),
       });
-      toast({ title: "Delivery settings saved" });
+      toast({ title: "Delivery settings saved", description: `${enabledProviders.length} delivery services active at checkout.` });
     } catch (error) {
       toast({ title: "Failed to save", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
     } finally {
@@ -2202,36 +2421,88 @@ function DeliverySettingsPanel({ authedFetch, toast }: {
     );
   }
 
+  const categoriesOrder: DeliveryCategory[] = ["in_house", "on_demand", "courier", "pickup_point"];
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Truck className="h-5 w-5" />
-            Delivery Providers
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-primary" />
+              South African Delivery Services ({enabledProviders.length} Active)
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setEnabledProviders(SA_DELIVERY_PROVIDERS.map((p) => p.id))}
+              >
+                Enable All
+              </Button>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-1">
-          <p className="text-sm text-muted-foreground mb-3">
-            Only enabled AND configured providers are offered to customers at checkout.
-            Providers without credentials are shown for reference but can't be turned on yet.
+        <CardContent className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            All toggled delivery services are live at customer checkout with Gauteng zone pricing (Zones 1–6).
+            When an order is packed, dispatch via your chosen service or live API and share the tracking link directly from the order card.
           </p>
-          {ALL_PROVIDERS.map(provider => {
-            const configured = !!configuredProviders[provider.id];
-            const enabled = enabledProviders.includes(provider.id);
+
+          {categoriesOrder.map((cat) => {
+            const providersInCat = SA_DELIVERY_PROVIDERS.filter((p) => p.category === cat);
             return (
-              <div key={provider.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                <div>
-                  <p className="font-medium text-foreground">{provider.name}</p>
-                  {!configured && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">Awaiting credentials</p>
-                  )}
+              <div key={cat} className="space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border pb-1.5">
+                  {CATEGORY_LABELS[cat]}
+                </h3>
+                <div className="divide-y divide-border">
+                  {providersInCat.map((provider) => {
+                    const enabled = enabledProviders.includes(provider.id);
+                    const mode = providerDispatchModes[provider.id] || (provider.id === "own_delivery" ? "in_house" : "managed_dispatch");
+                    return (
+                      <div key={provider.id} className="flex items-center justify-between gap-4 py-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <span
+                            className={`inline-flex items-center justify-center shrink-0 h-9 w-12 rounded-lg text-[10px] font-extrabold ${provider.badgeClass}`}
+                          >
+                            {provider.shortTag}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium text-foreground text-sm">{provider.name}</p>
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300">
+                                {mode === "live_api"
+                                  ? "Live API Connected"
+                                  : mode === "in_house"
+                                    ? "In-House Van"
+                                    : "Ready • Gauteng Rate Card"}
+                              </span>
+                              {provider.bookingUrl && (
+                                <a
+                                  href={provider.bookingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                                >
+                                  Portal <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {provider.description} · Zone 1: R{provider.zoneFees[1]} – Zone {provider.maxZone || 6}: R{provider.zoneFees[provider.maxZone || 6]}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={enabled}
+                          onCheckedChange={(checked) => toggleProvider(provider.id, checked)}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-                <Switch
-                  checked={enabled}
-                  disabled={!configured}
-                  onCheckedChange={(checked) => toggleProvider(provider.id, checked)}
-                />
               </div>
             );
           })}
@@ -2250,13 +2521,13 @@ function DeliverySettingsPanel({ authedFetch, toast }: {
             <Input
               type="number"
               min={0}
-              placeholder="Leave empty to disable"
+              placeholder="Leave empty to disable (e.g. 500 for free delivery over R500)"
               value={freeDeliveryThreshold}
               onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
               className="max-w-xs"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Orders at or above this subtotal get free delivery, applied automatically at checkout.
+              Orders at or above this subtotal get free delivery across all active services at checkout.
             </p>
           </div>
         </CardContent>

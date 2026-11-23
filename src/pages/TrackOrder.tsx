@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { getProviderMeta } from "@/utils/deliveryProviders";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -130,6 +131,8 @@ const TrackOrder = () => {
               ...prevOrder!,
               status: data.order.status,
               trackingUrl: data.order.trackingUrl ?? prevOrder?.trackingUrl,
+              driverDetails: data.order.driverDetails ?? prevOrder?.driverDetails,
+              deliveryProvider: data.order.deliveryProvider ?? prevOrder?.deliveryProvider,
               deliveryFailureReason: data.order.deliveryFailureReason ?? prevOrder?.deliveryFailureReason,
             }));
 
@@ -427,17 +430,24 @@ const TrackOrder = () => {
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                           <p className="text-2xl font-bold text-primary dark:text-primary-dark">{foundOrder.orderNumber}</p>
 
-                          {/* ✅ DELIVERY METHOD BADGE */}
+                          {/* ✅ DELIVERY METHOD & PROVIDER BADGE */}
                           {foundOrder.deliveryMethod === 'pickup' ? (
                             <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
                               <ShoppingBag className="h-3 w-3 mr-1" />
                               Store Pickup
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                              <Package className="h-3 w-3 mr-1" />
-                              Delivery
-                            </Badge>
+                            <>
+                              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                <Package className="h-3 w-3 mr-1" />
+                                Delivery
+                              </Badge>
+                              {foundOrder.deliveryProvider && (
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getProviderMeta(foundOrder.deliveryProvider).badgeClass}`}>
+                                  {getProviderMeta(foundOrder.deliveryProvider).name}
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
@@ -467,8 +477,8 @@ const TrackOrder = () => {
                           </p>
                           <p className="text-sm text-purple-800 dark:text-purple-200">
                             Portugal Bakery<br />
-                            123 Main Street, Johannesburg<br />
-                            Mon-Sat: 7:00 AM - 6:00 PM | Sun: 8:00 AM - 2:00 PM
+                            245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190<br />
+                            Mon-Fri: 6:45 AM - 4:00 PM | Sat: 6:45 AM - 2:00 PM
                           </p>
                         </div>
                       ) : null}
@@ -524,17 +534,25 @@ const TrackOrder = () => {
                     </div>
                   )}
 
-                  {/* Courier tracking - only shown once a courier has actually been assigned */}
+                  {/* Courier tracking - shown once courier/driver details or live tracking link exist */}
                   {foundOrder.deliveryMethod === 'delivery' && (foundOrder.trackingUrl || foundOrder.driverDetails) && (
                     <div className="p-4 mx-6 mt-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
                       <p className="text-xs font-semibold text-green-900 dark:text-green-100 mb-2">
                         🚴 Delivery in progress
-                        {foundOrder.deliveryProvider && ` · ${foundOrder.deliveryProvider.replace('_', ' ')}`}
+                        {foundOrder.deliveryProvider && ` · ${getProviderMeta(foundOrder.deliveryProvider).name}`}
                       </p>
                       {foundOrder.driverDetails?.name && (
                         <p className="text-sm text-green-800 dark:text-green-200">
-                          Driver: {foundOrder.driverDetails.name}
+                          Driver: <strong>{foundOrder.driverDetails.name}</strong>
                           {foundOrder.driverDetails.vehicle && ` · ${foundOrder.driverDetails.vehicle}`}
+                          {foundOrder.driverDetails.phone && (
+                            <>
+                              {" · "}
+                              <a href={`tel:${foundOrder.driverDetails.phone}`} className="underline">
+                                {foundOrder.driverDetails.phone}
+                              </a>
+                            </>
+                          )}
                         </p>
                       )}
                       {foundOrder.trackingUrl && (
@@ -542,9 +560,9 @@ const TrackOrder = () => {
                           href={foundOrder.trackingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block mt-2 text-sm font-medium text-green-700 dark:text-green-300 hover:underline"
+                          className="inline-block mt-2 text-sm font-semibold text-green-700 dark:text-green-300 hover:underline"
                         >
-                          Track Delivery →
+                          Open Live Courier Tracking →
                         </a>
                       )}
                     </div>

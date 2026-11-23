@@ -14,10 +14,12 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
-// Delivery fees are now calculated server-side by the delivery engine
-// (see POST /api/delivery/quotes) so every provider - including the
-// existing zone-based own_delivery - is compared consistently and can't be
-// tampered with client-side.
+import {
+  buildLocalQuotesFallback,
+  DeliveryQuoteOption,
+  formatEtaLabel,
+  getProviderMeta,
+} from "@/utils/deliveryProviders";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -48,18 +50,12 @@ const Order = () => {
   const [deliveryZone, setDeliveryZone] = useState("");
   const [deliveryCalculated, setDeliveryCalculated] = useState(false);
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
-  const [deliveryQuotes, setDeliveryQuotes] = useState<Array<{
-    providerId: string;
-    providerName: string;
-    fee: number;
-    currency: string;
-    etaMinutesMin?: number;
-    etaMinutesMax?: number;
-    zone?: string;
-    labels?: string[];
-  }>>([]);
+  const [deliveryQuotes, setDeliveryQuotes] = useState<DeliveryQuoteOption[]>([]);
+  const [quoteFilter, setQuoteFilter] = useState<"all" | "on_demand" | "courier" | "pickup_point">("all");
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("");
   const [deliveryQuoteId, setDeliveryQuoteId] = useState<string | null>(null);
+  const [preferredPickupPoint, setPreferredPickupPoint] = useState<string>("");
 
   // ✅ COMPUTED VALUES
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
@@ -90,27 +86,35 @@ const Order = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/delivery/quotes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          address: customerAddress,
-          items: cart.map(item => ({ name: item.name })),
-          subtotal: total
-        })
-      });
+      let quotes: DeliveryQuoteOption[] = [];
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to get delivery options");
+      try {
+        const res = await fetch(`${API_URL}/api/delivery/quotes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            address: customerAddress,
+            items: cart.map(item => ({ name: item.name })),
+            subtotal: total
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          quotes = data.quotes || [];
+        } else {
+          quotes = buildLocalQuotesFallback(customerAddress);
+        }
+      } catch {
+        // Graceful client fallback if backend server is waking up
+        quotes = buildLocalQuotesFallback(customerAddress);
       }
 
-      const data = await res.json();
-      const quotes = data.quotes || [];
       setDeliveryQuotes(quotes);
+      setQuoteFilter("all");
 
       if (quotes.length === 0) {
         toast({
@@ -121,17 +125,16 @@ const Order = () => {
         return;
       }
 
-      // Auto-select when there's only one option (today, that's own_delivery).
       if (quotes.length === 1) {
         selectDeliveryQuote(quotes[0]);
         toast({
           title: "Delivery fee calculated!",
-          description: `${quotes[0].zone || quotes[0].providerName} - Delivery fee: R${quotes[0].fee}`,
+          description: `${quotes[0].providerName} (${quotes[0].zone || "Gauteng"}) - R${quotes[0].fee}`,
         });
       } else {
         toast({
-          title: "Delivery options found!",
-          description: "Compare and select the delivery option that works for you.",
+          title: `${quotes.length} SA delivery services available!`,
+          description: "Choose from Uber, Bolt, inDrive, Yassir, Mr D, Couriers, Lockers & Bakery Delivery.",
         });
       }
     } catch (err) {
@@ -145,11 +148,12 @@ const Order = () => {
     }
   };
 
-  const selectDeliveryQuote = (quote: { providerId: string; fee: number; zone?: string; providerName: string; quoteId?: string | null }) => {
+  const selectDeliveryQuote = (quote: DeliveryQuoteOption) => {
     setSelectedProviderId(quote.providerId);
+    setSelectedProviderName(quote.providerName);
     setDeliveryFee(quote.fee);
-    setDeliveryZone(quote.zone || quote.providerName);
-    setDeliveryQuoteId((quote as any).quoteId || null);
+    setDeliveryZone(quote.zone ? `${quote.providerName} · ${quote.zone}` : quote.providerName);
+    setDeliveryQuoteId(quote.quoteId || null);
     setDeliveryCalculated(true);
   };
 
@@ -158,6 +162,7 @@ const Order = () => {
     setDeliveryFee(0);
     setDeliveryZone("");
     setSelectedProviderId(null);
+    setSelectedProviderName("");
     setDeliveryQuoteId(null);
     setDeliveryQuotes([]);
   };
@@ -278,8 +283,12 @@ const Order = () => {
           deliveryFee: deliveryMethod === "delivery" && deliveryCalculated ? deliveryFee : 0,
           deliveryZone: deliveryMethod === "delivery" && deliveryCalculated ? deliveryZone : "",
           deliveryProvider: deliveryMethod === "delivery" ? (selectedProviderId || "own_delivery") : null,
+          deliveryService: deliveryMethod === "delivery" ? (selectedProviderName || null) : null,
           deliveryQuoteId: deliveryMethod === "delivery" ? deliveryQuoteId : null,
-          specialInstructions,
+          pickupLocation: deliveryMethod === "delivery" && preferredPickupPoint.trim() ? preferredPickupPoint.trim() : null,
+          specialInstructions: preferredPickupPoint.trim()
+            ? `${specialInstructions ? specialInstructions + " | " : ""}Preferred Locker/Pickup Point: ${preferredPickupPoint.trim()}`
+            : specialInstructions,
           paymentID,
         }),
       });
@@ -582,8 +591,7 @@ const Order = () => {
                           value={customerAddress}
                           onChange={(e) => {
                             setCustomerAddress(e.target.value);
-                            // Only reset if user starts typing a new address
-                            if (deliveryCalculated) {
+                            if (deliveryCalculated || deliveryQuotes.length > 0) {
                               resetDeliverySelection();
                             }
                           }}
@@ -591,7 +599,7 @@ const Order = () => {
                           rows={3}
                         />
                         <p className="text-xs text-muted-foreground mt-1 mb-3">
-                          💡 Tip: Include your suburb name for accurate delivery fee (e.g., "123 Main St, Rosettenville, Johannesburg")
+                          💡 Tip: Include your suburb name for accurate delivery quotes (e.g., "123 Main St, Rosettenville, Johannesburg")
                         </p>
 
                         {!deliveryCalculated && deliveryQuotes.length === 0 && (
@@ -605,87 +613,176 @@ const Order = () => {
                             {calculatingDelivery ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Finding delivery options...
+                                Comparing SA delivery services...
                               </>
                             ) : (
                               <>
                                 <Calculator className="h-4 w-4 mr-2" />
-                                Get Delivery Options
+                                Compare Delivery Services (Uber, Bolt, inDrive, Yassir & More)
                               </>
                             )}
                           </Button>
                         )}
 
-                        {!deliveryCalculated && deliveryQuotes.length > 1 && (
-                          <div className="mb-3 space-y-2">
-                            <h4 className="font-semibold text-foreground text-sm mb-1">
-                              Choose your delivery option
-                            </h4>
-                            {deliveryQuotes.map((quote) => (
-                              <button
-                                key={quote.providerId}
-                                type="button"
-                                onClick={() => selectDeliveryQuote(quote)}
-                                className="w-full text-left p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
-                              >
-                                <div className="flex justify-between items-start mb-1">
-                                  <div>
-                                    <span className="font-medium text-foreground text-sm">
-                                      {quote.providerName}
-                                    </span>
-                                    {quote.labels && quote.labels.length > 0 && (
-                                      <span className="ml-2 inline-flex gap-1">
-                                        {quote.labels.map(label => (
-                                          <span key={label} className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                                            {label}
+                        {!deliveryCalculated && deliveryQuotes.length > 0 && (
+                          <div className="mb-3 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-foreground text-sm">
+                                Select a Delivery Service ({deliveryQuotes.length} available)
+                              </h4>
+                            </div>
+
+                            {/* Category filter pills */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                { key: "all" as const, label: "All" },
+                                { key: "on_demand" as const, label: "Fast On-Demand" },
+                                { key: "courier" as const, label: "Bakery & Couriers" },
+                                { key: "pickup_point" as const, label: "Pickup Lockers" },
+                              ].map((tab) => (
+                                <button
+                                  key={tab.key}
+                                  type="button"
+                                  onClick={() => setQuoteFilter(tab.key)}
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                    quoteFilter === tab.key
+                                      ? "bg-primary text-primary-foreground"
+                                      : "bg-muted text-muted-foreground hover:text-foreground"
+                                  }`}
+                                >
+                                  {tab.label}
+                                </button>
+                              ))}
+                            </div>
+
+                            <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                              {deliveryQuotes
+                                .filter((quote) => {
+                                  if (quoteFilter === "all") return true;
+                                  const cat = quote.category || getProviderMeta(quote.providerId).category;
+                                  if (quoteFilter === "courier") {
+                                    return cat === "courier" || cat === "in_house";
+                                  }
+                                  return cat === quoteFilter;
+                                })
+                                .map((quote) => {
+                                  const meta = getProviderMeta(quote.providerId);
+                                  const etaText = formatEtaLabel(quote.etaMinutesMin, quote.etaMinutesMax);
+                                  return (
+                                    <button
+                                      key={quote.providerId}
+                                      type="button"
+                                      onClick={() => selectDeliveryQuote(quote)}
+                                      className="w-full text-left p-3.5 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all"
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-start gap-3 min-w-0">
+                                          <span
+                                            className={`inline-flex items-center justify-center shrink-0 h-9 w-11 rounded-lg text-[10px] font-extrabold tracking-tight ${meta.badgeClass}`}
+                                          >
+                                            {meta.shortTag}
                                           </span>
-                                        ))}
-                                      </span>
-                                    )}
-                                    {quote.etaMinutesMax && (
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        Estimated {quote.etaMinutesMin === quote.etaMinutesMax
-                                          ? `${quote.etaMinutesMax} min`
-                                          : `${quote.etaMinutesMin}–${quote.etaMinutesMax} min`}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <span className="font-bold text-primary text-sm">
-                                    R{quote.fee}
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
+                                          <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                              <span className="font-semibold text-foreground text-sm">
+                                                {quote.providerName}
+                                              </span>
+                                              {quote.labels &&
+                                                quote.labels.map((label) => (
+                                                  <span
+                                                    key={label}
+                                                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary"
+                                                  >
+                                                    {label}
+                                                  </span>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                                              {quote.description || meta.description}
+                                            </p>
+                                            {etaText && (
+                                              <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mt-0.5">
+                                                ⏱ Est. {etaText}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        <div className="text-right shrink-0">
+                                          {quote.freeDelivery ? (
+                                            <>
+                                              <span className="block text-xs line-through text-muted-foreground">
+                                                R{quote.originalFee}
+                                              </span>
+                                              <span className="font-bold text-green-600 text-sm">FREE</span>
+                                            </>
+                                          ) : (
+                                            <span className="font-bold text-primary text-base">
+                                              R{quote.fee}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                            </div>
                           </div>
                         )}
 
                         {deliveryCalculated && (
-                          <div className="mt-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
-                            <div className="flex items-start gap-3">
-                              <MapPin className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                              <div className="flex-1">
-                                <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
-                                  Delivery Fee: R{deliveryFee.toFixed(2)}
-                                </p>
-                                <p className="text-xs text-green-700 dark:text-green-300 mb-2">
-                                  {deliveryZone}
-                                </p>
-                                {deliveryQuotes.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setDeliveryCalculated(false);
-                                      setSelectedProviderId(null);
-                                    }}
-                                    className="text-xs"
-                                  >
-                                    Change Option
-                                  </Button>
-                                )}
+                          <div className="mt-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-900 space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <span
+                                  className={`inline-flex items-center justify-center shrink-0 h-9 w-11 rounded-lg text-[10px] font-extrabold ${getProviderMeta(selectedProviderId).badgeClass}`}
+                                >
+                                  {getProviderMeta(selectedProviderId).shortTag}
+                                </span>
+                                <div>
+                                  <p className="font-semibold text-green-900 dark:text-green-100 text-sm">
+                                    {selectedProviderName || getProviderMeta(selectedProviderId).name} —{" "}
+                                    {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
+                                  </p>
+                                  <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
+                                    {deliveryZone}
+                                  </p>
+                                </div>
                               </div>
+                              {deliveryQuotes.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDeliveryCalculated(false);
+                                    setSelectedProviderId(null);
+                                  }}
+                                  className="text-xs shrink-0"
+                                >
+                                  Change Service
+                                </Button>
+                              )}
                             </div>
+
+                            {(selectedProviderId === "pudo" || selectedProviderId === "pargo") && (
+                              <div className="pt-2 border-t border-green-200 dark:border-green-900">
+                                <Label htmlFor="preferredPickupPoint" className="text-xs text-green-900 dark:text-green-100">
+                                  Preferred {selectedProviderId === "pudo" ? "PUDO Locker" : "Pargo Store"} (optional)
+                                </Label>
+                                <Input
+                                  id="preferredPickupPoint"
+                                  placeholder={
+                                    selectedProviderId === "pudo"
+                                      ? "e.g. PUDO Locker @ The Glen Shopping Centre"
+                                      : "e.g. Clicks Comaro Crossing / Spar Rosettenville"
+                                  }
+                                  value={preferredPickupPoint}
+                                  onChange={(e) => setPreferredPickupPoint(e.target.value)}
+                                  className="mt-1 bg-background text-foreground text-xs h-8"
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

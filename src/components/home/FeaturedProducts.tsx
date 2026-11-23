@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Sun, Flame, Leaf } from "lucide-react";
 import breadImg from "@/assets/product-bread.jpg";
 import cakeImg from "@/assets/product-cake.jpg";
 import croissantImg from "@/assets/product-croissant.jpg";
 import pastryImg from "@/assets/product-pastry.jpg";
+import { AMBIENT_POSITIONS, getCurrentSASeason, SASeasonId } from "@/utils/seasons";
 
 const products = [
   {
@@ -41,176 +42,126 @@ const products = [
   },
 ];
 
+function SeasonIcon({ seasonId, className }: { seasonId: SASeasonId; className?: string }) {
+  switch (seasonId) {
+    case "spring":
+    case "summer":
+      return <Sun className={className} />;
+    case "autumn":
+      return <Leaf className={className} />;
+    case "winter":
+      return <Flame className={className} />;
+    case "festive_summer":
+    default:
+      return <Sparkles className={className} />;
+  }
+}
+
 export function FeaturedProducts() {
+  const season = getCurrentSASeason();
+
   return (
-    <section className="relative py-20 md:py-28 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-neutral-950 dark:via-amber-950/20 dark:to-red-950/20 overflow-hidden">
-      {/* Animated Christmas Lights - Top */}
-      <div className="absolute top-0 left-0 right-0 h-8 flex items-center justify-around pointer-events-none z-10">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={`light-top-${i}`}
-            className="w-3 h-3 rounded-full animate-pulse shadow-lg"
-            style={{
-              backgroundColor: i % 3 === 0 ? '#ef4444' : i % 3 === 1 ? '#22c55e' : '#fbbf24',
-              animationDelay: `${i * 0.2}s`,
-              animationDuration: '1.5s',
-            }}
-          />
-        ))}
-      </div>
+    <section className={`relative py-20 md:py-28 overflow-hidden ${season.sectionBgClass}`}>
+      {/* Warm Golden Fairy Lights — shown automatically only during Sunny SA Festive Season (Dec 10–31) */}
+      {season.showFestiveLights && (
+        <>
+          <div className="absolute top-0 left-0 right-0 h-8 flex items-center justify-around pointer-events-none z-10">
+            {[...Array(18)].map((_, i) => (
+              <div
+                key={`festive-light-${i}`}
+                className="w-2.5 h-2.5 rounded-full animate-pulse shadow-md"
+                style={{
+                  backgroundColor: i % 3 === 0 ? "#f59e0b" : i % 3 === 1 ? "#ef4444" : "#eab308",
+                  animationDelay: `${i * 0.2}s`,
+                  animationDuration: "1.8s",
+                }}
+              />
+            ))}
+          </div>
+          <div className="absolute top-4 left-0 right-0 h-px bg-amber-900/15 dark:bg-amber-400/20 pointer-events-none z-0" />
+        </>
+      )}
 
-      {/* Christmas Light Wire - Top */}
-      <div className="absolute top-4 left-0 right-0 h-0.5 bg-neutral-800/20 dark:bg-neutral-600/30 pointer-events-none z-0" />
-
-      {/* Animated Christmas Lights - Bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-around pointer-events-none z-10">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={`light-bottom-${i}`}
-            className="w-3 h-3 rounded-full animate-pulse shadow-lg"
-            style={{
-              backgroundColor: i % 3 === 0 ? '#22c55e' : i % 3 === 1 ? '#fbbf24' : '#ef4444',
-              animationDelay: `${i * 0.15}s`,
-              animationDuration: '1.8s',
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Christmas Light Wire - Bottom */}
-      <div className="absolute bottom-4 left-0 right-0 h-0.5 bg-neutral-800/20 dark:bg-neutral-600/30 pointer-events-none z-0" />
-
-      {/* Floating Snowflakes */}
-      {[...Array(15)].map((_, i) => (
+      {/* Subtle Deterministic Seasonal Ambient Accents */}
+      {AMBIENT_POSITIONS.map((pos, i) => (
         <div
-          key={`snow-${i}`}
-          className="absolute text-amber-200 dark:text-amber-400/30 pointer-events-none opacity-60"
+          key={`ambient-${i}`}
+          className="absolute text-amber-500/25 dark:text-amber-400/15 pointer-events-none select-none"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            fontSize: `${Math.random() * 20 + 10}px`,
-            animation: `float ${Math.random() * 10 + 15}s linear infinite`,
-            animationDelay: `${Math.random() * 5}s`,
+            left: pos.left,
+            top: pos.top,
+            fontSize: `${pos.size}px`,
+            animation: `float ${pos.duration}s ease-in-out infinite`,
+            animationDelay: `${pos.delay}s`,
           }}
         >
-          ❄
+          {season.particleSymbols[i % season.particleSymbols.length]}
         </div>
       ))}
 
-      {/* Decorative Christmas Trees - Left */}
-      <div className="absolute left-4 top-1/4 hidden lg:block pointer-events-none opacity-40 dark:opacity-20">
-        <div className="text-6xl">🎄</div>
-      </div>
-      <div className="absolute left-8 bottom-1/4 hidden lg:block pointer-events-none opacity-30 dark:opacity-15">
-        <div className="text-5xl">🎄</div>
-      </div>
-
-      {/* Decorative Christmas Trees - Right */}
-      <div className="absolute right-4 top-1/3 hidden lg:block pointer-events-none opacity-40 dark:opacity-20">
-        <div className="text-6xl">🎄</div>
-      </div>
-      <div className="absolute right-8 bottom-1/3 hidden lg:block pointer-events-none opacity-30 dark:opacity-15">
-        <div className="text-5xl">🎄</div>
-      </div>
-
-      {/* Ornaments Decorations */}
-      <div className="absolute left-1/4 top-12 text-3xl opacity-50 dark:opacity-30 pointer-events-none" style={{ animation: 'swing 3s ease-in-out infinite', transformOrigin: 'top center' }}>🔴</div>
-      <div className="absolute right-1/4 top-16 text-2xl opacity-50 dark:opacity-30 pointer-events-none" style={{ animation: 'swing 3s ease-in-out infinite', animationDelay: '0.5s', transformOrigin: 'top center' }}>🟡</div>
-      <div className="absolute left-1/3 bottom-12 text-3xl opacity-50 dark:opacity-30 pointer-events-none" style={{ animation: 'swing 3s ease-in-out infinite', animationDelay: '1s', transformOrigin: 'top center' }}>🟢</div>
-      <div className="absolute right-1/3 bottom-16 text-2xl opacity-50 dark:opacity-30 pointer-events-none" style={{ animation: 'swing 3s ease-in-out infinite', animationDelay: '1.5s', transformOrigin: 'top center' }}>🔴</div>
-
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header with Christmas Touch */}
+        {/* Dynamic South African Seasonal Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-500 animate-pulse" />
-            <span className="text-amber-600 dark:text-amber-500 font-medium text-sm tracking-wider uppercase">
-              🎄 Holiday Specialties 🎄
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/70 dark:bg-neutral-900/70 border border-amber-200/70 dark:border-amber-800/40 shadow-sm mb-4">
+            <SeasonIcon seasonId={season.id} className={`h-4 w-4 ${season.accentTextClass}`} />
+            <span className={`${season.accentTextClass} font-semibold text-xs tracking-wider uppercase`}>
+              {season.eyebrow}
             </span>
-            <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-500 animate-pulse" />
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-neutral-900 dark:text-neutral-50 mb-4">
-            Featured Products
+            {season.heading}
           </h2>
           <p className="text-neutral-600 dark:text-neutral-400 text-lg">
-            Discover our most beloved creations, baked fresh daily with holiday cheer ✨
+            {season.subtitle}
           </p>
         </div>
 
-        {/* Products Grid with Christmas Cards */}
+        {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="group bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 animate-fade-in-up relative border-2 border-amber-200 dark:border-amber-900/50"
+              className={`group bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 animate-fade-in-up relative border ${season.cardBorderClass}`}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              {/* Christmas Ribbon Corner */}
-              <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none z-20">
-                <div className="absolute top-2 right-2 w-20 h-6 bg-gradient-to-r from-red-500 to-red-600 transform rotate-45 origin-top-right shadow-lg">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold transform -rotate-45">SALE</span>
-                  </div>
-                </div>
+              {/* Seasonal Corner Badge */}
+              <div className="absolute top-3 right-3 z-20 pointer-events-none">
+                <span
+                  className={`inline-block bg-gradient-to-r ${season.ribbonGradientClass} text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-md`}
+                >
+                  {season.cardRibbon}
+                </span>
               </div>
 
-              {/* Sparkle Effect on Hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
-                {[...Array(8)].map((_, i) => (
-                  <div
-                    key={`sparkle-${i}`}
-                    className="absolute text-amber-400 animate-ping"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      animationDelay: `${i * 0.2}s`,
-                      fontSize: '12px',
-                    }}
-                  >
-                    ✨
-                  </div>
-                ))}
-              </div>
-
-              <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+              <div className={`relative aspect-square overflow-hidden ${season.imageBgClass}`}>
                 <img
                   src={product.image}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-amber-600 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
+                <div className="absolute top-3 left-3">
+                  <span className={`${season.categoryPillClass} text-xs font-medium px-3 py-1 rounded-full shadow-md`}>
                     {product.category}
                   </span>
                 </div>
-
-                {/* Christmas ornament on image */}
-                <div className="absolute bottom-4 right-4 text-2xl opacity-70 group-hover:scale-125 transition-transform duration-300">
-                  {index % 4 === 0 ? '🎁' : index % 4 === 1 ? '⭐' : index % 4 === 2 ? '🎅' : '🔔'}
-                </div>
               </div>
 
-              <div className="p-5 bg-gradient-to-b from-white to-amber-50/30 dark:from-neutral-900 dark:to-amber-950/10">
-                <h3 className="font-heading font-semibold text-lg text-neutral-900 dark:text-neutral-50 mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">
+              <div className="p-5 bg-gradient-to-b from-white to-amber-50/20 dark:from-neutral-900 dark:to-amber-950/10">
+                <h3 className="font-heading font-semibold text-lg text-neutral-900 dark:text-neutral-50 mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                   {product.name}
                 </h3>
                 <p className="text-neutral-600 dark:text-neutral-400 text-sm mb-3">
                   {product.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-amber-600 dark:text-amber-500 font-bold text-lg">
+                  <span className={`${season.accentTextClass} font-bold text-lg`}>
                     {product.price}
                   </span>
                   <Link to="/menu">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="
-                                  border-amber-600 text-amber-600 
-                                  hover:bg-amber-600 hover:text-white 
-                                  dark:border-amber-500 dark:text-amber-500 
-                                  dark:hover:bg-amber-500 dark:hover:text-white
-                                "
+                      className={season.orderBtnClass}
                     >
                       Order
                     </Button>
@@ -221,16 +172,13 @@ export function FeaturedProducts() {
           ))}
         </div>
 
-        {/* CTA with Christmas Flair */}
-        <div className="text-center mt-12 relative">
-          <div className="absolute left-1/2 -translate-x-1/2 -top-8 text-4xl pointer-events-none opacity-60 animate-bounce">
-            ⭐
-          </div>
+        {/* CTA */}
+        <div className="text-center mt-12">
           <Link to="/menu">
             <Button
               variant="default"
               size="lg"
-              className="gap-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 shadow-lg hover:shadow-xl transition-all duration-300 group"
+              className={`gap-2 shadow-lg hover:shadow-xl transition-all duration-300 group ${season.ctaBtnClass}`}
             >
               View Full Menu
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
