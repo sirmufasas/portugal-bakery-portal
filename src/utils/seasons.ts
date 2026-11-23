@@ -1,192 +1,140 @@
 // src/utils/seasons.ts
-// Automatic South African (Southern Hemisphere) seasonal theme engine.
-// Adapts colours, badges, and bakery copy dynamically throughout the year
-// based on Johannesburg's calendar — no manual seasonal edits needed.
+// Automatic Southern Hemisphere seasonal theme engine for Portugal Bakery.
+// Dynamically adapts system-wide palette tokens, botanical/seasonal artwork,
+// and editorial copy throughout the year.
 
 export type SASeasonId = "spring" | "summer" | "festive_summer" | "autumn" | "winter";
 
 export interface SASeasonTheme {
   id: SASeasonId;
+  shortLabel: string;
   name: string;
   heroBadge: string;
   eyebrow: string;
   heading: string;
   subtitle: string;
   cardRibbon: string;
-  showFestiveLights: boolean;
-  sectionBgClass: string;
-  cardBorderClass: string;
-  imageBgClass: string;
-  accentTextClass: string;
-  categoryPillClass: string;
-  ribbonGradientClass: string;
-  orderBtnClass: string;
-  ctaBtnClass: string;
-  particleSymbols: string[];
+  topBarGradient: string;
+  sectionSurfaceClass: string;
+  heroGlowClass: string;
 }
 
-// Deterministic positions so ambient accents never jump on React re-renders.
-export const AMBIENT_POSITIONS = [
-  { left: "6%", top: "14%", size: 16, duration: 16, delay: 0 },
-  { left: "18%", top: "76%", size: 14, duration: 19, delay: 1.5 },
-  { left: "31%", top: "20%", size: 18, duration: 17, delay: 0.8 },
-  { left: "46%", top: "84%", size: 15, duration: 21, delay: 2.2 },
-  { left: "62%", top: "16%", size: 14, duration: 18, delay: 1.1 },
-  { left: "77%", top: "74%", size: 17, duration: 20, delay: 2.7 },
-  { left: "89%", top: "24%", size: 15, duration: 16, delay: 0.4 },
-  { left: "93%", top: "64%", size: 14, duration: 22, delay: 1.9 },
+export const SEASON_ORDER: SASeasonId[] = [
+  "spring",
+  "summer",
+  "festive_summer",
+  "autumn",
+  "winter",
 ];
 
-const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
+export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
   spring: {
     id: "spring",
-    name: "Johannesburg Spring",
-    heroBadge: "Spring Season · Fresh Daily",
-    eyebrow: "Jozi Spring Specialties",
-    heading: "Featured Products",
+    shortLabel: "Spring",
+    name: "Spring in Bloom",
+    heroBadge: "Spring in Bloom · Baked Fresh Daily",
+    eyebrow: "Spring Collection",
+    heading: "Freshly Blossomed Favorites",
     subtitle:
-      "Bright Johannesburg spring mornings call for crisp sourdough crusts, flaky croissants, and warm pastéis de nata.",
-    cardRibbon: "FRESH PICK",
-    showFestiveLights: false,
-    sectionBgClass:
-      "bg-gradient-to-br from-amber-50/90 via-orange-50/60 to-rose-50/60 dark:from-neutral-950 dark:via-amber-950/20 dark:to-stone-950",
-    cardBorderClass: "border-amber-200/80 dark:border-amber-900/40",
-    imageBgClass:
-      "bg-gradient-to-br from-amber-50 to-rose-50/60 dark:from-amber-950/20 dark:to-stone-900",
-    accentTextClass: "text-amber-700 dark:text-amber-400",
-    categoryPillClass: "bg-amber-600 text-white",
-    ribbonGradientClass: "from-amber-500 to-orange-500",
-    orderBtnClass:
-      "border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white dark:border-amber-500 dark:text-amber-400 dark:hover:bg-amber-500 dark:hover:text-white",
-    ctaBtnClass:
-      "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-white",
-    particleSymbols: ["✦", "☀", "✿", "✦"],
+      "Bright, sunlit mornings call for delicate flaky pastries, fresh berry cakes, and golden-crust sourdough baked fresh from dawn.",
+    cardRibbon: "SPRING BLOOM",
+    topBarGradient: "from-rose-400 via-pink-500 to-emerald-500",
+    sectionSurfaceClass:
+      "bg-gradient-to-br from-rose-50/90 via-amber-50/50 to-emerald-50/60 dark:from-[#1c1015] dark:via-[#191216] dark:to-[#101a15]",
+    heroGlowClass: "from-rose-500/20 via-amber-300/10 to-transparent",
   },
 
   summer: {
     id: "summer",
-    name: "South African Summer",
-    heroBadge: "Sunny SA Summer · Baked Fresh",
-    eyebrow: "Summer Bakery Favorites",
-    heading: "Featured Products",
+    shortLabel: "Summer",
+    name: "Golden Summer",
+    heroBadge: "Summer Sunshine · Baked Fresh Daily",
+    eyebrow: "Summer Collection",
+    heading: "Sun-Kissed Bakery Favorites",
     subtitle:
-      "Sun-kissed South African summer days pair effortlessly with golden custard tarts, berry ganache cakes, and artisan loaves.",
-    cardRibbon: "SUMMER PICK",
-    showFestiveLights: false,
-    sectionBgClass:
-      "bg-gradient-to-br from-amber-50 via-yellow-50/70 to-orange-50 dark:from-neutral-950 dark:via-amber-950/25 dark:to-orange-950/20",
-    cardBorderClass: "border-amber-200 dark:border-amber-800/50",
-    imageBgClass:
-      "bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-amber-950/20 dark:to-orange-950/20",
-    accentTextClass: "text-amber-600 dark:text-amber-400",
-    categoryPillClass: "bg-amber-600 text-white",
-    ribbonGradientClass: "from-amber-500 to-yellow-500",
-    orderBtnClass:
-      "border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white dark:border-amber-500 dark:text-amber-400 dark:hover:bg-amber-500 dark:hover:text-white",
-    ctaBtnClass:
-      "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-white",
-    particleSymbols: ["☀", "✦", "☀", "✧"],
+      "Celebrate warm, sunny days with caramelized pastéis de nata, light buttery croissants, and refreshing fruit-topped confections.",
+    cardRibbon: "SUMMER FRESH",
+    topBarGradient: "from-amber-400 via-orange-500 to-sky-500",
+    sectionSurfaceClass:
+      "bg-gradient-to-br from-amber-50/95 via-yellow-50/70 to-sky-50/50 dark:from-[#1b140c] dark:via-[#19130d] dark:to-[#0e171d]",
+    heroGlowClass: "from-amber-400/25 via-orange-400/10 to-transparent",
   },
 
   festive_summer: {
     id: "festive_summer",
-    name: "Sunny SA Festive Season",
-    heroBadge: "Festive Summer · Bolo Rei & Holiday Treats",
-    eyebrow: "Sunny Festive Specialties",
-    heading: "Featured Products",
+    shortLabel: "Festive",
+    name: "Festive Season",
+    heroBadge: "Festive Season · Holiday Bakes & Bolo Rei",
+    eyebrow: "Festive Specialties",
+    heading: "Holiday Table Favorites",
     subtitle:
-      "Celebrate a warm South African festive season with authentic Portuguese holiday bakes, Bolo Rei, and fresh family platters.",
+      "Gather around the table with traditional Portuguese festive bakes, signature Bolo Rei, and celebratory cakes crafted with love.",
     cardRibbon: "FESTIVE",
-    showFestiveLights: true,
-    sectionBgClass:
-      "bg-gradient-to-br from-amber-50 via-orange-50 to-red-50/70 dark:from-neutral-950 dark:via-amber-950/20 dark:to-red-950/20",
-    cardBorderClass: "border-amber-300/80 dark:border-amber-800/50",
-    imageBgClass:
-      "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-red-950/20",
-    accentTextClass: "text-amber-600 dark:text-amber-400",
-    categoryPillClass: "bg-red-600 text-white",
-    ribbonGradientClass: "from-red-600 to-amber-600",
-    orderBtnClass:
-      "border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white dark:border-amber-500 dark:text-amber-400 dark:hover:bg-amber-500 dark:hover:text-white",
-    ctaBtnClass:
-      "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-white",
-    particleSymbols: ["✨", "✦", "☀", "✨"],
+    topBarGradient: "from-red-600 via-amber-400 to-emerald-600",
+    sectionSurfaceClass:
+      "bg-gradient-to-br from-red-50/70 via-amber-50/80 to-emerald-50/50 dark:from-[#1d0f12] dark:via-[#1a140e] dark:to-[#0f1914]",
+    heroGlowClass: "from-red-500/20 via-amber-400/15 to-transparent",
   },
 
   autumn: {
     id: "autumn",
-    name: "Johannesburg Autumn",
-    heroBadge: "Autumn Harvest · Oven Warm",
-    eyebrow: "Autumn Harvest Specialties",
-    heading: "Featured Products",
+    shortLabel: "Autumn",
+    name: "Autumn Harvest",
+    heroBadge: "Autumn Harvest · Warm From The Oven",
+    eyebrow: "Autumn Harvest",
+    heading: "Golden Harvest Creations",
     subtitle:
-      "Crisp golden Jozi autumn days meet warm cinnamon notes, rich chocolate ganache, and slow-fermented sourdough.",
+      "Crisp autumn days pair effortlessly with slow-fermented rustic loaves, rich chocolate ganache, and warm spiced pastries.",
     cardRibbon: "HARVEST",
-    showFestiveLights: false,
-    sectionBgClass:
-      "bg-gradient-to-br from-orange-50/90 via-amber-50 to-stone-100 dark:from-neutral-950 dark:via-orange-950/20 dark:to-stone-950",
-    cardBorderClass: "border-orange-200/80 dark:border-orange-900/40",
-    imageBgClass:
-      "bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-stone-900",
-    accentTextClass: "text-orange-700 dark:text-amber-400",
-    categoryPillClass: "bg-orange-700 text-white",
-    ribbonGradientClass: "from-orange-600 to-amber-700",
-    orderBtnClass:
-      "border-orange-700 text-orange-700 hover:bg-orange-700 hover:text-white dark:border-amber-500 dark:text-amber-400 dark:hover:bg-amber-500 dark:hover:text-white",
-    ctaBtnClass:
-      "bg-orange-700 hover:bg-orange-800 dark:bg-amber-600 dark:hover:bg-amber-700 text-white",
-    particleSymbols: ["🍂", "✦", "🌾", "✦"],
+    topBarGradient: "from-orange-600 via-amber-600 to-red-800",
+    sectionSurfaceClass:
+      "bg-gradient-to-br from-orange-50/90 via-amber-50/70 to-stone-100/90 dark:from-[#1b110c] dark:via-[#18120e] dark:to-[#141110]",
+    heroGlowClass: "from-orange-500/20 via-amber-600/10 to-transparent",
   },
 
   winter: {
     id: "winter",
-    name: "Johannesburg Winter",
+    shortLabel: "Winter",
+    name: "Winter Hearth",
     heroBadge: "Winter Warmers · Straight From The Oven",
-    eyebrow: "Jozi Winter Warmers",
-    heading: "Featured Products",
+    eyebrow: "Winter Warmers",
+    heading: "Oven-Warm Comforts",
     subtitle:
-      "Beat the crisp Highveld winter chill with oven-warm crusty breads, buttery pastries, and comforting Portuguese classics.",
+      "Savor the comfort of oven-warm crusty breads, rich buttery layers, and timeless Portuguese classics alongside a hot cup of coffee.",
     cardRibbon: "OVEN WARM",
-    showFestiveLights: false,
-    sectionBgClass:
-      "bg-gradient-warm dark:bg-[#221611] dark:bg-none",
-    cardBorderClass: "border-stone-200 dark:border-amber-900/40",
-    imageBgClass:
-      "bg-gradient-to-br from-stone-100 to-amber-50/70 dark:from-stone-900 dark:to-amber-950/20",
-    accentTextClass: "text-primary dark:text-amber-400",
-    categoryPillClass: "bg-primary text-primary-foreground",
-    ribbonGradientClass: "from-amber-700 to-stone-700",
-    orderBtnClass:
-      "border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:border-amber-500 dark:text-amber-400 dark:hover:bg-amber-500 dark:hover:text-white",
-    ctaBtnClass:
-      "bg-primary hover:bg-primary/90 text-primary-foreground",
-    particleSymbols: ["☕", "✦", "🥐", "✦"],
+    topBarGradient: "from-amber-700 via-stone-600 to-rose-900",
+    sectionSurfaceClass:
+      "bg-gradient-to-br from-stone-100 via-amber-50/60 to-rose-50/40 dark:from-[#140e0b] dark:via-[#18110d] dark:to-[#190f12]",
+    heroGlowClass: "from-amber-600/20 via-stone-500/10 to-transparent",
   },
 };
 
 /**
- * Returns the active South African season theme for a given date (defaults to today).
- * Southern Hemisphere meteorological calendar:
+ * Returns the active Southern Hemisphere season for a given date:
  *  - Spring: Sep (8), Oct (9), Nov (10)
- *  - Summer: Dec (11), Jan (0), Feb (1) — with Sunny Festive Summer Dec 10–31
+ *  - Summer: Dec (11), Jan (0), Feb (1) — with Festive Season Dec 10–31
  *  - Autumn: Mar (2), Apr (3), May (4)
  *  - Winter: Jun (5), Jul (6), Aug (7)
  */
-export function getCurrentSASeason(date: Date = new Date()): SASeasonTheme {
-  const month = date.getMonth(); // 0-indexed (0 = Jan, 10 = Nov, 11 = Dec)
+export function getCalendarSASeasonId(date: Date = new Date()): SASeasonId {
+  const month = date.getMonth();
   const day = date.getDate();
 
   if (month === 11 && day >= 10) {
-    return SEASON_THEMES.festive_summer;
+    return "festive_summer";
   }
   if (month === 11 || month === 0 || month === 1) {
-    return SEASON_THEMES.summer;
+    return "summer";
   }
   if (month >= 2 && month <= 4) {
-    return SEASON_THEMES.autumn;
+    return "autumn";
   }
   if (month >= 5 && month <= 7) {
-    return SEASON_THEMES.winter;
+    return "winter";
   }
-  return SEASON_THEMES.spring;
+  return "spring";
+}
+
+export function getCurrentSASeason(date: Date = new Date()): SASeasonTheme {
+  return SEASON_THEMES[getCalendarSASeasonId(date)];
 }

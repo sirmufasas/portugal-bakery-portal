@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { SeasonProvider } from "@/contexts/SeasonContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
@@ -49,6 +50,7 @@ const FloatingButtonWrapper = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
+      <SeasonProvider>
       <AuthProvider>
         <ProductsProvider>
           <CartProvider>
@@ -111,6 +113,7 @@ const App = () => (
           </CartProvider>
         </ProductsProvider>
       </AuthProvider>
+      </SeasonProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

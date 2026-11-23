@@ -3,22 +3,27 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-bakery.jpg";
 import logoImage from "@/assets/268fcf8f-7821-40a6-bd4b-029f7983a83d-removebg-preview (1).png";
-import { getCurrentSASeason } from "@/utils/seasons";
+import { useSeason } from "@/contexts/SeasonContext";
+import { SeasonalHeroAtmosphere, SeasonSymbolIcon } from "@/components/seasonal/SeasonalArtwork";
 
 export function HeroSection() {
-  const season = getCurrentSASeason();
+  const { season } = useSeason();
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
+      {/* Background Image + Seasonal Atmospheric Wash */}
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           alt="Fresh baked goods at Portugal Bakery"
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 via-espresso/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 via-espresso/70 to-espresso/25 transition-colors duration-500" />
+        <div className={`absolute inset-0 bg-gradient-to-tr ${season.heroGlowClass} transition-all duration-700`} />
       </div>
+
+      {/* Subtle Seasonal Drifting Vector Elements */}
+      <SeasonalHeroAtmosphere seasonId={season.id} />
 
       {/* Logo in Top Right - Responsive */}
       <div className="absolute top-20 right-4 sm:top-24 sm:right-6 md:top-28 md:right-8 lg:top-32 lg:right-12 z-20 animate-fade-in">
@@ -33,12 +38,13 @@ export function HeroSection() {
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10 pt-20">
         <div className="max-w-2xl text-center sm:text-left">
-          <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4 animate-fade-in">
+          <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-5 animate-fade-in">
             <span className="text-amber font-medium text-sm tracking-wider uppercase">
               Since 1985
             </span>
             <span className="text-cream/40">•</span>
-            <span className="text-xs font-medium tracking-wide px-2.5 py-0.5 rounded-full bg-amber/20 text-amber border border-amber/30">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium tracking-wide px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-cream border border-white/25 shadow-sm">
+              <SeasonSymbolIcon seasonId={season.id} className="h-3.5 w-3.5 text-amber" />
               {season.heroBadge}
             </span>
           </div>
@@ -50,7 +56,7 @@ export function HeroSection() {
             <span className="block text-amber">Every Morning</span>
           </h1>
           <p
-            className="text-cream/80 text-lg md:text-xl leading-relaxed mb-8 max-w-lg animate-fade-in-up"
+            className="text-cream/85 text-lg md:text-xl leading-relaxed mb-8 max-w-lg animate-fade-in-up"
             style={{ animationDelay: "0.2s" }}
           >
             Experience the warmth of traditional Portuguese baking. Artisan breads, pastries, and confections made with love and the finest ingredients.
@@ -70,7 +76,7 @@ export function HeroSection() {
               <Button
                 variant="heroOutline"
                 size="xl"
-                className="w-full border border-amber text-white hover:bg-amber hover:text-cream dark:border-amber/70 dark:text-white dark:hover:bg-amber/80 dark:hover:text-cream"
+                className="w-full border border-amber text-white hover:bg-amber hover:text-espresso dark:border-amber/70 dark:text-white dark:hover:bg-amber/90 dark:hover:text-espresso"
               >
                 Order Online
               </Button>
@@ -80,7 +86,7 @@ export function HeroSection() {
       </div>
 
       {/* Decorative Bottom Gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10 transition-colors duration-500" />
     </section>
   );
 }
