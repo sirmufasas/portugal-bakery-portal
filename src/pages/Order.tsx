@@ -104,7 +104,16 @@ const Order = () => {
 
         if (res.ok) {
           const data = await res.json();
-          quotes = data.quotes || [];
+          const serverQuotes: DeliveryQuoteOption[] = data.quotes || [];
+          // If the backend is still running an older build that only returns own_delivery,
+          // supplement with the full SA provider rate-card quotes until backend deploy finishes.
+          if (serverQuotes.length <= 1) {
+            const fallbackQuotes = buildLocalQuotesFallback(customerAddress);
+            const serverMap = new Map(serverQuotes.map((q) => [q.providerId, q]));
+            quotes = fallbackQuotes.map((fq) => serverMap.get(fq.providerId) || fq);
+          } else {
+            quotes = serverQuotes;
+          }
         } else {
           quotes = buildLocalQuotesFallback(customerAddress);
         }
