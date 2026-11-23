@@ -1374,7 +1374,7 @@ const Testimonials = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       <Navbar />
       <FloatingCartButton />
       <main className="pt-20">
@@ -1396,7 +1396,7 @@ const Testimonials = () => {
         </section>
 
         {/* Testimonials Grid */}
-        <section className="py-12 md:py-16 bg-neutral-50 dark:bg-background transition-colors duration-300">
+        <section className="py-12 md:py-16 bg-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {displayedTestimonials.map((testimonial, index) => (

@@ -12,6 +12,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
 
 import { FloatingMessageButton } from "@/components/chat/FloatingMessageButton";
+import { GlobalSeasonalFrame } from "@/components/seasonal/SeasonalArtwork";
 import InstallPrompt from "@/components/InstallPrompt"; // ✅ IMPORT
 
 import Index from "./pages/Index";
@@ -78,6 +79,7 @@ const App = () => (
               <BrowserRouter>
                 <ScrollToTop />
                 <AdminLandingRedirect />
+                <GlobalSeasonalFrame />
 
                 {/* Floating button */}
                 <FloatingButtonWrapper />

@@ -1,7 +1,7 @@
 // src/utils/seasons.ts
-// Automatic Southern Hemisphere seasonal theme engine for Portugal Bakery.
-// Dynamically adapts system-wide palette tokens, botanical/seasonal artwork,
-// and editorial copy throughout the year.
+// Automatic South African (Southern Hemisphere) seasonal theme engine for Portugal Bakery.
+// Drives system-wide light-mode color palettes, botanical/seasonal vector illustrations,
+// and editorial accents across every page in the portal.
 
 export type SASeasonId = "spring" | "summer" | "festive_summer" | "autumn" | "winter";
 
@@ -14,9 +14,12 @@ export interface SASeasonTheme {
   heading: string;
   subtitle: string;
   cardRibbon: string;
+  themeColorHex: string;
   topBarGradient: string;
   sectionSurfaceClass: string;
+  heroOverlayClass: string;
   heroGlowClass: string;
+  pillClass: string;
 }
 
 export const SEASON_ORDER: SASeasonId[] = [
@@ -30,34 +33,42 @@ export const SEASON_ORDER: SASeasonId[] = [
 export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
   spring: {
     id: "spring",
-    shortLabel: "Spring",
+    shortLabel: "Spring Bloom",
     name: "Spring in Bloom",
-    heroBadge: "Spring in Bloom · Baked Fresh Daily",
+    heroBadge: "Spring in Bloom · Fresh Floral & Berry Bakes",
     eyebrow: "Spring Collection",
     heading: "Freshly Blossomed Favorites",
     subtitle:
       "Bright, sunlit mornings call for delicate flaky pastries, fresh berry cakes, and golden-crust sourdough baked fresh from dawn.",
     cardRibbon: "SPRING BLOOM",
-    topBarGradient: "from-rose-400 via-pink-500 to-emerald-500",
+    themeColorHex: "#E11D64",
+    topBarGradient: "from-pink-500 via-rose-400 to-emerald-500",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-rose-50/90 via-amber-50/50 to-emerald-50/60 dark:from-[#1c1015] dark:via-[#191216] dark:to-[#101a15]",
-    heroGlowClass: "from-rose-500/20 via-amber-300/10 to-transparent",
+      "bg-gradient-to-br from-rose-100/80 via-pink-50/70 to-emerald-50/75",
+    heroOverlayClass:
+      "bg-gradient-to-r from-[#3b1022]/85 via-[#4a162b]/60 to-rose-500/20",
+    heroGlowClass: "from-pink-400/35 via-amber-200/20 to-emerald-300/20",
+    pillClass: "bg-rose-100 text-rose-800 border-rose-300",
   },
 
   summer: {
     id: "summer",
-    shortLabel: "Summer",
+    shortLabel: "Summer Sun",
     name: "Golden Summer",
-    heroBadge: "Summer Sunshine · Baked Fresh Daily",
+    heroBadge: "Summer Sunshine · Citrus & Golden Nata",
     eyebrow: "Summer Collection",
     heading: "Sun-Kissed Bakery Favorites",
     subtitle:
       "Celebrate warm, sunny days with caramelized pastéis de nata, light buttery croissants, and refreshing fruit-topped confections.",
     cardRibbon: "SUMMER FRESH",
+    themeColorHex: "#EA580C",
     topBarGradient: "from-amber-400 via-orange-500 to-sky-500",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-amber-50/95 via-yellow-50/70 to-sky-50/50 dark:from-[#1b140c] dark:via-[#19130d] dark:to-[#0e171d]",
-    heroGlowClass: "from-amber-400/25 via-orange-400/10 to-transparent",
+      "bg-gradient-to-br from-amber-100/80 via-yellow-50/85 to-sky-100/65",
+    heroOverlayClass:
+      "bg-gradient-to-r from-[#3d2008]/85 via-[#522c0c]/60 to-amber-400/20",
+    heroGlowClass: "from-amber-400/35 via-yellow-300/20 to-sky-400/20",
+    pillClass: "bg-amber-100 text-amber-900 border-amber-300",
   },
 
   festive_summer: {
@@ -70,47 +81,59 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     subtitle:
       "Gather around the table with traditional Portuguese festive bakes, signature Bolo Rei, and celebratory cakes crafted with love.",
     cardRibbon: "FESTIVE",
+    themeColorHex: "#C81E3A",
     topBarGradient: "from-red-600 via-amber-400 to-emerald-600",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-red-50/70 via-amber-50/80 to-emerald-50/50 dark:from-[#1d0f12] dark:via-[#1a140e] dark:to-[#0f1914]",
-    heroGlowClass: "from-red-500/20 via-amber-400/15 to-transparent",
+      "bg-gradient-to-br from-red-100/70 via-amber-50/85 to-emerald-100/65",
+    heroOverlayClass:
+      "bg-gradient-to-r from-[#3a0d16]/88 via-[#47141e]/62 to-amber-500/20",
+    heroGlowClass: "from-red-500/30 via-amber-400/25 to-emerald-500/20",
+    pillClass: "bg-red-100 text-red-900 border-red-300",
   },
 
   autumn: {
     id: "autumn",
-    shortLabel: "Autumn",
+    shortLabel: "Autumn Harvest",
     name: "Autumn Harvest",
-    heroBadge: "Autumn Harvest · Warm From The Oven",
+    heroBadge: "Autumn Harvest · Spiced & Oven-Warm",
     eyebrow: "Autumn Harvest",
     heading: "Golden Harvest Creations",
     subtitle:
-      "Crisp autumn days pair effortlessly with slow-fermented rustic loaves, rich chocolate ganache, and warm spiced pastries.",
+      "Crisp autumn days pair effortlessly with slow-fermented rustic loaves, rich chocolate ganache, and warm cinnamon-spiced pastries.",
     cardRibbon: "HARVEST",
-    topBarGradient: "from-orange-600 via-amber-600 to-red-800",
+    themeColorHex: "#C2410C",
+    topBarGradient: "from-orange-600 via-amber-500 to-rose-700",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-orange-50/90 via-amber-50/70 to-stone-100/90 dark:from-[#1b110c] dark:via-[#18120e] dark:to-[#141110]",
-    heroGlowClass: "from-orange-500/20 via-amber-600/10 to-transparent",
+      "bg-gradient-to-br from-orange-100/85 via-amber-50/80 to-rose-100/55",
+    heroOverlayClass:
+      "bg-gradient-to-r from-[#3b180c]/88 via-[#4f2211]/64 to-orange-500/20",
+    heroGlowClass: "from-orange-500/32 via-amber-500/20 to-rose-500/15",
+    pillClass: "bg-orange-100 text-orange-900 border-orange-300",
   },
 
   winter: {
     id: "winter",
-    shortLabel: "Winter",
+    shortLabel: "Winter Azulejo",
     name: "Winter Hearth",
-    heroBadge: "Winter Warmers · Straight From The Oven",
+    heroBadge: "Winter Season · Crisp Morning & Warm Pastries",
     eyebrow: "Winter Warmers",
-    heading: "Oven-Warm Comforts",
+    heading: "Oven-Warm Winter Comforts",
     subtitle:
       "Savor the comfort of oven-warm crusty breads, rich buttery layers, and timeless Portuguese classics alongside a hot cup of coffee.",
     cardRibbon: "OVEN WARM",
-    topBarGradient: "from-amber-700 via-stone-600 to-rose-900",
+    themeColorHex: "#1E5BB8",
+    topBarGradient: "from-blue-600 via-sky-400 to-amber-500",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-stone-100 via-amber-50/60 to-rose-50/40 dark:from-[#140e0b] dark:via-[#18110d] dark:to-[#190f12]",
-    heroGlowClass: "from-amber-600/20 via-stone-500/10 to-transparent",
+      "bg-gradient-to-br from-sky-100/80 via-blue-50/70 to-amber-50/70",
+    heroOverlayClass:
+      "bg-gradient-to-r from-[#10233f]/88 via-[#183156]/65 to-amber-500/20",
+    heroGlowClass: "from-sky-400/30 via-blue-400/15 to-amber-400/20",
+    pillClass: "bg-sky-100 text-blue-900 border-sky-300",
   },
 };
 
 /**
- * Returns the active Southern Hemisphere season for a given date:
+ * Returns the active South African (Southern Hemisphere) season for a given date:
  *  - Spring: Sep (8), Oct (9), Nov (10)
  *  - Summer: Dec (11), Jan (0), Feb (1) — with Festive Season Dec 10–31
  *  - Autumn: Mar (2), Apr (3), May (4)

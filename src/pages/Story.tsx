@@ -29,7 +29,7 @@ const reasons = [
 
 const Story = () => {
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       <Navbar />
       <FloatingCartButton />
       <main className="pt-20">

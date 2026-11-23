@@ -25,6 +25,12 @@ import {
   SA_DELIVERY_PROVIDERS,
 } from "@/utils/deliveryProviders";
 import { DeliveryProviderLogo } from "@/components/delivery/DeliveryProviderLogo";
+import { useSeason } from "@/contexts/SeasonContext";
+import {
+  SeasonBadgeControl,
+  SeasonalSectionBackdrop,
+  SeasonSymbolIcon,
+} from "@/components/seasonal/SeasonalArtwork";
 
 import {
   Package,
@@ -140,6 +146,7 @@ export default function Admin() {
     carbs: "30g",
     fat: "8g",
   });
+  const { season } = useSeason();
 
   useEffect(() => {
     console.log('🎵 Initializing admin notifications...');
@@ -1282,18 +1289,30 @@ export default function Admin() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <Navbar />
       <AdminFloatingMessageButton />
-      <main className="pt-20 md:pt-24 pb-16">
+      <main className="pt-20 md:pt-24 pb-16 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
-              Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Manage orders, products, and communications
-            </p>
+          <div className={`relative overflow-hidden rounded-2xl border border-primary/20 p-6 md:p-8 mb-8 shadow-soft ${season.sectionSurfaceClass}`}>
+            <SeasonalSectionBackdrop seasonId={season.id} />
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 border border-primary/20 text-xs font-semibold text-primary mb-3 shadow-xs">
+                  <SeasonSymbolIcon seasonId={season.id} className="h-3.5 w-3.5" />
+                  <span>{season.heroBadge}</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-1.5">
+                  Admin Dashboard
+                </h1>
+                <p className="text-muted-foreground text-sm md:text-base">
+                  Manage live orders, South African couriers, products, and customer messages
+                </p>
+              </div>
+              <div className="shrink-0">
+                <SeasonBadgeControl />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

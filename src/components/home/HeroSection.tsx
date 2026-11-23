@@ -18,7 +18,7 @@ export function HeroSection() {
           alt="Fresh baked goods at Portugal Bakery"
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 via-espresso/70 to-espresso/25 transition-colors duration-500" />
+        <div className={`absolute inset-0 ${season.heroOverlayClass} transition-colors duration-500`} />
         <div className={`absolute inset-0 bg-gradient-to-tr ${season.heroGlowClass} transition-all duration-700`} />
       </div>
 

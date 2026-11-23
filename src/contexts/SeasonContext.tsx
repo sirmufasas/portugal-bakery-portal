@@ -47,8 +47,17 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-season", activeSeasonId);
-  }, [activeSeasonId]);
+    const root = document.documentElement;
+    root.setAttribute("data-season", activeSeasonId);
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute("content", season.themeColorHex);
+    }
+  }, [activeSeasonId, season.themeColorHex]);
 
   return (
     <SeasonContext.Provider value={{ mode, setMode, season, calendarSeasonId }}>

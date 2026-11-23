@@ -7,75 +7,7 @@
 
 @layer base {
   :root {
-    --background: 30 50% 98%;
-    --foreground: 25 50% 12%;
-
-    --card: 30 40% 96%;
-    --card-foreground: 25 50% 12%;
-
-    --popover: 30 50% 98%;
-    --popover-foreground: 25 50% 12%;
-
-    --primary: 30 60% 45%;
-    --primary-foreground: 30 50% 98%;
-
-    --secondary: 30 30% 90%;
-    --secondary-foreground: 25 50% 20%;
-
-    --muted: 30 20% 92%;
-    --muted-foreground: 25 20% 45%;
-
-    --accent: 350 70% 35%;
-    --accent-foreground: 30 50% 98%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 30 50% 98%;
-
-    --border: 30 30% 85%;
-    --input: 30 30% 85%;
-    --ring: 30 60% 45%;
-
-    --radius: 0.75rem;
-
-    /* Custom tokens */
-    --cream: 35 60% 96%;
-    --cream-dark: 30 40% 92%;
-    --amber: 30 60% 45%;
-    --amber-light: 35 70% 65%;
-    --amber-glow: 35 80% 75%;
-    --espresso: 25 50% 12%;
-    --espresso-light: 25 40% 25%;
-    --burgundy: 350 70% 35%;
-    --burgundy-light: 350 60% 50%;
-    --gold: 40 90% 50%;
-
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(30 60% 45% / 0.9), hsl(350 70% 35% / 0.8));
-    --gradient-warm: linear-gradient(180deg, hsl(35 60% 96%), hsl(30 40% 92%));
-    --gradient-card: linear-gradient(145deg, hsl(30 40% 96%), hsl(35 60% 96%));
-
-    /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(25 50% 12% / 0.1);
-    --shadow-elevated: 0 8px 30px -8px hsl(25 50% 12% / 0.15);
-    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.25);
-
-    /* Fonts */
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'Inter', sans-serif;
-
-    --sidebar-background: 30 40% 96%;
-    --sidebar-foreground: 25 50% 12%;
-    --sidebar-primary: 30 60% 45%;
-    --sidebar-primary-foreground: 30 50% 98%;
-    --sidebar-accent: 30 30% 90%;
-    --sidebar-accent-foreground: 25 50% 20%;
-    --sidebar-border: 30 30% 85%;
-    --sidebar-ring: 30 60% 45%;
-  }
-
-  /* ==================== SPRING: BRIGHT BLOSSOM ROSE, SAGE & HONEY ==================== */
-  html[data-season="spring"] {
-    --background: 342 65% 98.6%;
+    --background: 340 65% 97.4%;
     --foreground: 336 38% 14%;
 
     --card: 0 0% 100%;
@@ -84,38 +16,106 @@
     --popover: 0 0% 100%;
     --popover-foreground: 336 38% 14%;
 
-    --primary: 342 66% 49%;
+    --primary: 338 74% 49%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 146 34% 92%;
-    --secondary-foreground: 150 42% 18%;
+    --secondary: 148 44% 90%;
+    --secondary-foreground: 152 46% 18%;
 
-    --muted: 342 30% 95%;
-    --muted-foreground: 336 16% 43%;
+    --muted: 340 38% 94%;
+    --muted-foreground: 336 18% 40%;
 
-    --accent: 150 44% 36%;
+    --accent: 152 54% 34%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 342 28% 89%;
-    --input: 342 28% 89%;
-    --ring: 342 66% 49%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --cream: 345 60% 97%;
-    --cream-dark: 340 36% 93%;
-    --amber: 40 94% 55%;
-    --amber-light: 342 75% 72%;
-    --amber-glow: 342 85% 82%;
-    --espresso: 336 34% 15%;
-    --espresso-light: 336 26% 26%;
+    --border: 340 36% 86%;
+    --input: 340 36% 86%;
+    --ring: 338 74% 49%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --cream: 345 65% 97%;
+    --cream-dark: 340 42% 92%;
+    --amber: 40 95% 54%;
+    --amber-light: 340 78% 72%;
+    --amber-glow: 340 85% 82%;
+    --espresso: 336 36% 15%;
+    --espresso-light: 336 28% 26%;
+    --burgundy: 350 70% 35%;
+    --burgundy-light: 350 60% 50%;
     --gold: 43 96% 52%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(342 66% 49% / 0.9), hsl(28 85% 52% / 0.82));
-    --gradient-warm: linear-gradient(180deg, hsl(345 65% 98%), hsl(146 35% 96%));
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(338 74% 49% / 0.92), hsl(28 88% 52% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(342 70% 97.5%), hsl(148 42% 94%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(342 60% 97%));
+
+    /* Shadows */
+    --shadow-soft: 0 4px 22px -4px hsl(var(--primary) / 0.12);
+    --shadow-elevated: 0 10px 34px -8px hsl(var(--primary) / 0.2);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.26);
+
+    /* Fonts */
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 336 38% 14%;
+    --sidebar-primary: 338 74% 49%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 148 44% 90%;
+    --sidebar-accent-foreground: 152 46% 18%;
+    --sidebar-border: 340 36% 86%;
+    --sidebar-ring: 338 74% 49%;
   }
 
-  /* ==================== SUMMER: SUNLIT CITRUS AMBER, SOLAR IVORY & AZULEJO BLUE ==================== */
+  /* ==================== SPRING: BRIGHT BLOSSOM ROSE, JACARANDA & GARDEN SAGE ==================== */
+  html[data-season="spring"] {
+    --background: 340 65% 97.4%;
+    --foreground: 336 38% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 336 38% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 336 38% 14%;
+
+    --primary: 338 74% 49%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 148 44% 90%;
+    --secondary-foreground: 152 46% 18%;
+
+    --muted: 340 38% 94%;
+    --muted-foreground: 336 18% 40%;
+
+    --accent: 152 54% 34%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 340 36% 86%;
+    --input: 340 36% 86%;
+    --ring: 338 74% 49%;
+
+    --cream: 345 65% 97%;
+    --cream-dark: 340 42% 92%;
+    --amber: 40 95% 54%;
+    --amber-light: 340 78% 72%;
+    --amber-glow: 340 85% 82%;
+    --espresso: 336 36% 15%;
+    --espresso-light: 336 28% 26%;
+    --gold: 43 96% 52%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(338 74% 49% / 0.92), hsl(28 88% 52% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(342 70% 97.5%), hsl(148 42% 94%));
+  }
+
+  /* ==================== SUMMER: SUNLIT CITRUS TANGERINE, GOLDEN NATA & COASTAL SKY ==================== */
   html[data-season="summer"] {
-    --background: 45 75% 98.2%;
+    --background: 46 85% 96.6%;
     --foreground: 26 48% 13%;
 
     --card: 0 0% 100%;
@@ -124,260 +124,153 @@
     --popover: 0 0% 100%;
     --popover-foreground: 26 48% 13%;
 
-    --primary: 30 88% 45%;
+    --primary: 26 92% 46%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 45 58% 91%;
-    --secondary-foreground: 28 50% 19%;
+    --secondary: 199 70% 90%;
+    --secondary-foreground: 202 65% 18%;
 
-    --muted: 44 36% 94%;
-    --muted-foreground: 28 20% 42%;
+    --muted: 45 50% 92.5%;
+    --muted-foreground: 28 22% 40%;
 
-    --accent: 198 74% 38%;
+    --accent: 199 82% 37%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 40 36% 87%;
-    --input: 40 36% 87%;
-    --ring: 30 88% 45%;
+    --border: 42 46% 84%;
+    --input: 42 46% 84%;
+    --ring: 26 92% 46%;
 
-    --cream: 46 80% 97%;
-    --cream-dark: 42 48% 92%;
-    --amber: 43 96% 53%;
+    --cream: 46 85% 97%;
+    --cream-dark: 42 54% 91%;
+    --amber: 43 97% 52%;
     --amber-light: 38 92% 68%;
     --amber-glow: 43 96% 78%;
     --espresso: 26 48% 14%;
     --espresso-light: 26 38% 26%;
     --gold: 45 98% 50%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(30 88% 45% / 0.9), hsl(43 96% 50% / 0.82));
-    --gradient-warm: linear-gradient(180deg, hsl(46 80% 98%), hsl(38 60% 94%));
+    --gradient-hero: linear-gradient(135deg, hsl(26 92% 46% / 0.92), hsl(43 96% 50% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(46 88% 97%), hsl(199 55% 94%));
   }
 
-  /* ==================== FESTIVE SUMMER: CRANBERRY RUBY, EVERGREEN & CHAMPAGNE GOLD ==================== */
+  /* ==================== FESTIVE SUMMER: CRANBERRY RUBY, EVERGREEN PINE & CHAMPAGNE GOLD ==================== */
   html[data-season="festive_summer"] {
-    --background: 38 60% 98.2%;
-    --foreground: 350 40% 13%;
+    --background: 40 68% 96.8%;
+    --foreground: 350 42% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 350 40% 13%;
+    --card-foreground: 350 42% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 350 40% 13%;
+    --popover-foreground: 350 42% 13%;
 
-    --primary: 352 70% 43%;
+    --primary: 350 76% 43%;
     --primary-foreground: 40 60% 98%;
 
-    --secondary: 42 52% 91%;
-    --secondary-foreground: 350 40% 18%;
+    --secondary: 152 42% 89%;
+    --secondary-foreground: 154 50% 16%;
 
-    --muted: 38 30% 94%;
-    --muted-foreground: 350 16% 43%;
+    --muted: 40 38% 93%;
+    --muted-foreground: 350 18% 41%;
 
-    --accent: 154 48% 30%;
+    --accent: 154 56% 29%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 38 32% 87%;
-    --input: 38 32% 87%;
-    --ring: 352 70% 43%;
+    --border: 38 42% 84%;
+    --input: 38 42% 84%;
+    --ring: 350 76% 43%;
 
-    --cream: 40 65% 97%;
-    --cream-dark: 38 42% 92%;
-    --amber: 43 92% 52%;
+    --cream: 40 70% 97%;
+    --cream-dark: 38 46% 91%;
+    --amber: 43 94% 51%;
     --amber-light: 43 88% 68%;
     --amber-glow: 43 92% 78%;
-    --espresso: 350 42% 13%;
-    --espresso-light: 350 32% 24%;
-    --gold: 43 95% 50%;
+    --espresso: 350 42% 14%;
+    --espresso-light: 350 32% 25%;
+    --gold: 43 96% 50%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(352 70% 43% / 0.92), hsl(40 85% 48% / 0.82));
-    --gradient-warm: linear-gradient(180deg, hsl(40 65% 98%), hsl(352 35% 95%));
+    --gradient-hero: linear-gradient(135deg, hsl(350 76% 43% / 0.92), hsl(40 88% 48% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(40 70% 97%), hsl(350 40% 94%));
   }
 
-  /* ==================== AUTUMN: SPICED TERRACOTTA, CINNAMON & HARVEST WHEAT ==================== */
+  /* ==================== AUTUMN: SPICED TERRACOTTA COPPER, HARVEST GOLD & MULBERRY ==================== */
   html[data-season="autumn"] {
-    --background: 32 48% 97.6%;
-    --foreground: 22 48% 13%;
+    --background: 26 68% 96.4%;
+    --foreground: 20 48% 13%;
 
-    --card: 34 45% 99%;
-    --card-foreground: 22 48% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 48% 13%;
 
-    --popover: 34 45% 99%;
-    --popover-foreground: 22 48% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 48% 13%;
 
-    --primary: 18 72% 43%;
-    --primary-foreground: 34 50% 98%;
+    --primary: 15 80% 44%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 32 38% 90%;
-    --secondary-foreground: 22 45% 19%;
+    --secondary: 38 66% 89%;
+    --secondary-foreground: 22 50% 18%;
 
-    --muted: 30 26% 93%;
-    --muted-foreground: 22 20% 43%;
+    --muted: 28 40% 92.5%;
+    --muted-foreground: 20 22% 40%;
 
-    --accent: 34 78% 42%;
+    --accent: 334 54% 38%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 30 30% 86%;
-    --input: 30 30% 86%;
-    --ring: 18 72% 43%;
+    --border: 24 42% 84%;
+    --input: 24 42% 84%;
+    --ring: 15 80% 44%;
 
-    --cream: 34 56% 96%;
-    --cream-dark: 30 38% 91%;
-    --amber: 28 84% 50%;
-    --amber-light: 28 78% 66%;
+    --cream: 30 65% 96.5%;
+    --cream-dark: 26 44% 90.5%;
+    --amber: 30 90% 50%;
+    --amber-light: 28 80% 66%;
     --amber-glow: 30 85% 76%;
-    --espresso: 20 48% 12%;
-    --espresso-light: 20 38% 23%;
-    --gold: 38 90% 48%;
+    --espresso: 18 48% 13%;
+    --espresso-light: 18 38% 24%;
+    --gold: 38 92% 49%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(18 72% 43% / 0.92), hsl(34 78% 42% / 0.82));
-    --gradient-warm: linear-gradient(180deg, hsl(34 56% 97%), hsl(26 38% 92%));
+    --gradient-hero: linear-gradient(135deg, hsl(15 80% 44% / 0.92), hsl(36 86% 48% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(28 70% 96.8%), hsl(20 48% 93%));
   }
 
-  /* ==================== WINTER: ARTISAN HEARTH, ROASTED CARAMEL & ESPRESSO ==================== */
+  /* ==================== WINTER: CRISP AZULEJO COBALT, PORCELAIN FROST & WARM CINNAMON ==================== */
   html[data-season="winter"] {
-    --background: 28 34% 96.8%;
-    --foreground: 24 50% 11%;
+    --background: 210 50% 97%;
+    --foreground: 216 45% 14%;
 
-    --card: 30 30% 98.8%;
-    --card-foreground: 24 50% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 45% 14%;
 
-    --popover: 30 30% 98.8%;
-    --popover-foreground: 24 50% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 45% 14%;
 
-    --primary: 25 58% 36%;
-    --primary-foreground: 32 50% 98%;
-
-    --secondary: 28 25% 90%;
-    --secondary-foreground: 24 45% 18%;
-
-    --muted: 28 20% 92%;
-    --muted-foreground: 24 18% 43%;
-
-    --accent: 346 55% 34%;
-    --accent-foreground: 32 50% 98%;
-
-    --border: 28 24% 85%;
-    --input: 28 24% 85%;
-    --ring: 25 58% 36%;
-
-    --cream: 32 45% 96%;
-    --cream-dark: 28 30% 91%;
-    --amber: 32 78% 50%;
-    --amber-light: 32 70% 65%;
-    --amber-glow: 34 78% 75%;
-    --espresso: 24 52% 10%;
-    --espresso-light: 24 40% 21%;
-    --gold: 38 86% 48%;
-
-    --gradient-hero: linear-gradient(135deg, hsl(25 58% 36% / 0.92), hsl(346 55% 34% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(32 45% 96%), hsl(28 28% 91%));
-  }
-
-  /* ==================== DARK MODE (SEASON-AWARE) ==================== */
-  .dark {
-    --background: 25 40% 8%;
-    --foreground: 35 60% 96%;
-
-    --card: 25 35% 12%;
-    --card-foreground: 35 60% 96%;
-
-    --popover: 25 40% 8%;
-    --popover-foreground: 35 60% 96%;
-
-    --primary: 35 70% 55%;
-    --primary-foreground: 25 40% 8%;
-
-    --secondary: 25 30% 18%;
-    --secondary-foreground: 35 60% 96%;
-
-    --muted: 25 25% 15%;
-    --muted-foreground: 30 20% 60%;
-
-    --accent: 350 60% 50%;
-    --accent-foreground: 35 60% 96%;
-
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 35 60% 96%;
-
-    --border: 25 25% 20%;
-    --input: 25 25% 20%;
-    --ring: 35 70% 55%;
-
-    --sidebar-background: 25 35% 12%;
-    --sidebar-foreground: 35 60% 96%;
-    --sidebar-primary: 35 70% 55%;
-    --sidebar-primary-foreground: 25 40% 8%;
-    --sidebar-accent: 25 30% 18%;
-    --sidebar-accent-foreground: 35 60% 96%;
-    --sidebar-border: 25 25% 20%;
-    --sidebar-ring: 35 70% 55%;
-  }
-
-  html.dark[data-season="spring"] {
-    --background: 335 28% 8.5%;
-    --card: 335 24% 12.5%;
-    --popover: 335 28% 9%;
-    --primary: 342 76% 65%;
-    --primary-foreground: 335 32% 10%;
-    --secondary: 150 22% 17%;
-    --secondary-foreground: 145 40% 92%;
-    --muted: 335 20% 15%;
-    --accent: 150 44% 44%;
-    --border: 335 20% 21%;
-    --input: 335 20% 21%;
-    --ring: 342 76% 65%;
-  }
-
-  html.dark[data-season="summer"] {
-    --background: 28 32% 8%;
-    --card: 28 28% 12%;
-    --popover: 28 32% 8.5%;
-    --primary: 36 92% 56%;
-    --primary-foreground: 28 35% 9%;
-    --secondary: 200 26% 17%;
-    --secondary-foreground: 45 60% 95%;
-    --accent: 198 75% 48%;
-    --border: 28 22% 20%;
-    --input: 28 22% 20%;
-    --ring: 36 92% 56%;
-  }
-
-  html.dark[data-season="festive_summer"] {
-    --background: 350 28% 8%;
-    --card: 350 24% 12%;
-    --popover: 350 28% 8.5%;
-    --primary: 352 76% 60%;
+    --primary: 214 72% 43%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 154 24% 16%;
-    --secondary-foreground: 42 60% 95%;
-    --accent: 154 45% 42%;
-    --border: 350 20% 20%;
-    --input: 350 20% 20%;
-    --ring: 352 76% 60%;
-  }
 
-  html.dark[data-season="autumn"] {
-    --background: 20 32% 8%;
-    --card: 20 28% 12%;
-    --popover: 20 32% 8.5%;
-    --primary: 20 78% 57%;
-    --primary-foreground: 20 35% 9%;
-    --secondary: 24 24% 17%;
-    --border: 20 22% 20%;
-    --input: 20 22% 20%;
-    --ring: 20 78% 57%;
-  }
+    --secondary: 208 56% 90.5%;
+    --secondary-foreground: 216 48% 19%;
 
-  html.dark[data-season="winter"] {
-    --background: 24 35% 7%;
-    --card: 24 30% 11%;
-    --popover: 24 35% 7.5%;
-    --primary: 32 68% 55%;
-    --primary-foreground: 24 35% 8%;
-    --secondary: 24 24% 16%;
-    --border: 24 22% 19%;
-    --input: 24 22% 19%;
-    --ring: 32 68% 55%;
+    --muted: 210 36% 93%;
+    --muted-foreground: 215 20% 42%;
+
+    --accent: 25 84% 46%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 212 36% 85%;
+    --input: 212 36% 85%;
+    --ring: 214 72% 43%;
+
+    --cream: 210 48% 97.5%;
+    --cream-dark: 210 34% 92%;
+    --amber: 34 92% 52%;
+    --amber-light: 34 84% 67%;
+    --amber-glow: 36 88% 78%;
+    --espresso: 216 46% 14%;
+    --espresso-light: 216 34% 25%;
+    --gold: 38 92% 50%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(214 72% 43% / 0.92), hsl(28 84% 48% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(210 52% 97.2%), hsl(38 55% 95%));
   }
 }
 
@@ -425,12 +318,11 @@
   }
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -440,25 +332,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.45);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.7);
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-bounce {
-  animation: bounce 1s infinite;
 }
 
 @keyframes ping {
@@ -486,19 +365,19 @@ html {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
   33% {
-    transform: translate3d(10px, -14px, 0) rotate(12deg);
+    transform: translate3d(12px, -16px, 0) rotate(14deg);
   }
   66% {
-    transform: translate3d(-8px, -6px, 0) rotate(-8deg);
+    transform: translate3d(-10px, -7px, 0) rotate(-10deg);
   }
 }
 
 @keyframes gentle-sway {
   0%, 100% {
-    transform: rotate(-3deg) scale(1);
+    transform: rotate(-2.5deg) scale(1);
   }
   50% {
-    transform: rotate(3deg) scale(1.02);
+    transform: rotate(2.5deg) scale(1.025);
   }
 }
 
@@ -506,4 +385,3 @@ html {
   background: transparent !important;
   border: none !important;
 }
-

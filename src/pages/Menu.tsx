@@ -12,11 +12,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { useProducts } from "@/contexts/ProductsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSeason } from "@/contexts/SeasonContext";
+import { SeasonalSectionBackdrop, SeasonSymbolIcon } from "@/components/seasonal/SeasonalArtwork";
 import { useNavigate } from "react-router-dom";
 
 
 const Menu = () => {
   const { toast } = useToast();
+  const { season } = useSeason();
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,7 +133,7 @@ const Menu = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
+    <div className="min-h-screen bg-background transition-colors duration-300 relative">
       <Navbar />
 
       {/* Floating Cart Button */}
@@ -268,18 +271,22 @@ const Menu = () => {
         </div>
       )}
 
-      <main className="pt-20">
-        {/* Header */}
-        <section className="py-16 md:py-24 bg-gradient-to-b from-neutral-50 dark:from-background via-neutral-50/90 dark:via-background/90 to-neutral-50 dark:to-background transition-colors duration-300">
-          <div className="container mx-auto px-4">
+      <main className="pt-20 relative z-10">
+        {/* Seasonal Header */}
+        <section className={`relative py-16 md:py-24 overflow-hidden transition-colors duration-500 ${season.sectionSurfaceClass}`}>
+          <SeasonalSectionBackdrop seasonId={season.id} />
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-2xl mx-auto text-center">
-              <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">
-                Our Menu
-              </span>
-              <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground dark:text-foreground mb-4 animate-fade-in-up">
+              <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-primary/25 shadow-sm mb-4">
+                <SeasonSymbolIcon seasonId={season.id} className="h-4 w-4 text-primary" />
+                <span className="text-primary font-semibold text-xs tracking-wider uppercase">
+                  Our Menu · {season.name}
+                </span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4 animate-fade-in-up">
                 Freshly Baked Goods
               </h1>
-              <p className="text-muted-foreground dark:text-muted-foreground text-lg animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <p className="text-muted-foreground text-lg animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                 Browse our selection of {allProducts.length}+ artisan products including pastries, breads, cakes, and more.
               </p>
               <div className="mt-6">
@@ -300,7 +307,7 @@ const Menu = () => {
         </section>
 
         {/* Search and Filter Bar */}
-        <section className="py-6 bg-neutral-50 dark:bg-background border-b border-border sticky top-16 md:top-20 z-40 transition-colors duration-300">
+        <section className="py-6 bg-background/95 backdrop-blur-md border-b border-border sticky top-16 md:top-20 z-40 transition-colors duration-300">
           <div className="container mx-auto px-4">
             {/* Search Bar with Filter Button */}
             <div className="max-w-2xl mx-auto mb-0">
@@ -415,7 +422,7 @@ const Menu = () => {
         </section>
 
         {/* Products Grid */}
-        <section className="py-12 md:py-16 bg-neutral-50 dark:bg-background transition-colors duration-300">
+        <section className="py-12 md:py-16 bg-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="mb-6 text-center">
               <p className="text-muted-foreground dark:text-muted-foreground">

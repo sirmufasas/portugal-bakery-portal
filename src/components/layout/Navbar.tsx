@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, User, ChevronDown, Package, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { SeasonBadgeControl } from "@/components/seasonal/SeasonalArtwork";
 import { useSeason } from "@/contexts/SeasonContext";
 import {
@@ -40,8 +39,8 @@ export function Navbar() {
 
   return (
     <nav className={cn("fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-md transition-colors duration-500")}>
-      {/* Subtle Seasonal Top Accent Ribbon */}
-      <div className={`h-0.5 w-full bg-gradient-to-r ${season.topBarGradient}`} />
+      {/* Seasonal Top Accent Ribbon */}
+      <div className={`h-1 w-full bg-gradient-to-r ${season.topBarGradient}`} />
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
@@ -112,9 +111,8 @@ export function Navbar() {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2.5">
             <SeasonBadgeControl />
-            <ThemeToggle />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -181,7 +179,6 @@ export function Navbar() {
           {/* Mobile Actions */}
           <div className="flex md:hidden items-center gap-1.5">
             <SeasonBadgeControl />
-            <ThemeToggle />
             <button className="p-2" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
               {isOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
             </button>

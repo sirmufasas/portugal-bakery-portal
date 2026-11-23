@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSeason } from "@/contexts/SeasonContext";
+import { SeasonalSectionBackdrop, SeasonSymbolIcon } from "@/components/seasonal/SeasonalArtwork";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login, user, isAuthenticated } = useAuth();
+  const { season } = useSeason();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -162,13 +165,18 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
+    <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${season.sectionSurfaceClass}`}>
+      <SeasonalSectionBackdrop seasonId={season.id} />
       <Navbar />
-      <main className="pt-20 min-h-screen flex items-center justify-center px-4">
+      <main className="pt-20 min-h-screen flex items-center justify-center px-4 relative z-10">
         <div className="w-full max-w-md animate-fade-in-up">
-          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-elevated transition-colors duration-300">
+          <div className="bg-card/95 backdrop-blur-md rounded-2xl p-8 shadow-elevated border border-primary/15 transition-colors duration-300">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-heading font-bold text-foreground dark:text-foreground mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
+                <SeasonSymbolIcon seasonId={season.id} className="h-3.5 w-3.5" />
+                {season.name}
+              </div>
+              <h1 className="text-3xl font-heading font-bold text-foreground mb-2">
                 Welcome Back
               </h1>
               <p className="text-muted-foreground dark:text-muted-foreground">

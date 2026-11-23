@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSeason } from "@/contexts/SeasonContext";
+import { SeasonalSectionBackdrop } from "@/components/seasonal/SeasonalArtwork";
 
 const Signup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login } = useAuth();
+  const { season } = useSeason();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -74,11 +77,12 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
+    <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${season.sectionSurfaceClass}`}>
+      <SeasonalSectionBackdrop seasonId={season.id} />
       <Navbar />
-      <main className="pt-20 min-h-screen flex items-center justify-center px-4 py-12">
+      <main className="pt-20 min-h-screen flex items-center justify-center px-4 py-12 relative z-10">
         <div className="w-full max-w-md animate-fade-in-up">
-          <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-elevated transition-colors duration-300">
+          <div className="bg-card/95 backdrop-blur-md rounded-2xl p-8 shadow-elevated border border-primary/15 transition-colors duration-300">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-heading font-bold text-foreground dark:text-foreground mb-2">
                 Create Account

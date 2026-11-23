@@ -46,7 +46,7 @@ const About = () => {
   const getTodayHours = () => businessHours[dayNames[currentTime.getDay()] as keyof typeof businessHours];
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background transition-colors duration-300">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       <Navbar />
       <FloatingCartButton />
       <main className="pt-20">
@@ -70,7 +70,7 @@ const About = () => {
         </section>
 
         {/* Values Section */}
-        <section className="py-16 md:py-24 bg-neutral-50 dark:bg-background transition-colors duration-300">
+        <section className="py-16 md:py-24 bg-background transition-colors duration-300">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-2xl mx-auto mb-16">
               <span className="text-primary font-medium text-sm tracking-wider uppercase mb-3 block">What We Stand For</span>
