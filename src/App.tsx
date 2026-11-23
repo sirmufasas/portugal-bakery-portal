@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +41,23 @@ const ScrollToTop = () => {
   return null;
 };
 
+// ✅ Redirect logged-in admins directly to /admin instead of customer pages
+const AdminLandingRedirect = () => {
+  const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== "admin") return;
+    const allowedAdminPaths = ["/admin", "/profile", "/reset-password"];
+    if (!allowedAdminPaths.includes(location.pathname)) {
+      navigate("/admin", { replace: true });
+    }
+  }, [isAuthenticated, user, location.pathname, navigate]);
+
+  return null;
+};
+
 // ✅ Floating button only for non-admin users
 const FloatingButtonWrapper = () => {
   const { user } = useAuth();
@@ -60,6 +77,7 @@ const App = () => (
 
               <BrowserRouter>
                 <ScrollToTop />
+                <AdminLandingRedirect />
 
                 {/* Floating button */}
                 <FloatingButtonWrapper />

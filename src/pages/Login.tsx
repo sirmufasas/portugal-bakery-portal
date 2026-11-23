@@ -19,7 +19,7 @@ import {
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, user, isAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +29,15 @@ const Login = () => {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
+
+  // Redirect already-authenticated admins straight to /admin
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("expired") === "true") return;
+    if (isAuthenticated && user) {
+      navigate(user.role === "admin" ? "/admin" : "/", { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // Add this useEffect in Login component
   useEffect(() => {
@@ -79,10 +88,13 @@ const Login = () => {
 
       toast({
         title: "Welcome back!",
-        description: `Logged in as ${data.user.firstName}`,
+        description:
+          data.user?.role === "admin"
+            ? `Opening Admin Dashboard for ${data.user.firstName}`
+            : `Logged in as ${data.user.firstName}`,
       });
 
-      navigate("/");
+      navigate(data.user?.role === "admin" ? "/admin" : "/", { replace: true });
     } catch (error: any) {
       toast({
         title: "Login failed",

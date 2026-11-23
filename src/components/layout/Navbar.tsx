@@ -29,6 +29,7 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const { season } = useSeason();
   const isLoggedIn = !!user;
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => setIsOpen(false), [location.pathname]);
 
@@ -44,51 +45,70 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to={isAdmin ? "/admin" : "/"} className="flex items-center gap-2">
             <div className="relative w-10 h-10">
               <img src="./favicon.ico" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="text-xl md:text-2xl font-heading font-bold text-primary leading-none">Portugal</span>
-              <span className="text-[10px] md:text-xs font-body text-muted-foreground tracking-wider">BAKERY & CONFECTIONARY</span>
+              <span className="text-[10px] md:text-xs font-body text-muted-foreground tracking-wider">
+                {isAdmin ? "ADMIN PANEL" : "BAKERY & CONFECTIONARY"}
+              </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
+            {isAdmin ? (
               <Link
-                key={link.path}
-                to={link.path}
+                to="/admin"
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname === link.path ? "text-primary" : "text-muted-foreground"
+                  "inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full transition-colors",
+                  location.pathname === "/admin"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-primary"
                 )}
               >
-                {link.name}
+                <Shield className="h-4 w-4" />
+                Admin Dashboard
               </Link>
-            ))}
+            ) : (
+              <>
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary",
+                      location.pathname === link.path ? "text-primary" : "text-muted-foreground"
+                    )}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
 
-            {/* Us Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
-                  location.pathname === "/about" || location.pathname === "/story" ? "text-primary" : "text-muted-foreground"
-                )}>
-                  Us
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32 border border-border shadow-lg bg-background text-foreground">
-                <DropdownMenuItem asChild>
-                  <Link to="/about" className="cursor-pointer">About</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/story" className="cursor-pointer">Story</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                {/* Us Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
+                      location.pathname === "/about" || location.pathname === "/story" ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      Us
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-32 border border-border shadow-lg bg-background text-foreground">
+                    <DropdownMenuItem asChild>
+                      <Link to="/about" className="cursor-pointer">About</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/story" className="cursor-pointer">Story</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
           </div>
 
           {/* Desktop Actions */}
@@ -132,18 +152,16 @@ export function Navbar() {
 
                 {isLoggedIn && (
                   <>
-                    {/* Track Order - visible for all logged in users */}
-                    <DropdownMenuItem asChild>
-                      <Link to="/track-order" className="flex items-center gap-2">
-                        <Package className="h-4 w-4" /> Track Order
-                      </Link>
-                    </DropdownMenuItem>
-
-                    {/* Admin Dashboard - only for admins */}
-                    {user?.role === "admin" && (
+                    {isAdmin ? (
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center gap-2">
                           <Shield className="h-4 w-4" /> Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem asChild>
+                        <Link to="/track-order" className="flex items-center gap-2">
+                          <Package className="h-4 w-4" /> Track Order
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -174,38 +192,51 @@ export function Navbar() {
         {isOpen && (
           <div className="fixed inset-0 top-16 z-40 md:hidden bg-background text-foreground p-6 overflow-y-auto">
             <div className="flex flex-col gap-4">
-              {/* Navigation Links */}
-              {navLinks.map((link) => (
+              {isAdmin ? (
                 <Link
-                  key={link.path}
-                  to={link.path}
+                  to="/admin"
                   onClick={() => setIsOpen(false)}
-                  className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                  className="flex items-center gap-3 text-lg font-semibold py-3 px-4 rounded-lg bg-primary/10 text-primary transition-colors"
                 >
-                  {link.name}
+                  <Shield className="h-5 w-5" />
+                  Admin Dashboard
                 </Link>
-              ))}
+              ) : (
+                <>
+                  {/* Navigation Links */}
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
 
-              {/* Us Dropdown for Mobile */}
-              <div className="border border-border rounded-lg overflow-hidden">
-                <div className="text-lg font-medium py-3 px-4 bg-muted/20">
-                  Us
-                </div>
-                <Link
-                  to="/about"
-                  onClick={() => setIsOpen(false)}
-                  className="text-base font-medium py-3 px-6 block hover:bg-muted/30 transition-colors"
-                >
-                  About
-                </Link>
-                <Link
-                  to="/story"
-                  onClick={() => setIsOpen(false)}
-                  className="text-base font-medium py-3 px-6 block hover:bg-muted/30 transition-colors"
-                >
-                  Story
-                </Link>
-              </div>
+                  {/* Us Dropdown for Mobile */}
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <div className="text-lg font-medium py-3 px-4 bg-muted/20">
+                      Us
+                    </div>
+                    <Link
+                      to="/about"
+                      onClick={() => setIsOpen(false)}
+                      className="text-base font-medium py-3 px-6 block hover:bg-muted/30 transition-colors"
+                    >
+                      About
+                    </Link>
+                    <Link
+                      to="/story"
+                      onClick={() => setIsOpen(false)}
+                      className="text-base font-medium py-3 px-6 block hover:bg-muted/30 transition-colors"
+                    >
+                      Story
+                    </Link>
+                  </div>
+                </>
+              )}
 
               <div className="border-t border-border my-2"></div>
 
@@ -221,26 +252,14 @@ export function Navbar() {
                 </Link>
               )}
 
-              {isLoggedIn && (
-                <>
-                  <Link
-                    to="/track-order"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
-                  >
-                    <Package className="h-5 w-5" /> Track Order
-                  </Link>
-
-                  {user?.role === "admin" && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
-                    >
-                      <Shield className="h-5 w-5" /> Admin Dashboard
-                    </Link>
-                  )}
-                </>
+              {isLoggedIn && !isAdmin && (
+                <Link
+                  to="/track-order"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 text-lg font-medium py-3 px-4 rounded-lg hover:bg-muted/30 transition-colors"
+                >
+                  <Package className="h-5 w-5" /> Track Order
+                </Link>
               )}
 
               <div className="border-t border-border my-2"></div>

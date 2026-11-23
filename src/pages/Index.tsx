@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -8,7 +9,11 @@ import { TestimonialsPreview } from "@/components/home/TestimonialsPreview";
 import { CTASection } from "@/components/home/CTASection";
 
 const Index = () => {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+
+  if (isAuthenticated && user?.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
