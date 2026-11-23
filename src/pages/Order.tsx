@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin, Calculator, Info } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin, Calculator, Info, CheckCircle2, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { allProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
+import { DeliveryProviderLogo } from "@/components/delivery/DeliveryProviderLogo";
+import { OrderTrackingMap } from "@/components/OrderTrackingMap";
 import {
   buildLocalQuotesFallback,
   DeliveryQuoteOption,
@@ -379,66 +381,140 @@ const Order = () => {
 
   // --- Render Steps ---
   if (orderStep === "confirmed") {
+    const chosenProvider = getProviderMeta(selectedProviderId || "own_delivery");
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <div className="max-w-md text-center animate-fade-in-up">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShoppingBag className="h-10 w-10 text-primary" />
-            </div>
-            <h1 className="text-3xl font-heading font-bold text-foreground mb-4">Order Confirmed!</h1>
-            <p className="text-muted-foreground mb-2">
-              Thank you for your order. We'll start preparing it right away.
-            </p>
-            <p className="text-muted-foreground mb-6">
-              A confirmation email has been sent to <strong>{customerEmail}</strong>
-            </p>
-            <div className="bg-card rounded-2xl p-6 shadow-soft mb-6">
-              <p className="text-sm text-muted-foreground mb-2">Order ID</p>
-              <p className="text-2xl font-bold text-primary">{orderId}</p>
-            </div>
-            <div className="bg-card rounded-2xl p-6 shadow-soft mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                <p className="font-semibold text-foreground">Message the Bakery</p>
+        <main className="flex-1 pt-24 pb-16 px-4">
+          <div className="max-w-3xl mx-auto animate-fade-in-up space-y-6">
+            {/* Order Confirmed Banner */}
+            <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-soft border border-border text-center">
+              <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="h-9 w-9 text-green-600 dark:text-green-400" />
               </div>
-              <Textarea
-                placeholder="Send us a message about your order..."
-                value={customerMessage}
-                onChange={(e) => setCustomerMessage(e.target.value)}
-                className="w-full resize-none mb-3"
-                rows={3}
-              />
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleSendCustomerMessage}
-                disabled={sendingMessage || !customerMessage.trim()}
-              >
-                {sendingMessage ? (
+              <h1 className="text-3xl sm:text-4xl font-heading font-bold text-foreground mb-2">
+                Order Confirmed!
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto">
+                Thank you for ordering from Portugal Bakery. We&apos;ve started preparing your fresh bake
+                {deliveryMethod === "delivery"
+                  ? ` and queued your ${selectedProviderName || chosenProvider.name} delivery.`
+                  : " for collection at our La Rochelle bakery."}
+              </p>
+              {customerEmail && (
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
+                  Confirmation sent to <strong>{customerEmail}</strong>
+                </p>
+              )}
+
+              <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-3 px-5 py-3 rounded-xl bg-muted/60 border border-border">
+                <div className="text-left">
+                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground block">
+                    Order Number
+                  </span>
+                  <span className="text-xl font-extrabold text-primary">{orderId}</span>
+                </div>
+                {deliveryMethod === "delivery" && (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Sending...
+                    <div className="h-8 w-px bg-border hidden sm:block" />
+                    <div className="flex items-center gap-2.5 text-left">
+                      <DeliveryProviderLogo
+                        providerId={selectedProviderId || "own_delivery"}
+                        alt={selectedProviderName || chosenProvider.name}
+                        size="sm"
+                      />
+                      <div>
+                        <span className="text-[11px] uppercase tracking-wider text-muted-foreground block">
+                          Delivery Partner
+                        </span>
+                        <span className="text-sm font-bold text-foreground">
+                          {selectedProviderName || chosenProvider.name}
+                        </span>
+                      </div>
+                    </div>
                   </>
-                ) : (
-                  'Send Message'
                 )}
-              </Button>
+              </div>
             </div>
-            <Button
-              variant="default"
-              size="lg"
-              onClick={() => {
-                setOrderStep("menu");
-                clearCart();
-                setSpecialInstructions("");
-                setCustomerEmail("");
-                setCustomerName("");
-              }}
-            >
-              Place Another Order
-            </Button>
+
+            {/* Live Delivery Route & Distance Map tailored to chosen delivery company */}
+            <OrderTrackingMap
+              orderNumber={orderId}
+              status="confirmed"
+              customerAddress={customerAddress || "Johannesburg"}
+              deliveryMethod={deliveryMethod}
+              deliveryProvider={selectedProviderId || "own_delivery"}
+              deliveryServiceName={selectedProviderName || chosenProvider.name}
+              pickupLocation={preferredPickupPoint}
+            />
+
+            {/* Quick Actions + Message Bakery */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-card rounded-2xl p-6 shadow-soft border border-border flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <Navigation className="h-5 w-5 text-primary" />
+                    <p className="font-semibold text-foreground">Real-Time Order Updates</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-5">
+                    Follow every step from the oven to your door, view live courier details, and chat with our team anytime.
+                  </p>
+                </div>
+                <div className="space-y-2.5">
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    onClick={() => navigate(`/track-order?order=${encodeURIComponent(orderId)}`)}
+                  >
+                    <Navigation className="h-4 w-4 mr-2" />
+                    Open Full Live Order Tracker
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setOrderStep("menu");
+                      clearCart();
+                      setSpecialInstructions("");
+                      setCustomerEmail("");
+                      setCustomerName("");
+                      resetDeliverySelection();
+                    }}
+                  >
+                    Place Another Order
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-2xl p-6 shadow-soft border border-border">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <p className="font-semibold text-foreground">Message the Bakery</p>
+                </div>
+                <Textarea
+                  placeholder="Add gate code, buzzer instructions, or a note for our bakers..."
+                  value={customerMessage}
+                  onChange={(e) => setCustomerMessage(e.target.value)}
+                  className="w-full resize-none mb-3"
+                  rows={3}
+                />
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleSendCustomerMessage}
+                  disabled={sendingMessage || !customerMessage.trim()}
+                >
+                  {sendingMessage ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Message"
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </main>
         <Footer />
@@ -686,11 +762,11 @@ const Order = () => {
                                     >
                                       <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-start gap-3 min-w-0">
-                                          <span
-                                            className={`inline-flex items-center justify-center shrink-0 h-9 w-11 rounded-lg text-[10px] font-extrabold tracking-tight ${meta.badgeClass}`}
-                                          >
-                                            {meta.shortTag}
-                                          </span>
+                                          <DeliveryProviderLogo
+                                            providerId={quote.providerId}
+                                            alt={quote.providerName}
+                                            size="md"
+                                          />
                                           <div className="min-w-0">
                                             <div className="flex flex-wrap items-center gap-1.5">
                                               <span className="font-semibold text-foreground text-sm">
@@ -740,58 +816,71 @@ const Order = () => {
                         )}
 
                         {deliveryCalculated && (
-                          <div className="mt-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-900 space-y-3">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start gap-3">
-                                <span
-                                  className={`inline-flex items-center justify-center shrink-0 h-9 w-11 rounded-lg text-[10px] font-extrabold ${getProviderMeta(selectedProviderId).badgeClass}`}
-                                >
-                                  {getProviderMeta(selectedProviderId).shortTag}
-                                </span>
-                                <div>
-                                  <p className="font-semibold text-green-900 dark:text-green-100 text-sm">
-                                    {selectedProviderName || getProviderMeta(selectedProviderId).name} —{" "}
-                                    {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
-                                  </p>
-                                  <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
-                                    {deliveryZone}
-                                  </p>
+                          <div className="mt-3 space-y-3">
+                            <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-900 space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                  <DeliveryProviderLogo
+                                    providerId={selectedProviderId}
+                                    alt={selectedProviderName || getProviderMeta(selectedProviderId).name}
+                                    size="md"
+                                  />
+                                  <div>
+                                    <p className="font-semibold text-green-900 dark:text-green-100 text-sm">
+                                      {selectedProviderName || getProviderMeta(selectedProviderId).name} —{" "}
+                                      {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
+                                    </p>
+                                    <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
+                                      {deliveryZone}
+                                    </p>
+                                  </div>
                                 </div>
+                                {deliveryQuotes.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setDeliveryCalculated(false);
+                                      setSelectedProviderId(null);
+                                    }}
+                                    className="text-xs shrink-0"
+                                  >
+                                    Change Service
+                                  </Button>
+                                )}
                               </div>
-                              {deliveryQuotes.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setDeliveryCalculated(false);
-                                    setSelectedProviderId(null);
-                                  }}
-                                  className="text-xs shrink-0"
-                                >
-                                  Change Service
-                                </Button>
+
+                              {(selectedProviderId === "pudo" || selectedProviderId === "pargo") && (
+                                <div className="pt-2 border-t border-green-200 dark:border-green-900">
+                                  <Label htmlFor="preferredPickupPoint" className="text-xs text-green-900 dark:text-green-100">
+                                    Preferred {selectedProviderId === "pudo" ? "PUDO Locker" : "Pargo Store"} (optional)
+                                  </Label>
+                                  <Input
+                                    id="preferredPickupPoint"
+                                    placeholder={
+                                      selectedProviderId === "pudo"
+                                        ? "e.g. PUDO Locker @ The Glen Shopping Centre"
+                                        : "e.g. Clicks Comaro Crossing / Spar Rosettenville"
+                                    }
+                                    value={preferredPickupPoint}
+                                    onChange={(e) => setPreferredPickupPoint(e.target.value)}
+                                    className="mt-1 bg-background text-foreground text-xs h-8"
+                                  />
+                                </div>
                               )}
                             </div>
 
-                            {(selectedProviderId === "pudo" || selectedProviderId === "pargo") && (
-                              <div className="pt-2 border-t border-green-200 dark:border-green-900">
-                                <Label htmlFor="preferredPickupPoint" className="text-xs text-green-900 dark:text-green-100">
-                                  Preferred {selectedProviderId === "pudo" ? "PUDO Locker" : "Pargo Store"} (optional)
-                                </Label>
-                                <Input
-                                  id="preferredPickupPoint"
-                                  placeholder={
-                                    selectedProviderId === "pudo"
-                                      ? "e.g. PUDO Locker @ The Glen Shopping Centre"
-                                      : "e.g. Clicks Comaro Crossing / Spar Rosettenville"
-                                  }
-                                  value={preferredPickupPoint}
-                                  onChange={(e) => setPreferredPickupPoint(e.target.value)}
-                                  className="mt-1 bg-background text-foreground text-xs h-8"
-                                />
-                              </div>
-                            )}
+                            {/* Live Route & Distance Preview for Chosen Delivery Service */}
+                            <OrderTrackingMap
+                              compact
+                              status="pending"
+                              customerAddress={customerAddress}
+                              deliveryMethod="delivery"
+                              deliveryProvider={selectedProviderId || "own_delivery"}
+                              deliveryServiceName={selectedProviderName || getProviderMeta(selectedProviderId).name}
+                              pickupLocation={preferredPickupPoint}
+                            />
                           </div>
                         )}
                       </div>

@@ -24,6 +24,7 @@ import {
   getProviderMeta,
   SA_DELIVERY_PROVIDERS,
 } from "@/utils/deliveryProviders";
+import { DeliveryProviderLogo } from "@/components/delivery/DeliveryProviderLogo";
 
 import {
   Package,
@@ -993,7 +994,12 @@ export default function Admin() {
                     Delivery
                   </Badge>
                   {order.deliveryProvider && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${getProviderMeta(order.deliveryProvider).badgeClass}`}>
+                    <span className="inline-flex items-center gap-1.5 pl-1 pr-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-muted border border-border text-foreground">
+                      <DeliveryProviderLogo
+                        providerId={order.deliveryProvider}
+                        alt={getProviderMeta(order.deliveryProvider).name}
+                        size="xs"
+                      />
                       {getProviderMeta(order.deliveryProvider).name}
                     </span>
                   )}
@@ -1036,9 +1042,14 @@ export default function Admin() {
                         href={getProviderMeta(order.deliveryProvider).bookingUrl!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-90"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium pl-1 pr-2 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-90"
                       >
-                        Open {getProviderMeta(order.deliveryProvider).shortTag}
+                        <DeliveryProviderLogo
+                          providerId={order.deliveryProvider}
+                          alt={getProviderMeta(order.deliveryProvider).name}
+                          size="xs"
+                        />
+                        Open {getProviderMeta(order.deliveryProvider).name}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -1195,8 +1206,14 @@ export default function Admin() {
                   <Button
                     size="sm"
                     onClick={() => requestCourier(order.orderNumber, order.deliveryProvider)}
+                    className="gap-2"
                   >
-                    Dispatch {getProviderMeta(order.deliveryProvider).shortTag}
+                    <DeliveryProviderLogo
+                      providerId={order.deliveryProvider}
+                      alt={getProviderMeta(order.deliveryProvider).name}
+                      size="xs"
+                    />
+                    Dispatch {getProviderMeta(order.deliveryProvider).name}
                   </Button>
                 )}
 
@@ -1208,7 +1225,10 @@ export default function Admin() {
                     <SelectContent>
                       {SA_DELIVERY_PROVIDERS.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.name}
+                          <span className="inline-flex items-center gap-2">
+                            <DeliveryProviderLogo providerId={p.id} alt={p.name} size="xs" />
+                            <span>{p.name}</span>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -2296,9 +2316,16 @@ function OrderTrackingEditor({
 
   return (
     <div className="p-2.5 rounded-lg border border-border bg-muted/40 space-y-2 text-left">
-      <p className="text-[11px] font-semibold text-foreground">
-        Attach {getProviderMeta(order.deliveryProvider).shortTag} Tracking / Driver
-      </p>
+      <div className="flex items-center gap-1.5">
+        <DeliveryProviderLogo
+          providerId={order.deliveryProvider}
+          alt={getProviderMeta(order.deliveryProvider).name}
+          size="xs"
+        />
+        <p className="text-[11px] font-semibold text-foreground">
+          Attach {getProviderMeta(order.deliveryProvider).name} Tracking
+        </p>
+      </div>
       <Input
         placeholder="Live trip URL (Uber/Bolt/inDrive/Courier)"
         value={trackingUrl}
@@ -2463,12 +2490,12 @@ function DeliverySettingsPanel({ authedFetch, toast }: {
                     const mode = providerDispatchModes[provider.id] || (provider.id === "own_delivery" ? "in_house" : "managed_dispatch");
                     return (
                       <div key={provider.id} className="flex items-center justify-between gap-4 py-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <span
-                            className={`inline-flex items-center justify-center shrink-0 h-9 w-12 rounded-lg text-[10px] font-extrabold ${provider.badgeClass}`}
-                          >
-                            {provider.shortTag}
-                          </span>
+                        <div className="flex items-start gap-3.5 min-w-0">
+                          <DeliveryProviderLogo
+                            providerId={provider.id}
+                            alt={provider.name}
+                            size="md"
+                          />
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium text-foreground text-sm">{provider.name}</p>

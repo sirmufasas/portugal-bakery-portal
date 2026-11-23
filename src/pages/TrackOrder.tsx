@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2, XCircle, ShoppingBag } from "lucide-react"; import { useToast } from "@/hooks/use-toast";
+import { Search, Package, ChefHat, Clock, CheckCircle, MessageSquare, Send, Loader2, XCircle, ShoppingBag } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FloatingCartButton } from "@/components/cart/FloatingCartButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { getProviderMeta } from "@/utils/deliveryProviders";
+import { DeliveryProviderLogo } from "@/components/delivery/DeliveryProviderLogo";
+import { OrderTrackingMap } from "@/components/OrderTrackingMap";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 
@@ -40,6 +44,8 @@ interface Order {
   address?: string;          // ✅ ADDED
   phone?: string;            // ✅ ADDED
   deliveryProvider?: string | null;
+  deliveryService?: string | null;
+  pickupLocation?: string | null;
   trackingUrl?: string | null;
   driverDetails?: { name?: string; phone?: string; vehicle?: string } | null;
   deliveryFailureReason?: string | null;
@@ -97,7 +103,8 @@ const getStatusSteps = (deliveryMethod: string) =>
 
 const TrackOrder = () => {
   const { toast } = useToast();
-  const [orderId, setOrderId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [orderId, setOrderId] = useState(() => searchParams.get("order") || "");
   const [foundOrder, setFoundOrder] = useState<Order | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -210,8 +217,9 @@ const TrackOrder = () => {
     };
   }, [foundOrder]);
 
-  const handleSearch = async () => {
-    if (!orderId.trim()) {
+  const handleSearch = async (overrideId?: string) => {
+    const targetOrderId = (overrideId ?? orderId).trim();
+    if (!targetOrderId) {
       toast({
         title: "Error",
         description: "Please enter an order ID",
@@ -233,7 +241,7 @@ const TrackOrder = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/orders/${orderId.trim()}`, {
+      const response = await fetch(`${API_URL}/api/orders/${encodeURIComponent(targetOrderId)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -268,6 +276,16 @@ const TrackOrder = () => {
       setLoading(false);
     }
   };
+
+  // Auto-load order if ?order=PB-... query param is provided (e.g. from Order Confirmed screen)
+  useEffect(() => {
+    const urlOrder = searchParams.get("order");
+    if (urlOrder && urlOrder.trim()) {
+      setOrderId(urlOrder.trim());
+      handleSearch(urlOrder.trim());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const fetchMessages = async () => {
     setMessagesLoading(true);
@@ -402,7 +420,7 @@ const TrackOrder = () => {
                   className="flex-1 bg-white dark:bg-[#2D2416] text-foreground dark:text-white dark:border-[#5C4632] placeholder:text-muted-foreground dark:placeholder:text-gray-400 focus:ring-primary dark:focus:ring-primary-dark"
                   disabled={loading}
                 />
-                <Button onClick={handleSearch} disabled={loading}>
+                <Button onClick={() => handleSearch()} disabled={loading}>
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -443,8 +461,13 @@ const TrackOrder = () => {
                                 Delivery
                               </Badge>
                               {foundOrder.deliveryProvider && (
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getProviderMeta(foundOrder.deliveryProvider).badgeClass}`}>
-                                  {getProviderMeta(foundOrder.deliveryProvider).name}
+                                <span className="inline-flex items-center gap-1.5 pl-1 pr-3 py-0.5 rounded-full text-xs font-semibold bg-muted border border-border text-foreground">
+                                  <DeliveryProviderLogo
+                                    providerId={foundOrder.deliveryProvider}
+                                    alt={getProviderMeta(foundOrder.deliveryProvider).name}
+                                    size="xs"
+                                  />
+                                  {foundOrder.deliveryService || getProviderMeta(foundOrder.deliveryProvider).name}
                                 </span>
                               )}
                             </>
@@ -568,6 +591,23 @@ const TrackOrder = () => {
                     </div>
                   )}
 
+
+                  {/* Live Provider-Branded Interactive Delivery Map */}
+                  {!['cancelled', 'payment_failed'].includes(foundOrder.status) && (
+                    <div className="px-6 pt-5">
+                      <OrderTrackingMap
+                        orderNumber={foundOrder.orderNumber}
+                        status={foundOrder.status}
+                        customerAddress={foundOrder.address || "Johannesburg"}
+                        deliveryMethod={foundOrder.deliveryMethod === "pickup" ? "pickup" : "delivery"}
+                        deliveryProvider={foundOrder.deliveryProvider || "own_delivery"}
+                        deliveryServiceName={foundOrder.deliveryService || getProviderMeta(foundOrder.deliveryProvider).name}
+                        pickupLocation={foundOrder.pickupLocation}
+                        trackingUrl={foundOrder.trackingUrl}
+                        driverDetails={foundOrder.driverDetails}
+                      />
+                    </div>
+                  )}
 
                   <div className="p-6 border-b border-border dark:border-border-dark">
                     <div className="flex items-center justify-between">
