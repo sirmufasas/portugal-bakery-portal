@@ -27,6 +27,7 @@ import {
   getProviderLogoSrc,
 } from "@/components/delivery/DeliveryProviderLogo";
 import { formatEtaLabel, getProviderMeta } from "@/utils/deliveryProviders";
+import { computeLiveUberStyleEta } from "@/utils/etaCalculator";
 import {
   BAKERY_OFFICIAL_ADDRESS,
   BAKERY_ORIGIN_COORDS,
@@ -73,6 +74,9 @@ export interface OrderTrackingMapProps {
     phone?: string | null;
     vehicle?: string | null;
   } | null;
+  itemCount?: number;
+  orderCreatedAt?: string | Date | null;
+  statusUpdatedAt?: string | Date | null;
   compact?: boolean;
   className?: string;
 }
@@ -389,6 +393,9 @@ export function OrderTrackingMap({
   pickupLocation,
   trackingUrl,
   driverDetails,
+  itemCount = 2,
+  orderCreatedAt = null,
+  statusUpdatedAt = null,
   compact = false,
   className,
 }: OrderTrackingMapProps) {
@@ -428,6 +435,10 @@ export function OrderTrackingMap({
     return Math.max(0.4, haversineKm(BAKERY_COORDS, initial) * 1.24);
   });
   const [driveMinutes, setDriveMinutes] = useState<number | null>(null);
+  const [osrmDurationSeconds, setOsrmDurationSeconds] = useState<number | null>(
+    null
+  );
+  const [nowClock, setNowClock] = useState<Date>(() => new Date());
   const [mapStyle, setMapStyle] = useState<"street" | "satellite">("street");
   const [showDirections, setShowDirections] = useState(false);
   const [liveTick, setLiveTick] = useState(0);
@@ -547,6 +558,14 @@ export function OrderTrackingMap({
     }
   }, [customerCoords]);
 
+  // Real-time clock refresh every 20s so SAST arrival window ticks live like Uber
+  useEffect(() => {
+    const clockTimer = window.setInterval(() => {
+      setNowClock(new Date());
+    }, 20000);
+    return () => window.clearInterval(clockTimer);
+  }, []);
+
   // Subtle live tick when courier is actively en route
   useEffect(() => {
     const activeStatuses = [
@@ -640,6 +659,7 @@ export function OrderTrackingMap({
         pts: [number, number][];
         distKm: number;
         durMin: number;
+        durSeconds: number | null;
         steps: RouteTurnStep[];
         vias: string[];
       } | null = null;
@@ -700,6 +720,10 @@ export function OrderTrackingMap({
               pts,
               distKm,
               durMin,
+              durSeconds:
+                typeof route.duration === "number"
+                  ? Math.round(route.duration)
+                  : null,
               steps: parsedSteps,
               vias: topRoads,
             };
@@ -729,6 +753,10 @@ export function OrderTrackingMap({
                 pts: proxyData.coordinates,
                 distKm: proxyData.distanceKm,
                 durMin: proxyData.durationMinutes,
+                durSeconds:
+                  typeof proxyData.rawDurationSeconds === "number"
+                    ? proxyData.rawDurationSeconds
+                    : null,
                 steps: (proxyData.steps || []).map((s: any) => ({
                   instruction: formatManeuverInstruction(s),
                   road: s.road,
@@ -755,6 +783,7 @@ export function OrderTrackingMap({
         setRoutePoints(resolvedRoute.pts);
         setRoadDistanceKm(resolvedRoute.distKm);
         setDriveMinutes(resolvedRoute.durMin);
+        setOsrmDurationSeconds(resolvedRoute.durSeconds);
         setTurnSteps(resolvedRoute.steps);
         setViaStreets(resolvedRoute.vias);
       } else {
@@ -767,6 +796,7 @@ export function OrderTrackingMap({
         setDriveMinutes(
           Math.max(4, Math.round((approxKm / theme.avgSpeedKmh) * 60))
         );
+        setOsrmDurationSeconds(null);
         setTurnSteps([]);
         setViaStreets([]);
       }
@@ -949,32 +979,45 @@ export function OrderTrackingMap({
     [customerAddress, deliveryMethod, destCoords]
   );
 
+  const liveEta = useMemo(
+    () =>
+      computeLiveUberStyleEta({
+        providerId: providerMeta.id,
+        deliveryMethod,
+        status,
+        zoneNumber,
+        coords: deliveryMethod === "delivery" ? destCoords : null,
+        roadDistanceKm,
+        osrmDurationSeconds,
+        turnCount: turnSteps.length || 4,
+        itemCount,
+        orderCreatedAt,
+        statusUpdatedAt,
+        now: nowClock,
+      }),
+    [
+      providerMeta.id,
+      deliveryMethod,
+      status,
+      zoneNumber,
+      destCoords,
+      roadDistanceKm,
+      osrmDurationSeconds,
+      turnSteps.length,
+      itemCount,
+      orderCreatedAt,
+      statusUpdatedAt,
+      nowClock,
+    ]
+  );
+
   const etaSummary = useMemo(() => {
-    if (deliveryMethod === "pickup") return "Ready for store collection";
-    const s = (status || "").toLowerCase();
-    if (s === "completed" || s === "delivered") return "Delivered";
-    if (
-      s === "out_for_delivery" ||
-      s === "in_transit" ||
-      s === "picked_up" ||
-      s === "shipped"
-    ) {
-      const remMins = Math.max(
-        4,
-        Math.round((driveMinutes || 20) * (1 - progress) + 3)
-      );
-      return `~${remMins} min remaining`;
+    if (liveEta.isDelivered) return "Delivered";
+    if (deliveryMethod === "pickup") {
+      return `${liveEta.arrivalWindowLabel} (${liveEta.durationLabel})`;
     }
-    if (driveMinutes) {
-      return `~${driveMinutes} min drive (${formatEtaLabel(
-        providerMeta.zoneEtas[zoneNumber]?.[0] || driveMinutes + 10,
-        providerMeta.zoneEtas[zoneNumber]?.[1] || driveMinutes + 25
-      )})`;
-    }
-    const [minEta, maxEta] =
-      providerMeta.zoneEtas[zoneNumber] || providerMeta.zoneEtas[3] || [30, 55];
-    return formatEtaLabel(minEta, maxEta);
-  }, [deliveryMethod, status, driveMinutes, progress, providerMeta, zoneNumber]);
+    return `${liveEta.arrivalWindowLabel} (${liveEta.durationLabel})`;
+  }, [liveEta, deliveryMethod]);
 
   const statusHeadline = useMemo(() => {
     if (deliveryMethod === "pickup") {
@@ -1544,7 +1587,19 @@ export function OrderTrackingMap({
                       {destinationQuery || "Tap map to choose delivery address"}
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-muted text-foreground font-semibold">
-                      {roadDistanceKm.toFixed(1)} km · {etaSummary}
+                      {roadDistanceKm.toFixed(1)} km · Arrives {liveEta.arrivalWindowLabel} ({liveEta.durationLabel})
+                    </span>
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 rounded-full font-semibold",
+                        liveEta.traffic.severity === "heavy"
+                          ? "bg-amber-100 text-amber-900"
+                          : liveEta.traffic.severity === "moderate"
+                          ? "bg-stone-200 text-stone-800"
+                          : "bg-emerald-100 text-emerald-900"
+                      )}
+                    >
+                      {liveEta.traffic.label}
                     </span>
                   </div>
                   {viaStreets.length > 0 && (
@@ -1677,42 +1732,135 @@ export function OrderTrackingMap({
             </div>
           )}
 
-          {/* Distance & ETA Telemetry Pills */}
+          {/* Distance & Live Uber-Style ETA Telemetry Pills */}
           {deliveryMethod === "delivery" && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-3.5">
-              <div className="rounded-xl bg-background border border-border px-3 py-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-                  <Navigation className="h-3.5 w-3.5 text-primary" />
-                  Road Distance
+            <div className="space-y-2.5 mt-3.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="rounded-xl bg-background border border-border px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
+                    <Navigation className="h-3.5 w-3.5 text-primary" />
+                    Road Distance
+                  </div>
+                  <p className="text-base sm:text-lg font-extrabold text-foreground mt-0.5">
+                    {isDelivered
+                      ? "0.0 km"
+                      : progress > 0
+                      ? `${remainingKm.toFixed(1)} km left`
+                      : `${roadDistanceKm.toFixed(1)} km`}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    ~{liveEta.driveMinutes} min road drive
+                  </p>
                 </div>
-                <p className="text-base sm:text-lg font-extrabold text-foreground mt-0.5">
-                  {isDelivered
-                    ? "0.0 km"
-                    : progress > 0
-                    ? `${remainingKm.toFixed(1)} km left`
-                    : `${roadDistanceKm.toFixed(1)} km`}
-                </p>
+
+                <div className="rounded-xl bg-background border border-border px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-1 text-[11px] text-muted-foreground font-medium">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      Est. Arrival (SAST)
+                    </span>
+                    {!isDelivered && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        LIVE
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm sm:text-base font-extrabold text-foreground mt-0.5 leading-tight">
+                    {liveEta.arrivalWindowLabel}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                    {isDelivered
+                      ? "Completed"
+                      : `${liveEta.durationLabel} · ${liveEta.latestByLabel}`}
+                  </p>
+                </div>
+
+                <div className="col-span-2 sm:col-span-1 rounded-xl bg-background border border-border px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
+                    <Truck className="h-3.5 w-3.5 text-primary" />
+                    Vehicle & Traffic
+                  </div>
+                  <p className="text-xs sm:text-sm font-bold text-foreground mt-0.5 truncate">
+                    {driverDetails?.vehicle || theme.vehicleLabel}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-[11px] font-semibold mt-0.5 truncate",
+                      liveEta.traffic.severity === "heavy"
+                        ? "text-amber-700"
+                        : liveEta.traffic.severity === "moderate"
+                        ? "text-stone-700"
+                        : "text-emerald-700"
+                    )}
+                  >
+                    {liveEta.traffic.label}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-xl bg-background border border-border px-3 py-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  Est. Arrival
-                </div>
-                <p className="text-xs sm:text-sm font-extrabold text-foreground mt-1">
-                  {etaSummary}
-                </p>
-              </div>
+              {/* Real-Time Stage Breakdown Strip (just like Uber Eats) */}
+              {!isDelivered && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-background/85 border border-border/80 px-3 py-2 text-[11px] text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    {liveEta.prepMinutes > 0 && (
+                      <span>
+                        Bakery prep{" "}
+                        <strong className="text-foreground">
+                          ~{liveEta.prepMinutes}m
+                        </strong>
+                      </span>
+                    )}
+                    {liveEta.prepMinutes > 0 && liveEta.pickupMinutes > 0 && (
+                      <span className="text-border">•</span>
+                    )}
+                    {liveEta.pickupMinutes > 0 && (
+                      <span>
+                        Courier pickup{" "}
+                        <strong className="text-foreground">
+                          ~{liveEta.pickupMinutes}m
+                        </strong>
+                      </span>
+                    )}
+                    {(liveEta.prepMinutes > 0 || liveEta.pickupMinutes > 0) && (
+                      <span className="text-border">•</span>
+                    )}
+                    <span>
+                      Street drive{" "}
+                      <strong className="text-foreground">
+                        ~{liveEta.driveMinutes}m
+                      </strong>
+                    </span>
+                  </div>
 
-              <div className="col-span-2 sm:col-span-1 rounded-xl bg-background border border-border px-3 py-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-                  <Truck className="h-3.5 w-3.5 text-primary" />
-                  Vehicle
+                  {!liveEta.storeOpenNow && liveEta.nextOpenLabel && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-semibold">
+                      Scheduled · {liveEta.nextOpenLabel}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate">
-                  {driverDetails?.vehicle || theme.vehicleLabel}
-                </p>
+              )}
+            </div>
+          )}
+
+          {/* Store Pickup Ready-Time Banner */}
+          {deliveryMethod === "pickup" && !isDelivered && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-muted-foreground">
+                  Estimated collection ready:{" "}
+                  <strong className="text-foreground">
+                    {liveEta.arrivalWindowLabel}
+                  </strong>{" "}
+                  ({liveEta.durationLabel})
+                </span>
               </div>
+              {!liveEta.storeOpenNow && liveEta.nextOpenLabel && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-semibold text-[11px]">
+                  {liveEta.nextOpenLabel}
+                </span>
+              )}
             </div>
           )}
         </div>

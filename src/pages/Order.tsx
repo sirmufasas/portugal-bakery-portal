@@ -21,9 +21,10 @@ import { DeliveryAddressPicker } from "@/components/order/DeliveryAddressPicker"
 import {
   buildLocalQuotesFallback,
   DeliveryQuoteOption,
-  formatEtaLabel,
   getProviderMeta,
 } from "@/utils/deliveryProviders";
+import { calculateZoneDetails } from "@/utils/deliveryZones";
+import { computeLiveUberStyleEta, getLiveJhbTraffic } from "@/utils/etaCalculator";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
 const CHECKOUT_DRAFT_KEY = "pb_checkout_draft_v1";
@@ -48,6 +49,17 @@ const Order = () => {
   const [verifyingCallback, setVerifyingCallback] = useState(false);
   const [customerMessage, setCustomerMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [checkoutClock, setCheckoutClock] = useState<Date>(() => new Date());
+
+  const totalItemCount = Math.max(
+    1,
+    cart.reduce((sum, item) => sum + item.quantity, 0)
+  );
+
+  useEffect(() => {
+    const t = window.setInterval(() => setCheckoutClock(new Date()), 30000);
+    return () => window.clearInterval(t);
+  }, []);
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerCoords, setCustomerCoords] = useState<[number, number] | null>(null);
@@ -222,7 +234,7 @@ const Order = () => {
             address: targetAddress,
             latitude: targetCoords ? targetCoords[0] : undefined,
             longitude: targetCoords ? targetCoords[1] : undefined,
-            items: cart.map(item => ({ name: item.name })),
+            items: cart.map(item => ({ name: item.name, quantity: item.quantity })),
             subtotal: total
           })
         });
@@ -231,17 +243,21 @@ const Order = () => {
           const data = await res.json();
           const serverQuotes: DeliveryQuoteOption[] = data.quotes || [];
           if (serverQuotes.length <= 1) {
-            const fallbackQuotes = buildLocalQuotesFallback(targetAddress, targetCoords);
+            const fallbackQuotes = buildLocalQuotesFallback(
+              targetAddress,
+              targetCoords,
+              totalItemCount
+            );
             const serverMap = new Map(serverQuotes.map((q) => [q.providerId, q]));
             quotes = fallbackQuotes.map((fq) => serverMap.get(fq.providerId) || fq);
           } else {
             quotes = serverQuotes;
           }
         } else {
-          quotes = buildLocalQuotesFallback(targetAddress, targetCoords);
+          quotes = buildLocalQuotesFallback(targetAddress, targetCoords, totalItemCount);
         }
       } catch {
-        quotes = buildLocalQuotesFallback(targetAddress, targetCoords);
+        quotes = buildLocalQuotesFallback(targetAddress, targetCoords, totalItemCount);
       }
 
       setDeliveryQuotes(quotes);
@@ -567,6 +583,8 @@ const Order = () => {
               deliveryProvider={selectedProviderId || "own_delivery"}
               deliveryServiceName={selectedProviderName || chosenProvider.name}
               pickupLocation={preferredPickupPoint}
+              itemCount={totalItemCount}
+              orderCreatedAt={checkoutClock}
             />
 
             {/* Quick Actions + Message Bakery */}
@@ -836,10 +854,27 @@ const Order = () => {
 
                         {!deliveryCalculated && deliveryQuotes.length > 0 && (
                           <div className="mb-3 space-y-3">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                               <h4 className="font-semibold text-foreground text-sm">
                                 Select a Delivery Service ({deliveryQuotes.length} available)
                               </h4>
+                              {(() => {
+                                const liveTraffic = getLiveJhbTraffic(checkoutClock);
+                                return (
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                                      liveTraffic.severity === "heavy"
+                                        ? "bg-amber-100 text-amber-900"
+                                        : liveTraffic.severity === "moderate"
+                                        ? "bg-stone-200 text-stone-800"
+                                        : "bg-emerald-100 text-emerald-900"
+                                    }`}
+                                  >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                                    {liveTraffic.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
 
                             {/* Category filter pills */}
@@ -877,7 +912,19 @@ const Order = () => {
                                 })
                                 .map((quote) => {
                                   const meta = getProviderMeta(quote.providerId);
-                                  const etaText = formatEtaLabel(quote.etaMinutesMin, quote.etaMinutesMax);
+                                  const resolvedZone = calculateZoneDetails(
+                                    customerAddress,
+                                    customerCoords
+                                  );
+                                  const liveQuoteEta = computeLiveUberStyleEta({
+                                    providerId: quote.providerId,
+                                    deliveryMethod: "delivery",
+                                    status: "pending",
+                                    zoneNumber: resolvedZone.zoneNumber,
+                                    coords: customerCoords,
+                                    itemCount: totalItemCount,
+                                    now: checkoutClock,
+                                  });
                                   return (
                                     <button
                                       key={quote.providerId}
@@ -910,11 +957,12 @@ const Order = () => {
                                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                                               {quote.description || meta.description}
                                             </p>
-                                            {etaText && (
-                                              <p className="text-[11px] font-medium text-amber-700 mt-0.5">
-                                                ⏱ Est. {etaText}
-                                              </p>
-                                            )}
+                                            <p className="text-[11px] font-semibold text-amber-800 mt-1">
+                                              Arrives {liveQuoteEta.arrivalWindowLabel} ({liveQuoteEta.durationLabel})
+                                            </p>
+                                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                                              Prep ~{liveQuoteEta.prepMinutes}m · Pickup ~{liveQuoteEta.pickupMinutes}m · Drive ~{liveQuoteEta.driveMinutes}m
+                                            </p>
                                           </div>
                                         </div>
 
@@ -957,6 +1005,23 @@ const Order = () => {
                                   <p className="text-xs text-green-700 mt-0.5">
                                     {deliveryZone}
                                   </p>
+                                  {(() => {
+                                    const z = calculateZoneDetails(customerAddress, customerCoords);
+                                    const selEta = computeLiveUberStyleEta({
+                                      providerId: selectedProviderId || "own_delivery",
+                                      deliveryMethod: "delivery",
+                                      status: "pending",
+                                      zoneNumber: z.zoneNumber,
+                                      coords: customerCoords,
+                                      itemCount: totalItemCount,
+                                      now: checkoutClock,
+                                    });
+                                    return (
+                                      <p className="text-xs font-semibold text-green-900 mt-1">
+                                        Est. arrival: {selEta.arrivalWindowLabel} ({selEta.durationLabel}) · {selEta.traffic.label}
+                                      </p>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                               {deliveryQuotes.length > 1 && (
@@ -1025,6 +1090,7 @@ const Order = () => {
                               getProviderMeta(selectedProviderId).name
                             }
                             pickupLocation={preferredPickupPoint}
+                            itemCount={totalItemCount}
                           />
                         )}
                       </div>

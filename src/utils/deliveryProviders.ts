@@ -2,6 +2,7 @@
 // Complete registry of South African delivery services supported by Portugal Bakery.
 
 import { calculateZoneDetails } from "./deliveryZones";
+import { computeLiveUberStyleEta } from "./etaCalculator";
 
 export type DeliveryCategory = "in_house" | "on_demand" | "courier" | "pickup_point";
 
@@ -33,6 +34,13 @@ export interface DeliveryQuoteOption {
   currency: string;
   etaMinutesMin?: number;
   etaMinutesMax?: number;
+  driveMinutes?: number;
+  prepMinutes?: number;
+  pickupMinutes?: number;
+  trafficLabel?: string;
+  storeOpenNow?: boolean;
+  estimatedArrivalStart?: string;
+  estimatedArrivalEnd?: string;
   zone?: string;
   serviceType?: string;
   labels?: string[];
@@ -272,15 +280,25 @@ export function formatEtaLabel(min?: number, max?: number): string {
  */
 export function buildLocalQuotesFallback(
   address: string,
-  coords?: [number, number] | null
+  coords?: [number, number] | null,
+  itemCount = 2
 ): DeliveryQuoteOption[] {
   const { zone, zoneNumber } = calculateZoneDetails(address, coords);
+  const now = new Date();
 
   const results: DeliveryQuoteOption[] = SA_DELIVERY_PROVIDERS.filter(
     (p) => p.enabledByDefault !== false && (!p.maxZone || zoneNumber <= p.maxZone)
   ).map((p) => {
     const fee = p.zoneFees[zoneNumber] ?? p.zoneFees[6];
-    const [etaMinutesMin, etaMinutesMax] = p.zoneEtas[zoneNumber] || p.zoneEtas[6];
+    const liveEta = computeLiveUberStyleEta({
+      providerId: p.id,
+      deliveryMethod: "delivery",
+      status: "pending",
+      zoneNumber,
+      coords,
+      itemCount,
+      now,
+    });
     return {
       providerId: p.id,
       providerName: p.name,
@@ -289,8 +307,13 @@ export function buildLocalQuotesFallback(
       bookingUrl: p.bookingUrl,
       fee,
       currency: "ZAR",
-      etaMinutesMin,
-      etaMinutesMax,
+      etaMinutesMin: liveEta.etaMinutesMin,
+      etaMinutesMax: liveEta.etaMinutesMax,
+      driveMinutes: liveEta.driveMinutes,
+      prepMinutes: liveEta.prepMinutes,
+      pickupMinutes: liveEta.pickupMinutes,
+      trafficLabel: liveEta.traffic.label,
+      storeOpenNow: liveEta.storeOpenNow,
       zone,
       serviceType: p.serviceType,
       quoteId: `${p.id}_z${zoneNumber}_${fee}`,

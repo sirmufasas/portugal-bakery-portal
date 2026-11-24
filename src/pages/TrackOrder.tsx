@@ -39,6 +39,9 @@ interface Order {
   }>;
   totalAmount: number;
   createdAt: string;
+  updatedAt?: string;
+  pickedUpAt?: string | null;
+  driverAssignedAt?: string | null;
   specialInstructions?: string;
   deliveryMethod?: string;  // ✅ ADDED
   address?: string;          // ✅ ADDED
@@ -613,6 +616,21 @@ const TrackOrder = () => {
                         pickupLocation={foundOrder.pickupLocation}
                         trackingUrl={foundOrder.trackingUrl}
                         driverDetails={foundOrder.driverDetails}
+                        itemCount={
+                          Array.isArray(foundOrder.items)
+                            ? foundOrder.items.reduce(
+                                (sum, it) => sum + (Number(it.quantity) || 1),
+                                0
+                              )
+                            : 2
+                        }
+                        orderCreatedAt={foundOrder.createdAt}
+                        statusUpdatedAt={
+                          foundOrder.pickedUpAt ||
+                          foundOrder.driverAssignedAt ||
+                          foundOrder.updatedAt ||
+                          foundOrder.createdAt
+                        }
                       />
                     </div>
                   )}
