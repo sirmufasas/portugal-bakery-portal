@@ -27,7 +27,7 @@ export interface LiveGPSPosition {
 // (especially helpful when an OSM street sits right on the boundary of two suburbs,
 // e.g. "4th Street" on the La Rochelle / Rosettenville border).
 export const GAUTENG_SUBURB_COORDS: Record<string, [number, number]> = {
-  "la rochelle": [-26.2432, 28.0565],
+  "la rochelle": [-26.24144, 28.05526],
   rosettenville: [-26.2522, 28.0547],
   turffontein: [-26.2448, 28.0402],
   kenilworth: [-26.2485, 28.0485],

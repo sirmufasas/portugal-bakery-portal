@@ -1226,7 +1226,7 @@ const Order = () => {
                     ? unitDetails.trim()
                       ? `${unitDetails.trim()}, ${customerAddress}`
                       : customerAddress
-                    : "Store Pickup - 245 Johannesburg Road, La Rochelle",
+                    : "Store Pickup - 245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190",
                 specialInstructions: preferredPickupPoint.trim()
                   ? `${specialInstructions ? specialInstructions + " | " : ""}Preferred Locker/Pickup Point: ${preferredPickupPoint.trim()}`
                   : specialInstructions,

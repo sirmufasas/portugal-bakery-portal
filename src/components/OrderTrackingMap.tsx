@@ -28,6 +28,7 @@ import {
 } from "@/components/delivery/DeliveryProviderLogo";
 import { formatEtaLabel, getProviderMeta } from "@/utils/deliveryProviders";
 import {
+  BAKERY_OFFICIAL_ADDRESS,
   BAKERY_ORIGIN_COORDS,
   calculateZoneDetails,
 } from "@/utils/deliveryZones";
@@ -83,7 +84,7 @@ interface RouteTurnStep {
 }
 
 const BAKERY_COORDS: [number, number] = BAKERY_ORIGIN_COORDS;
-const BAKERY_LABEL = "Portugal Bakery · 245 Johannesburg Rd, La Rochelle";
+const BAKERY_LABEL = `Portugal Bakery · ${BAKERY_OFFICIAL_ADDRESS}`;
 
 interface ProviderVisualTheme {
   accentColor: string;
@@ -311,12 +312,20 @@ function interpolateAlongPolyline(
   return { point: pts[pts.length - 1], splitIndex: pts.length - 1 };
 }
 
+function normalizeBakeryRoadName(name?: string | null): string {
+  const n = (name || "").trim();
+  if (/^johannesburg street$/i.test(n)) return "Johannesburg Rd";
+  return n;
+}
+
 function formatManeuverInstruction(step: any): string {
-  const road = step.name || step.ref || step.road || "road";
+  const rawRoad = step.name || step.ref || step.road || "road";
+  const road = normalizeBakeryRoadName(rawRoad) || "road";
   const type = step.maneuver?.type || step.type || "continue";
   const mod = step.maneuver?.modifier || step.modifier || "";
 
-  if (type === "depart") return `Head out on ${road}`;
+  if (type === "depart")
+    return `Head out from 245 Johannesburg Rd onto ${road}`;
   if (type === "arrive") return `Arrive at destination (${road})`;
   if (type === "roundabout" || type === "rotary")
     return `At the roundabout, take exit onto ${road}`;
@@ -660,10 +669,11 @@ export function OrderTrackingMap({
 
             const roadTotals = new Map<string, number>();
             for (const s of rawSteps) {
+              const normName = normalizeBakeryRoadName(s.name);
               const label = (
-                s.ref && s.name
-                  ? `${s.ref} (${s.name})`
-                  : s.ref || s.name || ""
+                s.ref && normName
+                  ? `${s.ref} (${normName})`
+                  : s.ref || normName || ""
               ).trim();
               if (!label) continue;
               roadTotals.set(
@@ -968,7 +978,7 @@ export function OrderTrackingMap({
 
   const statusHeadline = useMemo(() => {
     if (deliveryMethod === "pickup") {
-      return "Collect your fresh bake at Portugal Bakery (245 Johannesburg Rd, La Rochelle)";
+      return `Collect your fresh bake at Portugal Bakery (${BAKERY_OFFICIAL_ADDRESS})`;
     }
     const s = (status || "confirmed").toLowerCase();
     if (s === "completed" || s === "delivered") {
@@ -1041,7 +1051,7 @@ export function OrderTrackingMap({
 
       L.marker(BAKERY_COORDS, { icon: bakeryIcon })
         .bindPopup(
-          `<strong>Portugal Bakery</strong><br/>245 Johannesburg Rd, La Rochelle`
+          `<strong>Portugal Bakery</strong><br/>${BAKERY_OFFICIAL_ADDRESS}`
         )
         .addTo(group);
 
@@ -1350,7 +1360,9 @@ export function OrderTrackingMap({
     (status || "").toLowerCase()
   );
 
-  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${BAKERY_COORDS[0]},${BAKERY_COORDS[1]}&destination=${destCoords[0]},${destCoords[1]}&travelmode=driving`;
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
+    BAKERY_OFFICIAL_ADDRESS
+  )}&destination=${destCoords[0]},${destCoords[1]}&travelmode=driving`;
 
   const fullscreenModal =
     isFullscreen && typeof document !== "undefined"

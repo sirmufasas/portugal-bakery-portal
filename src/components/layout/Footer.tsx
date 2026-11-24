@@ -61,7 +61,7 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-amber shrink-0 mt-0.5" />
                 <span className="text-cream/70 text-sm">
-                  Portugal Bakery, Johannesburg
+                  245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190
                 </span>
               </li>
               <li className="flex items-center gap-3">

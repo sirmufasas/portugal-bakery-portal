@@ -145,7 +145,7 @@ const About = () => {
                   <h3 className="font-heading font-semibold text-lg text-foreground dark:text-foreground mb-4">Contact Us</h3>
                   <div className="space-y-3">
                     <a href="https://maps.app.goo.gl/BYKLVXfZ3LfyHZAt5" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground dark:text-muted-foreground hover:text-primary transition-colors">
-                      <MapPin className="h-5 w-5 text-primary flex-shrink-0" /><span>Portugal Bakery, Johannesburg</span>
+                      <MapPin className="h-5 w-5 text-primary flex-shrink-0" /><span>245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190</span>
                     </a>
                     <a href="tel:0114362396" className="flex items-center gap-3 text-muted-foreground dark:text-muted-foreground hover:text-primary transition-colors">
                       <Phone className="h-5 w-5 text-primary flex-shrink-0" /><span>0114362396</span>

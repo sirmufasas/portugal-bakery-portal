@@ -8,7 +8,9 @@ export interface DeliveryZone {
   suburbs: string[];
 }
 
-export const BAKERY_ORIGIN_COORDS: [number, number] = [-26.2425, 28.0558];
+export const BAKERY_OFFICIAL_ADDRESS =
+  "245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190";
+export const BAKERY_ORIGIN_COORDS: [number, number] = [-26.24144, 28.05526];
 
 // Delivery zones radiated from Portugal Bakery (245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190)
 export const DELIVERY_ZONES: DeliveryZone[] = [
