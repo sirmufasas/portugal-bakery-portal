@@ -31,6 +31,7 @@ interface CartContextType {
   isLoading: boolean;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
@@ -44,7 +45,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const lastSyncedCart = useRef<string>("");
 
-  // --- Load cart from backend ---
+  // --- Load cart from backend (with local backup across payment redirects) ---
   const loadCartFromBackend = useCallback(async () => {
     if (!user || !token) {
       setCart([]);
@@ -52,23 +53,37 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    const backupKey = `pb_cart_backup_${user._id}`;
+
     try {
       setIsLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cart`, {
+      const res = await fetch(`${API_URL}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) {
-        console.error("Failed to load cart:", res.status);
-        setCart([]);
+        const localRaw = localStorage.getItem(backupKey);
+        if (localRaw) {
+          setCart(JSON.parse(localRaw));
+        } else {
+          setCart([]);
+        }
         return;
       }
 
       const data = await res.json();
-      setCart(Array.isArray(data) ? data : []);
+      if (Array.isArray(data) && data.length > 0) {
+        setCart(data);
+        localStorage.setItem(backupKey, JSON.stringify(data));
+      } else {
+        const localRaw = localStorage.getItem(backupKey);
+        const parsedLocal = localRaw ? JSON.parse(localRaw) : [];
+        setCart(Array.isArray(parsedLocal) ? parsedLocal : []);
+      }
     } catch (error) {
       console.error("Failed to load cart:", error);
-      setCart([]);
+      const localRaw = localStorage.getItem(backupKey);
+      setCart(localRaw ? JSON.parse(localRaw) : []);
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +118,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsSyncing(true);
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cart`, {
+      const res = await fetch(`${API_URL}/api/cart`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -134,9 +149,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cart, user, token, isSyncing, toast]);
 
-  // --- Debounced sync ---
+  // --- Debounced sync + instant local backup ---
   useEffect(() => {
     if (!user || !token || isLoading) return;
+
+    try {
+      localStorage.setItem(`pb_cart_backup_${user._id}`, JSON.stringify(cart));
+    } catch {
+      // ignore storage quota
+    }
 
     // Retry only after 1s normally, 10s if previous failed
     const delay = failedSync.current ? 10000 : 1000;
@@ -185,9 +206,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart([]);
     lastSyncedCart.current = "";
     failedSync.current = false;
+    localStorage.removeItem(`pb_cart_backup_${user._id}`);
 
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/cart`, {
+      await fetch(`${API_URL}/api/cart`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

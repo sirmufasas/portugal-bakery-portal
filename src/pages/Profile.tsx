@@ -76,7 +76,8 @@ const Profile = () => {
 
             try {
                 setFetchingOrders(true);
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my-orders`, {
+                const apiUrl = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
+                const res = await fetch(`${apiUrl}/api/orders/my-orders`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -173,7 +174,8 @@ const Profile = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
+            const apiUrl = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
+            const response = await fetch(`${apiUrl}/api/auth/change-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -217,7 +219,8 @@ const Profile = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/request-password-reset`, {
+            const apiUrl = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
+            const response = await fetch(`${apiUrl}/api/auth/request-password-reset`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1309,7 +1309,10 @@ export default function Admin() {
                   Manage live orders, South African couriers, products, and customer messages
                 </p>
               </div>
-              <div className="shrink-0">
+              <div className="shrink-0 flex flex-col sm:items-end gap-1.5 bg-white/85 backdrop-blur-sm border border-primary/15 rounded-xl px-3.5 py-2.5 shadow-xs">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Global Site Theme · SA Events &amp; Seasons
+                </span>
                 <SeasonBadgeControl />
               </div>
             </div>

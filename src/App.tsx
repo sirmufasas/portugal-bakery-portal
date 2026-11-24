@@ -68,11 +68,11 @@ const FloatingButtonWrapper = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <SeasonProvider>
       <AuthProvider>
-        <ProductsProvider>
-          <CartProvider>
-            <TooltipProvider>
+        <SeasonProvider>
+          <ProductsProvider>
+            <CartProvider>
+              <TooltipProvider>
               <Toaster />
               <Sonner />
 
@@ -132,8 +132,8 @@ const App = () => (
             </TooltipProvider>
           </CartProvider>
         </ProductsProvider>
+        </SeasonProvider>
       </AuthProvider>
-      </SeasonProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

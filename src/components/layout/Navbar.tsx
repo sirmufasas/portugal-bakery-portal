@@ -112,7 +112,7 @@ export function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2.5">
-            <SeasonBadgeControl />
+            {isAdmin && <SeasonBadgeControl />}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -178,7 +178,7 @@ export function Navbar() {
 
           {/* Mobile Actions */}
           <div className="flex md:hidden items-center gap-1.5">
-            <SeasonBadgeControl />
+            {isAdmin && <SeasonBadgeControl />}
             <button className="p-2" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
               {isOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
             </button>

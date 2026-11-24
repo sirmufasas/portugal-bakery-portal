@@ -74,7 +74,8 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      const apiUrl = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
+      const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -124,7 +125,8 @@ const Login = () => {
     setSendingReset(true);
 
     try {
-      const url = `${import.meta.env.VITE_API_URL}/api/auth/request-password-reset`;
+      const apiUrl = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
+      const url = `${apiUrl}/api/auth/request-password-reset`;
 
       const response = await fetch(url, {
         method: "POST",

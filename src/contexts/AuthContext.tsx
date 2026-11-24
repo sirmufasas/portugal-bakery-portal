@@ -38,10 +38,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const savedUser = localStorage.getItem("user");
       const savedToken = localStorage.getItem("token");
 
+const API_URL = import.meta.env.VITE_API_URL || "https://bakerybackend-i7wj.onrender.com";
+
       if (savedUser && savedToken) {
         try {
           // Verify token with backend
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+          const response = await fetch(`${API_URL}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${savedToken}`
             }
@@ -50,14 +52,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (response.ok) {
             setUser(JSON.parse(savedUser));
             setToken(savedToken);
-          } else {
+          } else if (response.status === 401 || response.status === 403) {
             // Token is invalid or expired
             console.log('Token expired or invalid - logging out');
             handleLogout();
           }
         } catch (error) {
-          console.error('Token verification failed:', error);
-          handleLogout();
+          console.error('Token verification network warning (preserving session):', error);
         }
       }
 

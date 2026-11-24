@@ -1,18 +1,19 @@
-// Order.tsx - Fixed Hooks Order
+// Order.tsx - Full Functional Ordering + Yoco Online Checkout
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin, Calculator, Info, CheckCircle2, Navigation } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, MessageSquare, ArrowLeft, Loader2, Truck, MapPin, Calculator, Info, CheckCircle2, Navigation, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { allProducts } from "@/data/products";
+import { allProducts, categories } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { DummyPayment } from "@/components/order/DummyPayment";
+import { YocoCheckoutCard } from "@/components/order/YocoCheckoutCard";
 import { useCart } from "@/contexts/CartContext";
+import { useProducts } from "@/contexts/ProductsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
 import { DeliveryProviderLogo } from "@/components/delivery/DeliveryProviderLogo";
 import { OrderTrackingMap } from "@/components/OrderTrackingMap";
@@ -24,17 +25,18 @@ import {
 } from "@/utils/deliveryProviders";
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://bakerybackend-i7wj.onrender.com';
-
-const menuItems = allProducts.slice(0, 20);
+const CHECKOUT_DRAFT_KEY = "pb_checkout_draft_v1";
 
 type OrderStep = "menu" | "checkout" | "payment" | "confirmed";
 
 const Order = () => {
   // ✅ ALL HOOKS FIRST - Context hooks
-  const { user, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { cart, addToCart, updateQuantity, removeItem, clearCart, total } = useCart();
+  const { products: liveProducts } = useProducts();
 
   // ✅ ALL STATE HOOKS
   const [specialInstructions, setSpecialInstructions] = useState("");
@@ -42,7 +44,7 @@ const Order = () => {
   const [orderId, setOrderId] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [verifyingCallback, setVerifyingCallback] = useState(false);
   const [customerMessage, setCustomerMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [customerPhone, setCustomerPhone] = useState("");
@@ -58,12 +60,49 @@ const Order = () => {
   const [selectedProviderName, setSelectedProviderName] = useState<string>("");
   const [deliveryQuoteId, setDeliveryQuoteId] = useState<string | null>(null);
   const [preferredPickupPoint, setPreferredPickupPoint] = useState<string>("");
+  const [menuCategory, setMenuCategory] = useState<string>("All");
+  const [menuSearch, setMenuSearch] = useState<string>("");
 
   // ✅ COMPUTED VALUES
   const finalTotal = deliveryMethod === "delivery" && deliveryCalculated ? total + deliveryFee : total;
+  const catalogProducts = liveProducts && liveProducts.length > 0 ? liveProducts : allProducts;
+
+  // ✅ Prefill logged-in customer details
+  useEffect(() => {
+    if (!user) return;
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+    if (fullName && !customerName) setCustomerName(fullName);
+    if (user.email && !customerEmail) setCustomerEmail(user.email);
+    if ((user as any).phone && !customerPhone) setCustomerPhone((user as any).phone);
+  }, [user, customerName, customerEmail, customerPhone]);
+
+  // ✅ Restore saved checkout draft if returning from Capitec 3DS redirect
+  useEffect(() => {
+    try {
+      const savedRaw = sessionStorage.getItem(CHECKOUT_DRAFT_KEY);
+      if (!savedRaw) return;
+      const draft = JSON.parse(savedRaw);
+      if (draft.customerName) setCustomerName(draft.customerName);
+      if (draft.customerEmail) setCustomerEmail(draft.customerEmail);
+      if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
+      if (draft.customerAddress) setCustomerAddress(draft.customerAddress);
+      if (draft.specialInstructions) setSpecialInstructions(draft.specialInstructions);
+      if (draft.deliveryMethod) setDeliveryMethod(draft.deliveryMethod);
+      if (typeof draft.deliveryFee === "number") setDeliveryFee(draft.deliveryFee);
+      if (draft.deliveryZone) setDeliveryZone(draft.deliveryZone);
+      if (draft.deliveryCalculated) setDeliveryCalculated(true);
+      if (draft.selectedProviderId) setSelectedProviderId(draft.selectedProviderId);
+      if (draft.selectedProviderName) setSelectedProviderName(draft.selectedProviderName);
+      if (draft.deliveryQuoteId) setDeliveryQuoteId(draft.deliveryQuoteId);
+      if (draft.preferredPickupPoint) setPreferredPickupPoint(draft.preferredPickupPoint);
+    } catch {
+      // ignore invalid session draft
+    }
+  }, []);
 
   // ✅ ALL useEffect HOOKS - BEFORE ANY CONDITIONAL LOGIC
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       toast({
         title: "Authentication required",
@@ -72,7 +111,75 @@ const Order = () => {
       });
       navigate("/login");
     }
-  }, [isAuthenticated, navigate, toast]);
+  }, [authLoading, isAuthenticated, navigate, toast]);
+
+  // ✅ Handle Yoco Hosted Checkout return verification (?payment_verify=yoco&reference=...)
+  useEffect(() => {
+    const verifyMode = searchParams.get("payment_verify");
+    const reference = searchParams.get("reference");
+    const cancelled = searchParams.get("payment_cancelled");
+    const failed = searchParams.get("payment_failed");
+
+    if (cancelled || failed) {
+      toast({
+        title: failed ? "Yoco payment unsuccessful" : "Yoco payment cancelled",
+        description: "Your basket and delivery details are still saved whenever you're ready to retry.",
+        variant: "destructive",
+      });
+      setOrderStep("payment");
+      setSearchParams({}, { replace: true });
+      return;
+    }
+
+    if (!verifyMode || !reference) return;
+    const authToken = token || localStorage.getItem("token");
+    if (!authToken) return;
+
+    let active = true;
+    (async () => {
+      try {
+        setVerifyingCallback(true);
+        const res = await fetch(`${API_URL}/api/payments/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ reference }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
+
+        if (res.ok && data?.verified && data?.order) {
+          handleVerifiedYocoOrder(data.order);
+          setSearchParams({}, { replace: true });
+        } else {
+          toast({
+            title: "Payment not yet confirmed",
+            description: data?.error || "Could not verify Yoco payment.",
+            variant: "destructive",
+          });
+          setOrderStep("payment");
+          setSearchParams({}, { replace: true });
+        }
+      } catch {
+        if (!active) return;
+        toast({
+          title: "Verification error",
+          description: "Could not verify Yoco payment status. Please check your orders or retry.",
+          variant: "destructive",
+        });
+        setOrderStep("payment");
+        setSearchParams({}, { replace: true });
+      } finally {
+        if (active) setVerifyingCallback(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [searchParams, token]);
 
   const handleCalculateDelivery = async () => {
     if (!customerAddress.trim()) {
@@ -179,7 +286,7 @@ const Order = () => {
   };
 
   const handleAddToCart = (product: {
-    id: string;
+    id: number | string;
     name: string;
     price: number;
     image: string;
@@ -259,76 +366,48 @@ const Order = () => {
     setOrderStep("menu");
   };
 
-  const handlePaymentComplete = async (paymentID: string) => {
-    setIsProcessing(true);
-
+  const saveCheckoutDraft = () => {
     try {
-      const token = localStorage.getItem("token");
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      // ✅ FIXED: Use finalTotal which already includes delivery fee when calculated
-      const orderTotal = deliveryMethod === "delivery" && deliveryCalculated
-        ? total + deliveryFee
-        : total;
-
-      const res = await fetch(`${API_URL}/api/orders`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
+      sessionStorage.setItem(
+        CHECKOUT_DRAFT_KEY,
+        JSON.stringify({
+          customerName,
+          customerEmail,
           customerPhone,
-          customerAddress: deliveryMethod === "delivery" ? customerAddress : "",
+          customerAddress,
+          specialInstructions,
           deliveryMethod,
-          items: cart.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            imageUrl: item.imageUrl,
-            quantity: item.quantity
-          })),
-          totalAmount: orderTotal,
-          deliveryFee: deliveryMethod === "delivery" && deliveryCalculated ? deliveryFee : 0,
-          deliveryZone: deliveryMethod === "delivery" && deliveryCalculated ? deliveryZone : "",
-          deliveryProvider: deliveryMethod === "delivery" ? (selectedProviderId || "own_delivery") : null,
-          deliveryService: deliveryMethod === "delivery" ? (selectedProviderName || null) : null,
-          deliveryQuoteId: deliveryMethod === "delivery" ? deliveryQuoteId : null,
-          pickupLocation: deliveryMethod === "delivery" && preferredPickupPoint.trim() ? preferredPickupPoint.trim() : null,
-          specialInstructions: preferredPickupPoint.trim()
-            ? `${specialInstructions ? specialInstructions + " | " : ""}Preferred Locker/Pickup Point: ${preferredPickupPoint.trim()}`
-            : specialInstructions,
-          paymentID,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to save order");
-      }
-
-      const orderData = await res.json();
-
-      setOrderId(orderData.orderNumber);
-      setOrderStep("confirmed");
-      clearCart();
-
-      toast({
-        title: "Payment successful!",
-        description: `Your order ID is ${orderData.orderNumber}. Check your email for confirmation.`
-      });
-    } catch (err) {
-      console.error("Order error:", err);
-      toast({
-        title: "Order failed",
-        description: err instanceof Error ? err.message : "Could not save your order. Try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+          deliveryFee,
+          deliveryZone,
+          deliveryCalculated,
+          selectedProviderId,
+          selectedProviderName,
+          deliveryQuoteId,
+          preferredPickupPoint,
+        })
+      );
+    } catch {
+      // ignore storage quota errors
     }
+  };
+
+  const handleVerifiedYocoOrder = (orderData: any) => {
+    if (orderData.deliveryMethod) setDeliveryMethod(orderData.deliveryMethod);
+    if (orderData.address) setCustomerAddress(orderData.address);
+    if (orderData.deliveryProvider) setSelectedProviderId(orderData.deliveryProvider);
+    if (orderData.deliveryService) setSelectedProviderName(orderData.deliveryService);
+    if (orderData.customerEmail) setCustomerEmail(orderData.customerEmail);
+
+    setOrderId(orderData.orderNumber);
+    setOrderStep("confirmed");
+    clearCart();
+    sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
+    sessionStorage.removeItem("pb_pending_payment_ref");
+
+    toast({
+      title: "Yoco payment verified!",
+      description: `Order ${orderData.orderNumber} is confirmed and being prepared.`,
+    });
   };
 
   const handleSendCustomerMessage = async () => {
@@ -997,37 +1076,110 @@ const Order = () => {
     );
   }
 
-  if (orderStep === "payment") {
+  if (verifyingCallback) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
-        <main className="flex-1 flex flex-col items-center px-4">
-          <section className="text-center mt-12 mb-10">
+        <main className="flex-1 flex items-center justify-center px-4 pt-20">
+          <div className="bg-card rounded-2xl p-8 shadow-soft border border-border max-w-md w-full text-center space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-[#00A9E0] mx-auto" />
+            <h2 className="text-2xl font-heading font-bold text-foreground">
+              Verifying Yoco Payment...
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Confirming your transaction directly with Yoco and preparing your live order tracker.
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (orderStep === "payment") {
+    const activeToken = token || localStorage.getItem("token");
+    const effectiveDeliveryFee =
+      deliveryMethod === "delivery" && deliveryCalculated ? deliveryFee : 0;
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center px-4 pt-24 pb-16">
+          <section className="text-center mb-8">
             <span className="text-primary font-medium text-sm tracking-wider uppercase mb-2 block">
-              Secure Payment
+              Yoco Secure Checkout
             </span>
-            <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground">
+            <h1 className="text-3xl md:text-5xl font-heading font-bold text-foreground">
               Complete Payment
             </h1>
           </section>
 
-          <div className="w-full max-w-lg mb-12">
+          <div className="w-full max-w-xl">
             <Button
               variant="ghost"
               onClick={handleBackToCheckout}
-              className="mb-6"
+              className="mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Details
+              Back to Delivery &amp; Contact Details
             </Button>
 
-            <DummyPayment
-              amountZAR={finalTotal}
-              onSuccess={handlePaymentComplete}
-              onError={() =>
+            <YocoCheckoutCard
+              total={finalTotal}
+              subtotal={total}
+              deliveryFee={effectiveDeliveryFee}
+              deliveryMethod={deliveryMethod}
+              token={activeToken}
+              onBeforeRedirect={saveCheckoutDraft}
+              checkoutPayload={{
+                items: cart.map((item) => ({
+                  id: Number(item.id),
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  imageUrl: item.imageUrl,
+                })),
+                customerName,
+                customerEmail,
+                customerPhone,
+                customerAddress:
+                  deliveryMethod === "delivery" ? customerAddress : "",
+                shippingAddress:
+                  deliveryMethod === "delivery"
+                    ? customerAddress
+                    : "Store Pickup - 245 Johannesburg Road, La Rochelle",
+                specialInstructions: preferredPickupPoint.trim()
+                  ? `${specialInstructions ? specialInstructions + " | " : ""}Preferred Locker/Pickup Point: ${preferredPickupPoint.trim()}`
+                  : specialInstructions,
+                deliveryMethod,
+                deliveryFee: effectiveDeliveryFee,
+                deliveryZone:
+                  deliveryMethod === "delivery" && deliveryCalculated
+                    ? deliveryZone
+                    : "",
+                deliveryProvider:
+                  deliveryMethod === "delivery"
+                    ? selectedProviderId || "own_delivery"
+                    : null,
+                deliveryService:
+                  deliveryMethod === "delivery"
+                    ? selectedProviderName || null
+                    : null,
+                deliveryQuoteId:
+                  deliveryMethod === "delivery" ? deliveryQuoteId : null,
+                pickupLocation:
+                  deliveryMethod === "delivery" && preferredPickupPoint.trim()
+                    ? {
+                        id: "custom_pickup_point",
+                        name: preferredPickupPoint.trim(),
+                        address: preferredPickupPoint.trim(),
+                      }
+                    : null,
+              }}
+              onPaymentError={(message) =>
                 toast({
-                  title: "Payment failed",
-                  description: "Please try again.",
+                  title: "Yoco payment issue",
+                  description: message,
                   variant: "destructive",
                 })
               }
@@ -1039,86 +1191,269 @@ const Order = () => {
     );
   }
 
-  // Default menu selection
+  // Filter catalog for quick-add menu inside /order
+  const filteredCatalog = catalogProducts.filter((p) => {
+    const matchesCategory =
+      menuCategory === "All" || p.category === menuCategory;
+    const q = menuSearch.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
+
+  // Default menu & cart selection
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="flex-1">
-        <section className="py-12 md:py-16 bg-background">
+      <main className="flex-1 pt-24 pb-16">
+        <section className="pb-8 bg-background">
           <div className="container mx-auto px-4 text-center">
-            <span className="text-primary font-medium text-sm tracking-wider uppercase mb-4 block">Order Online</span>
-            <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4">Place Your Order</h1>
-            <p className="text-muted-foreground text-lg">Select items from our menu and we'll have them ready for pickup.</p>
+            <span className="text-primary font-medium text-sm tracking-wider uppercase mb-2 block">
+              Order Online
+            </span>
+            <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-3">
+              Place Your Order
+            </h1>
+            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+              Add freshly baked Portuguese pastries, breads, and cakes to your basket, choose your delivery partner or bakery pickup, and pay securely online with Yoco.
+            </p>
           </div>
         </section>
 
-        <section className="py-12 bg-background">
+        <section className="py-4 bg-background">
           <div className="container mx-auto px-4">
-            <div className="max-w-lg mx-auto space-y-6">
-              {/* Cart Section */}
-              <div className="bg-card rounded-2xl p-6 shadow-soft">
-                <h2 className="text-xl font-heading font-bold text-foreground mb-4">Your Cart</h2>
-                {cart.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Your cart is empty. Add items to get started!
-                  </p>
-                ) : (
-                  <>
-                    <div className="space-y-3 mb-4">
-                      {cart.map(item => (
-                        <div key={item.id} className="flex gap-3 items-center">
-                          <img src={item.imageUrl} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{item.name} x{item.quantity}</p>
-                            <div className="flex gap-2 mt-1">
-                              <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, -1)}>
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, 1)}>
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => removeItem(item.id)}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          <span className="font-medium">R{(item.price * item.quantity).toFixed(2)}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
+              {/* Left Column: Quick-Add Bakery Catalog */}
+              <div className="lg:col-span-7 bg-card rounded-2xl p-6 shadow-soft border border-border space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-heading font-bold text-foreground">
+                      Fresh From Our Ovens
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      Tap + to add items directly to your order
+                    </p>
+                  </div>
+                  <Link
+                    to="/menu"
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    View Full Detailed Menu →
+                  </Link>
+                </div>
+
+                {/* Search + Category Pills */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Input
+                      value={menuSearch}
+                      onChange={(e) => setMenuSearch(e.target.value)}
+                      placeholder="Search pastéis de nata, sourdough, cakes..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setMenuCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                          menuCategory === cat
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-muted text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Product List */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[540px] overflow-y-auto pr-1">
+                  {filteredCatalog.slice(0, 24).map((product) => {
+                    const inCart = cart.find((c) => c.id === Number(product.id));
+                    return (
+                      <div
+                        key={product.id}
+                        className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background hover:border-primary/40 transition-colors"
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-16 h-16 rounded-lg object-cover shrink-0 bg-muted"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-foreground truncate">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {product.category}
+                          </p>
+                          <p className="text-sm font-bold text-primary mt-0.5">
+                            R{Number(product.price).toFixed(2)}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-primary">R{finalTotal.toFixed(2)}</span>
-                    </div>
-                  </>
-                )}
+                        {inCart ? (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(inCart.id, -1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-5 text-center text-xs font-bold">
+                              {inCart.quantity}
+                            </span>
+                            <Button
+                              size="icon"
+                              variant="default"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(inCart.id, 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0 h-8 px-2.5 text-xs font-semibold"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            Add
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Special Instructions Section */}
-              {cart.length > 0 && (
-                <div className="bg-card rounded-2xl p-6 shadow-soft">
-                  <h2 className="text-xl font-heading font-bold text-foreground mb-2">Special Instructions</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Tell us about any ingredient preferences, allergies, or special requests
-                  </p>
-                  <Textarea
-                    placeholder="Example: No nuts please, extra chocolate, remove raisins, add extra butter, etc."
-                    value={specialInstructions}
-                    onChange={(e) => setSpecialInstructions(e.target.value)}
-                    className="min-h-[120px] bg-background text-foreground resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    💡 We'll do our best to accommodate your requests
-                  </p>
-                </div>
-              )}
+              {/* Right Column: Cart + Special Instructions + Checkout */}
+              <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+                <div className="bg-card rounded-2xl p-6 shadow-soft border border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
+                      <ShoppingBag className="h-5 w-5 text-primary" />
+                      Your Basket
+                    </h2>
+                    {cart.length > 0 && (
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                        {cart.reduce((s, i) => s + i.quantity, 0)} items
+                      </span>
+                    )}
+                  </div>
 
-              {/* Checkout Button */}
-              {cart.length > 0 && (
-                <Button variant="default" size="lg" className="w-full" onClick={handleProceedToCheckout}>
-                  Proceed to Checkout
-                </Button>
-              )}
+                  {cart.length === 0 ? (
+                    <div className="text-center py-8 space-y-3">
+                      <ShoppingBag className="h-10 w-10 text-muted-foreground/50 mx-auto" />
+                      <p className="text-muted-foreground text-sm">
+                        Your basket is empty. Tap <strong>+ Add</strong> on any fresh bake to start your order!
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3 mb-4 max-h-[320px] overflow-y-auto pr-1">
+                        {cart.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex gap-3 items-center p-2 rounded-xl bg-background border border-border/60"
+                          >
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-14 h-14 rounded-lg object-cover shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                R{item.price.toFixed(2)} each
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-6 w-6"
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="text-xs font-semibold w-5 text-center">
+                                  {item.quantity}
+                                </span>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-6 w-6"
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                  onClick={() => removeItem(item.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-sm">
+                              R{(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
+                        <span>Subtotal</span>
+                        <span className="text-primary">R{total.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Special Instructions Section */}
+                {cart.length > 0 && (
+                  <div className="bg-card rounded-2xl p-6 shadow-soft border border-border">
+                    <h2 className="text-lg font-heading font-bold text-foreground mb-1.5">
+                      Special Instructions
+                    </h2>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Allergies, cake inscriptions, slicing, or ingredient requests
+                    </p>
+                    <Textarea
+                      placeholder="Example: Happy Birthday message on cake, sliced loaf, no nuts please..."
+                      value={specialInstructions}
+                      onChange={(e) => setSpecialInstructions(e.target.value)}
+                      className="min-h-[96px] bg-background text-foreground resize-none"
+                    />
+                  </div>
+                )}
+
+                {/* Checkout Button */}
+                {cart.length > 0 && (
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full h-12 text-base font-semibold shadow-md"
+                    onClick={handleProceedToCheckout}
+                  >
+                    Proceed to Delivery &amp; Yoco Payment →
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </section>

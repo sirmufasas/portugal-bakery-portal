@@ -29,29 +29,6 @@ const Menu = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Force re-login if products don't load within 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!allProducts || allProducts.length === 0) {
-        toast({
-          title: "Session expired",
-          description: "Please log in again to view products.",
-          variant: "destructive",
-        });
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/login");
-      }
-    }, 5000);
-
-    // Clear timer if products load
-    if (allProducts && allProducts.length > 0) {
-      clearTimeout(timer);
-    }
-
-    return () => clearTimeout(timer);
-  }, [allProducts, navigate, toast]);
-
   // Filter by category
   let filteredProducts = activeCategory === "All"
     ? allProducts
@@ -92,8 +69,10 @@ const Menu = () => {
 
     // Convert 'image' to 'imageUrl' to match cart structure
     addToCart({
-      ...product,
-      imageUrl: product.image
+      id: Number(product.id),
+      name: product.name,
+      price: Number(product.price),
+      imageUrl: product.image,
     });
 
     toast({
