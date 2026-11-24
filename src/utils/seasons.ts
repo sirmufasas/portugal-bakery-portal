@@ -1,7 +1,8 @@
 // src/utils/seasons.ts
 // Automatic South African National Events, Public Holidays & Seasons Theme Engine.
-// Permanently Light Mode — drives system-wide palettes, bespoke vector artwork,
-// and editorial accents across every screen. Theme switching is Admin-only.
+// Permanently Light Mode — refined, grounded Portuguese Artisan Bakery palettes
+// with warm alabaster/linen surfaces and mature culinary & heritage accents.
+// Theme switching is strictly Admin-only.
 
 export type SASeasonId =
   // 4 Baseline South African Seasons
@@ -77,44 +78,44 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     id: "spring",
     category: "season",
     dateLabel: "Sep – Nov",
-    shortLabel: "Spring Bloom",
-    name: "Spring in Bloom",
-    heroBadge: "Spring in Bloom · Fresh Floral & Berry Bakes",
-    eyebrow: "Spring Collection",
-    heading: "Freshly Blossomed Favorites",
+    shortLabel: "Spring Harvest",
+    name: "Spring Artisan Season",
+    heroBadge: "Spring Season · Fresh Sourdough & Artisan Pastries",
+    eyebrow: "Spring Bakery Selection",
+    heading: "Freshly Baked Morning Classics",
     subtitle:
-      "Bright sunlit mornings call for delicate flaky pastries, fresh berry cakes, and golden-crust sourdough baked fresh from dawn.",
-    cardRibbon: "SPRING BLOOM",
-    themeColorHex: "#E11D64",
-    topBarGradient: "from-pink-500 via-rose-400 to-emerald-500",
+      "Crisp sunlit mornings pair naturally with flaky laminated pastries, golden pastéis de nata, and slow-fermented artisan loaves baked from dawn.",
+    cardRibbon: "SPRING BAKE",
+    themeColorHex: "#326249",
+    topBarGradient: "from-emerald-800 via-amber-700 to-stone-700",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-rose-100/80 via-pink-50/70 to-emerald-50/75",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f4] to-emerald-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3b1022]/85 via-[#4a162b]/60 to-rose-500/20",
-    heroGlowClass: "from-pink-400/35 via-amber-200/20 to-emerald-300/20",
-    pillClass: "bg-rose-100 text-rose-800 border-rose-300",
+      "bg-gradient-to-r from-[#1c1917]/88 via-[#1f2922]/68 to-transparent",
+    heroGlowClass: "from-emerald-800/18 via-amber-600/12 to-transparent",
+    pillClass: "bg-emerald-950/5 text-emerald-900 border-emerald-800/25",
   },
 
   summer: {
     id: "summer",
     category: "season",
     dateLabel: "Dec – Feb",
-    shortLabel: "Summer Sun",
+    shortLabel: "Golden Summer",
     name: "Golden Summer",
-    heroBadge: "Summer Sunshine · Citrus & Golden Nata",
-    eyebrow: "Summer Collection",
-    heading: "Sun-Kissed Bakery Favorites",
+    heroBadge: "Summer Season · Caramelised Nata & Artisan Breads",
+    eyebrow: "Summer Bakery Table",
+    heading: "Sun-Warmed Portuguese Classics",
     subtitle:
-      "Celebrate warm sunny days with caramelized pastéis de nata, light buttery croissants, and refreshing fruit-topped confections.",
+      "Celebrate warm summer days with blistered pastéis de nata, airy buttery croissants, and crusty Portuguese rolls straight from our deck ovens.",
     cardRibbon: "SUMMER FRESH",
-    themeColorHex: "#EA580C",
-    topBarGradient: "from-amber-400 via-orange-500 to-sky-500",
+    themeColorHex: "#A1561C",
+    topBarGradient: "from-amber-700 via-yellow-700 to-stone-700",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-amber-100/80 via-yellow-50/85 to-sky-100/65",
+      "bg-gradient-to-br from-stone-100/90 via-[#fbf9f5] to-amber-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3d2008]/85 via-[#522c0c]/60 to-amber-400/20",
-    heroGlowClass: "from-amber-400/35 via-yellow-300/20 to-sky-400/20",
-    pillClass: "bg-amber-100 text-amber-900 border-amber-300",
+      "bg-gradient-to-r from-[#241a11]/88 via-[#332417]/66 to-transparent",
+    heroGlowClass: "from-amber-600/20 via-yellow-600/12 to-transparent",
+    pillClass: "bg-amber-950/5 text-amber-900 border-amber-800/25",
   },
 
   autumn: {
@@ -123,20 +124,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "Mar – May",
     shortLabel: "Autumn Harvest",
     name: "Autumn Harvest",
-    heroBadge: "Autumn Harvest · Spiced & Oven-Warm",
+    heroBadge: "Autumn Harvest · Spiced & Oven-Warm Loaves",
     eyebrow: "Autumn Harvest",
     heading: "Golden Harvest Creations",
     subtitle:
-      "Crisp autumn days pair effortlessly with slow-fermented rustic loaves, rich chocolate ganache, and warm cinnamon-spiced pastries.",
+      "Cooler autumn mornings call for slow-fermented rustic loaves, dark chocolate ganache cakes, and warm cinnamon-dusted pastries.",
     cardRibbon: "HARVEST",
-    themeColorHex: "#C2410C",
-    topBarGradient: "from-orange-600 via-amber-500 to-rose-700",
+    themeColorHex: "#8F4223",
+    topBarGradient: "from-amber-900 via-orange-800 to-stone-800",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-orange-100/85 via-amber-50/80 to-rose-100/55",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf7f2] to-orange-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3b180c]/88 via-[#4f2211]/64 to-orange-500/20",
-    heroGlowClass: "from-orange-500/32 via-amber-500/20 to-rose-500/15",
-    pillClass: "bg-orange-100 text-orange-900 border-orange-300",
+      "bg-gradient-to-r from-[#261710]/90 via-[#382117]/68 to-transparent",
+    heroGlowClass: "from-orange-800/20 via-amber-700/14 to-transparent",
+    pillClass: "bg-orange-950/5 text-orange-950 border-orange-900/25",
   },
 
   winter: {
@@ -145,20 +146,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "Jun – Aug",
     shortLabel: "Winter Hearth",
     name: "Winter Hearth",
-    heroBadge: "Winter Season · Crisp Mornings & Warm Pastries",
+    heroBadge: "Winter Hearth · Crisp Mornings & Oven-Warm Breads",
     eyebrow: "Winter Warmers",
     heading: "Oven-Warm Winter Comforts",
     subtitle:
-      "Savor the comfort of oven-warm crusty breads, rich buttery layers, and timeless Portuguese classics alongside a hot cup of coffee.",
+      "Savour the comfort of crusty hearth breads, rich buttery layers, and traditional Portuguese classics alongside freshly brewed espresso.",
     cardRibbon: "OVEN WARM",
-    themeColorHex: "#1E5BB8",
-    topBarGradient: "from-blue-600 via-sky-400 to-amber-500",
+    themeColorHex: "#294D7A",
+    topBarGradient: "from-slate-800 via-blue-900 to-amber-800",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-sky-100/80 via-blue-50/70 to-amber-50/70",
+      "bg-gradient-to-br from-stone-100/90 via-[#f9f8f6] to-slate-100/55",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#10233f]/88 via-[#183156]/65 to-amber-500/20",
-    heroGlowClass: "from-sky-400/30 via-blue-400/15 to-amber-400/20",
-    pillClass: "bg-sky-100 text-blue-900 border-sky-300",
+      "bg-gradient-to-r from-[#131d2b]/90 via-[#1c2b3f]/68 to-transparent",
+    heroGlowClass: "from-blue-900/20 via-amber-700/14 to-transparent",
+    pillClass: "bg-slate-900/5 text-slate-900 border-slate-700/25",
   },
 
   // ==================== SOUTH AFRICAN PUBLIC HOLIDAYS & BIG EVENTS ====================
@@ -168,21 +169,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "27 April",
     shortLabel: "Freedom Day",
     name: "Freedom Day (27 Apr)",
-    heroBadge: "Celebrating South Africa's Freedom Day · 27 April",
-    eyebrow: "Freedom Day · Unity & Celebration",
-    heading: "Baked to Share Across Our Rainbow Nation",
+    heroBadge: "Commemorating South Africa's Freedom Day · 27 April",
+    eyebrow: "27 April · Unity & Table Sharing",
+    heading: "Artisan Loaves & Platters Made to Share",
     subtitle:
-      "Commemorating 27 April with celebratory platters, freshly baked Portuguese rolls, golden pastéis de nata, and family cakes made for gathering together.",
+      "Marking 27 April with generous sharing platters, crusty Portuguese rolls, golden pastéis de nata, and celebratory family cakes.",
     cardRibbon: "FREEDOM DAY",
-    themeColorHex: "#007A4D",
-    topBarGradient:
-      "from-[#E03C31] via-[#FFB81C] via-45% to-[#007A4D]",
+    themeColorHex: "#1B6044",
+    topBarGradient: "from-[#1B6044] via-[#B47B1C] to-[#1E3A5F]",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-emerald-100/80 via-amber-50/80 to-sky-100/70",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f4] to-emerald-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#072b1e]/88 via-[#0e3b2a]/65 to-[#FFB81C]/25",
-    heroGlowClass: "from-emerald-500/35 via-amber-400/25 to-blue-600/20",
-    pillClass: "bg-emerald-100 text-emerald-900 border-emerald-400",
+      "bg-gradient-to-r from-[#12241c]/90 via-[#1a3328]/68 to-transparent",
+    heroGlowClass: "from-emerald-800/22 via-amber-600/14 to-transparent",
+    pillClass: "bg-emerald-950/5 text-emerald-950 border-emerald-800/30",
   },
 
   heritage_day: {
@@ -191,20 +191,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "24 September",
     shortLabel: "Heritage Day",
     name: "Heritage Day (24 Sep)",
-    heroBadge: "Happy Heritage Day · 24 September · Braai & Bakery Table",
-    eyebrow: "South African Heritage & Braai Day",
-    heading: "Artisan Loaves, Rolls & Sweet Heritage Classics",
+    heroBadge: "Heritage Day · 24 September · Braai Rolls & Artisan Table",
+    eyebrow: "24 September · South African Heritage",
+    heading: "Crusty Rolls, Sourdough & Heritage Classics",
     subtitle:
-      "Celebrate South Africa's rich cultural tapestry with crusty garlic sourdough, Portuguese prego rolls, and celebratory tarts for every Heritage Day table.",
+      "Celebrate Heritage Day around the fire and family table with freshly baked Portuguese prego rolls, garlic sourdough, and custard tarts.",
     cardRibbon: "HERITAGE DAY",
-    themeColorHex: "#B45309",
-    topBarGradient: "from-amber-500 via-red-600 to-emerald-700",
+    themeColorHex: "#954B1E",
+    topBarGradient: "from-amber-800 via-stone-800 to-emerald-900",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-amber-100/85 via-orange-50/80 to-emerald-100/60",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f3] to-amber-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3b1d09]/88 via-[#54280c]/66 to-amber-500/25",
-    heroGlowClass: "from-amber-500/35 via-red-500/20 to-emerald-500/20",
-    pillClass: "bg-amber-100 text-amber-950 border-amber-400",
+      "bg-gradient-to-r from-[#241810]/90 via-[#362317]/68 to-transparent",
+    heroGlowClass: "from-amber-700/22 via-emerald-800/14 to-transparent",
+    pillClass: "bg-amber-950/5 text-amber-950 border-amber-800/30",
   },
 
   womens_day: {
@@ -213,20 +213,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "9 August",
     shortLabel: "Women's Day",
     name: "National Women's Day (9 Aug)",
-    heroBadge: "Happy National Women's Day · 9 August · King Protea Collection",
-    eyebrow: "Honouring South Africa's Women",
-    heading: "Handcrafted Cakes & Pastries in Full Protea Bloom",
+    heroBadge: "National Women's Day · 9 August · Signature Patisserie",
+    eyebrow: "9 August · Honouring South Africa's Women",
+    heading: "Handcrafted Cakes & Fine Patisserie",
     subtitle:
-      "Wathint' Abafazi, Wathint' Imbokodo — celebrate the extraordinary women in your life with signature cakes, delicate pastries, and gift-wrapped treats.",
-    cardRibbon: "WOMEN'S DAY",
-    themeColorHex: "#BE185D",
-    topBarGradient: "from-pink-600 via-fuchsia-500 to-amber-400",
+      "Commemorating 9 August with refined layer cakes, artisan tartlets, and thoughtfully boxed bakery selections crafted from scratch.",
+    cardRibbon: "9 AUGUST",
+    themeColorHex: "#864331",
+    topBarGradient: "from-stone-800 via-amber-800 to-emerald-900",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-pink-100/85 via-rose-50/80 to-purple-100/65",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f5] to-amber-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3d0e28]/88 via-[#521537]/64 to-pink-400/25",
-    heroGlowClass: "from-pink-500/35 via-fuchsia-400/20 to-amber-300/20",
-    pillClass: "bg-pink-100 text-pink-900 border-pink-300",
+      "bg-gradient-to-r from-[#241815]/90 via-[#36241f]/68 to-transparent",
+    heroGlowClass: "from-amber-800/20 via-stone-700/14 to-transparent",
+    pillClass: "bg-stone-900/5 text-stone-900 border-stone-700/25",
   },
 
   youth_day: {
@@ -235,20 +235,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "16 June",
     shortLabel: "Youth Day",
     name: "Youth Day (16 Jun)",
-    heroBadge: "Commemorating Youth Day · 16 June · Spirit of Courage & Hope",
-    eyebrow: "South African Youth Day",
-    heading: "Bold Flavors & Fresh Bakes for a Bright Future",
+    heroBadge: "Commemorating Youth Day · 16 June · Fresh Holiday Bakes",
+    eyebrow: "16 June Public Holiday",
+    heading: "Warm Pastries & Sharing Boxes",
     subtitle:
-      "Honouring the courage and energy of South Africa's youth with warm winter pastries, freshly glazed donuts, and artisan treats made to share.",
-    cardRibbon: "YOUTH DAY",
-    themeColorHex: "#D97706",
-    topBarGradient: "from-orange-500 via-amber-400 to-blue-600",
+      "Honouring 16 June with oven-warm winter pastries, freshly glazed brioche, and handcrafted treats made for gathering together.",
+    cardRibbon: "16 JUNE",
+    themeColorHex: "#9E561E",
+    topBarGradient: "from-amber-800 via-slate-800 to-stone-700",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-amber-100/80 via-orange-50/75 to-sky-100/70",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f4] to-slate-100/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#2c1a08]/88 via-[#3d250d]/64 to-blue-500/25",
-    heroGlowClass: "from-orange-400/35 via-amber-300/20 to-blue-500/25",
-    pillClass: "bg-orange-100 text-orange-950 border-orange-300",
+      "bg-gradient-to-r from-[#1f1914]/90 via-[#2d241c]/68 to-transparent",
+    heroGlowClass: "from-amber-700/20 via-slate-700/14 to-transparent",
+    pillClass: "bg-amber-950/5 text-amber-950 border-amber-800/25",
   },
 
   mandela_day: {
@@ -258,19 +258,19 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     shortLabel: "Mandela Day",
     name: "Mandela Day (18 Jul)",
     heroBadge: "Nelson Mandela International Day · 18 July · Spirit of Ubuntu",
-    eyebrow: "67 Minutes of Kindness & Sharing",
-    heading: "Warm Loaves & Sharing Platters Crafted with Ubuntu",
+    eyebrow: "18 July · Generosity & Community",
+    heading: "Warm Loaves & Platters Crafted for Sharing",
     subtitle:
-      "Celebrate Madiba's legacy of generosity by sharing freshly baked bread, sweet pastries, and comforting winter boxes with community, colleagues, and loved ones.",
+      "Honouring Madiba's legacy with freshly baked loaves, generous office & community platters, and comforting winter bakes.",
     cardRibbon: "UBUNTU · 18 JUL",
-    themeColorHex: "#CA8A04",
-    topBarGradient: "from-yellow-500 via-amber-500 to-emerald-600",
+    themeColorHex: "#98631B",
+    topBarGradient: "from-amber-700 via-stone-800 to-emerald-900",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-yellow-100/80 via-amber-50/80 to-emerald-100/65",
+      "bg-gradient-to-br from-stone-100/90 via-[#fbf9f4] to-amber-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#2f2306]/88 via-[#45340a]/64 to-emerald-500/22",
-    heroGlowClass: "from-yellow-400/35 via-amber-300/25 to-emerald-400/20",
-    pillClass: "bg-yellow-100 text-yellow-950 border-yellow-400",
+      "bg-gradient-to-r from-[#241c10]/90 via-[#362a18]/68 to-transparent",
+    heroGlowClass: "from-amber-600/20 via-emerald-800/12 to-transparent",
+    pillClass: "bg-amber-950/5 text-amber-950 border-amber-800/30",
   },
 
   human_rights_day: {
@@ -279,20 +279,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "21 March",
     shortLabel: "Human Rights Day",
     name: "Human Rights Day (21 Mar)",
-    heroBadge: "Human Rights Day · 21 March · Dignity, Equality & Community",
+    heroBadge: "Human Rights Day · 21 March · Dignity & Community",
     eyebrow: "21 March Public Holiday",
     heading: "Gather Around Freshly Baked Tradition",
     subtitle:
-      "Marking South Africa's Human Rights Day long weekend with slow-fermented loaves, family pastry boxes, and handcrafted cakes.",
+      "Marking South Africa's 21 March holiday with slow-fermented sourdough loaves, family pastry boxes, and traditional cakes.",
     cardRibbon: "21 MARCH",
-    themeColorHex: "#0F766E",
-    topBarGradient: "from-teal-600 via-amber-400 to-emerald-600",
+    themeColorHex: "#266469",
+    topBarGradient: "from-teal-900 via-stone-700 to-amber-800",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-teal-100/75 via-amber-50/80 to-emerald-50/75",
+      "bg-gradient-to-br from-stone-100/90 via-[#f9f8f5] to-teal-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#0a2e2b]/88 via-[#11423e]/65 to-amber-400/22",
-    heroGlowClass: "from-teal-400/32 via-amber-300/20 to-emerald-400/20",
-    pillClass: "bg-teal-100 text-teal-950 border-teal-300",
+      "bg-gradient-to-r from-[#122224]/90 via-[#1b3336]/68 to-transparent",
+    heroGlowClass: "from-teal-800/18 via-amber-700/12 to-transparent",
+    pillClass: "bg-teal-950/5 text-teal-950 border-teal-800/25",
   },
 
   workers_day: {
@@ -301,20 +301,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "1 May",
     shortLabel: "Workers' Day",
     name: "Workers' Day (1 May)",
-    heroBadge: "Happy Workers' Day · 1 May · Honouring Craft & Dedication",
+    heroBadge: "Workers' Day · 1 May · Honouring Honest Craft",
     eyebrow: "1 May Public Holiday",
-    heading: "Honest Artisan Craft in Every Loaf",
+    heading: "Time-Honoured Craft in Every Loaf",
     subtitle:
-      "Celebrating South Africa's workforce and timeless baking craftsmanship with golden-crust breads, savoury pies, and well-earned holiday treats.",
-    cardRibbon: "WORKERS' DAY",
-    themeColorHex: "#B91C1C",
-    topBarGradient: "from-red-600 via-amber-500 to-orange-600",
+      "Celebrating South Africa's workforce and traditional baking craftsmanship with crusty hearth breads, savoury bakes, and holiday pastries.",
+    cardRibbon: "1 MAY CRAFT",
+    themeColorHex: "#782B33",
+    topBarGradient: "from-[#782B33] via-stone-800 to-amber-800",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-amber-100/80 via-orange-50/80 to-red-100/60",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f5] to-amber-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3b1111]/88 via-[#521919]/64 to-amber-500/22",
-    heroGlowClass: "from-red-500/28 via-amber-400/25 to-orange-400/20",
-    pillClass: "bg-red-100 text-red-900 border-red-300",
+      "bg-gradient-to-r from-[#241315]/90 via-[#361d20]/68 to-transparent",
+    heroGlowClass: "from-amber-800/18 via-stone-700/14 to-transparent",
+    pillClass: "bg-stone-900/5 text-stone-900 border-stone-700/25",
   },
 
   easter: {
@@ -323,20 +323,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "Easter Weekend",
     shortLabel: "Easter & Family Day",
     name: "Easter & Family Day",
-    heroBadge: "Blessed Easter & Family Day · Traditional Folar & Spiced Buns",
+    heroBadge: "Easter & Family Day · Traditional Folar da Páscoa & Spiced Buns",
     eyebrow: "Easter Weekend Specialties",
-    heading: "Portuguese Folar da Páscoa & Family Table Treats",
+    heading: "Portuguese Folar da Páscoa & Family Table Bakes",
     subtitle:
-      "Celebrate Good Friday through Family Day with authentic Portuguese Easter Folar, warm spiced buns, custard tarts, and celebratory family cakes.",
+      "Celebrate Good Friday through Family Day with authentic Portuguese Easter Folar, warm cinnamon-spiced buns, and custard tarts.",
     cardRibbon: "EASTER SPECIAL",
-    themeColorHex: "#7C3AED",
-    topBarGradient: "from-violet-500 via-amber-400 to-emerald-400",
+    themeColorHex: "#8C5125",
+    topBarGradient: "from-amber-800 via-stone-700 to-emerald-900",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-violet-100/75 via-amber-50/85 to-rose-50/70",
+      "bg-gradient-to-br from-stone-100/90 via-[#fbf9f4] to-amber-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#281247]/86 via-[#381a63]/62 to-amber-400/25",
-    heroGlowClass: "from-violet-400/32 via-amber-300/25 to-emerald-300/20",
-    pillClass: "bg-violet-100 text-violet-900 border-violet-300",
+      "bg-gradient-to-r from-[#241a12]/90 via-[#36271b]/68 to-transparent",
+    heroGlowClass: "from-amber-700/20 via-emerald-800/12 to-transparent",
+    pillClass: "bg-amber-950/5 text-amber-950 border-amber-800/25",
   },
 
   mothers_day: {
@@ -345,42 +345,42 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "2nd Sun of May",
     shortLabel: "Mother's Day",
     name: "Mother's Day",
-    heroBadge: "Happy Mother's Day · Luxury Cakes & Floral Pastry Boxes",
-    eyebrow: "Mother's Day Gifting",
-    heading: "Baked with Love for Mom",
+    heroBadge: "Mother's Day Weekend · Signature Cakes & Gift Boxes",
+    eyebrow: "Mother's Day Selection",
+    heading: "Handcrafted Cakes & Pastries for Mom",
     subtitle:
-      "Spoil Mom this Mother's Day weekend with velvety ganache cakes, delicate cream pastries, and ribbon-wrapped confectionery boxes.",
-    cardRibbon: "FOR MOM",
-    themeColorHex: "#DB2777",
-    topBarGradient: "from-rose-500 via-pink-400 to-amber-400",
+      "Celebrate Mother's Day with rich Belgian chocolate ganache cakes, flaky French-butter croissants, and ribbon-tied pastry boxes.",
+    cardRibbon: "MOTHER'S DAY",
+    themeColorHex: "#864331",
+    topBarGradient: "from-stone-800 via-amber-800 to-emerald-900",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-rose-100/85 via-pink-50/80 to-amber-50/75",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f5] to-amber-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3d1024]/86 via-[#541732]/62 to-rose-400/25",
-    heroGlowClass: "from-rose-400/35 via-pink-300/25 to-amber-300/20",
-    pillClass: "bg-rose-100 text-rose-900 border-rose-300",
+      "bg-gradient-to-r from-[#241815]/90 via-[#36241f]/68 to-transparent",
+    heroGlowClass: "from-amber-700/20 via-stone-700/12 to-transparent",
+    pillClass: "bg-stone-900/5 text-stone-900 border-stone-700/25",
   },
 
   valentines: {
     id: "valentines",
     category: "sa_event",
     dateLabel: "14 February",
-    shortLabel: "Valentine's",
-    name: "Valentine's Celebration (14 Feb)",
-    heroBadge: "Valentine's Celebration · Decadent Chocolate & Berry Confections",
-    eyebrow: "Sweetheart Collection",
-    heading: "Handcrafted Indulgences Made for Two",
+    shortLabel: "14 Feb Reserve",
+    name: "Valentine's Reserve (14 Feb)",
+    heroBadge: "14 February · Dark Chocolate Ganache & Artisan Patisserie",
+    eyebrow: "14 February Patisserie",
+    heading: "Rich Cocoa, Espresso & Custard Indulgences",
     subtitle:
-      "Share rich chocolate ganache cakes, strawberry-kissed pastries, and warm custard tarts baked with romance in every bite.",
-    cardRibbon: "VALENTINE'S",
-    themeColorHex: "#E11D48",
-    topBarGradient: "from-rose-600 via-pink-500 to-red-500",
+      "Crafted with dark couverture chocolate, slow-roasted espresso, and caramelised custard pastry made to share.",
+    cardRibbon: "14 FEB SPECIAL",
+    themeColorHex: "#782B33",
+    topBarGradient: "from-[#6E252D] via-stone-800 to-amber-800",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-rose-100/85 via-red-50/75 to-pink-100/75",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f5] to-stone-200/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3d0a18]/88 via-[#541022]/64 to-rose-500/25",
-    heroGlowClass: "from-rose-500/35 via-red-400/25 to-pink-400/20",
-    pillClass: "bg-rose-100 text-rose-900 border-rose-300",
+      "bg-gradient-to-r from-[#241215]/90 via-[#361b1f]/68 to-transparent",
+    heroGlowClass: "from-[#782B33]/20 via-amber-700/12 to-transparent",
+    pillClass: "bg-stone-900/5 text-stone-900 border-stone-700/25",
   },
 
   reconciliation_day: {
@@ -389,20 +389,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "16 December",
     shortLabel: "Reconciliation Day",
     name: "Day of Reconciliation (16 Dec)",
-    heroBadge: "Day of Reconciliation · 16 December · Peace, Unity & Togetherness",
+    heroBadge: "Day of Reconciliation · 16 December · Unity & Summer Table",
     eyebrow: "16 December Public Holiday",
     heading: "Summer Holiday Loaves & Sharing Platters",
     subtitle:
-      "Bringing friends, neighbours, and families together around one table with fresh summer bakes and traditional Portuguese favourites.",
+      "Bringing neighbours, friends, and families together around one table with fresh summer loaves and Portuguese classics.",
     cardRibbon: "16 DECEMBER",
-    themeColorHex: "#0284C7",
-    topBarGradient: "from-sky-600 via-emerald-500 to-amber-400",
+    themeColorHex: "#266469",
+    topBarGradient: "from-teal-900 via-emerald-900 to-amber-700",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-sky-100/80 via-emerald-50/75 to-amber-50/75",
+      "bg-gradient-to-br from-stone-100/90 via-[#f9f8f5] to-teal-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#0c293d]/86 via-[#123b57]/62 to-emerald-400/22",
-    heroGlowClass: "from-sky-400/32 via-emerald-300/22 to-amber-300/20",
-    pillClass: "bg-sky-100 text-sky-950 border-sky-300",
+      "bg-gradient-to-r from-[#122224]/90 via-[#1b3336]/68 to-transparent",
+    heroGlowClass: "from-teal-800/18 via-amber-700/12 to-transparent",
+    pillClass: "bg-teal-950/5 text-teal-950 border-teal-800/25",
   },
 
   festive_summer: {
@@ -411,20 +411,20 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     dateLabel: "18 – 31 Dec",
     shortLabel: "Festive Season",
     name: "Festive & Christmas Season",
-    heroBadge: "Festive Season · Holiday Bakes & Traditional Bolo Rei",
-    eyebrow: "Festive Specialties",
-    heading: "Holiday Table Favorites",
+    heroBadge: "Festive Season · Traditional Bolo Rei & Holiday Platters",
+    eyebrow: "Festive Bakery Tradition",
+    heading: "Traditional Bolo Rei & Holiday Table Favorites",
     subtitle:
-      "Gather around the summer holiday table with traditional Portuguese festive bakes, signature Bolo Rei, and celebratory cakes crafted with love.",
+      "Gather around the holiday table with authentic Portuguese Bolo Rei, artisanal loaves, and celebratory cakes baked fresh daily.",
     cardRibbon: "FESTIVE",
-    themeColorHex: "#C81E3A",
-    topBarGradient: "from-red-600 via-amber-400 to-emerald-600",
+    themeColorHex: "#245A41",
+    topBarGradient: "from-emerald-900 via-[#782B33] to-amber-700",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-red-100/70 via-amber-50/85 to-emerald-100/65",
+      "bg-gradient-to-br from-stone-100/90 via-[#faf8f4] to-emerald-50/40",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#3a0d16]/88 via-[#47141e]/62 to-amber-500/20",
-    heroGlowClass: "from-red-500/30 via-amber-400/25 to-emerald-500/20",
-    pillClass: "bg-red-100 text-red-900 border-red-300",
+      "bg-gradient-to-r from-[#14241c]/90 via-[#1f362b]/68 to-transparent",
+    heroGlowClass: "from-emerald-900/20 via-amber-700/14 to-transparent",
+    pillClass: "bg-emerald-950/5 text-emerald-950 border-emerald-800/30",
   },
 
   new_year: {
@@ -434,19 +434,19 @@ export const SEASON_THEMES: Record<SASeasonId, SASeasonTheme> = {
     shortLabel: "New Year",
     name: "New Year's Celebration",
     heroBadge: "Happy New Year · Fresh Beginnings & Golden Pastries",
-    eyebrow: "New Year Celebration",
+    eyebrow: "New Year Bakery Table",
     heading: "Start the Year with Fresh Artisan Bakes",
     subtitle:
-      "Toast to a bright new year in South Africa with celebratory cakes, flaky golden croissants, and signature pastéis de nata.",
+      "Welcome the new year in South Africa with celebratory cakes, flaky golden croissants, and warm pastéis de nata.",
     cardRibbon: "NEW YEAR",
-    themeColorHex: "#B45309",
-    topBarGradient: "from-amber-400 via-yellow-500 to-indigo-600",
+    themeColorHex: "#98631B",
+    topBarGradient: "from-amber-700 via-stone-800 to-slate-800",
     sectionSurfaceClass:
-      "bg-gradient-to-br from-amber-100/80 via-yellow-50/85 to-indigo-100/60",
+      "bg-gradient-to-br from-stone-100/90 via-[#fbf9f4] to-amber-50/45",
     heroOverlayClass:
-      "bg-gradient-to-r from-[#291d06]/88 via-[#3d2b0a]/64 to-amber-400/25",
-    heroGlowClass: "from-amber-400/35 via-yellow-300/25 to-indigo-400/20",
-    pillClass: "bg-amber-100 text-amber-950 border-amber-300",
+      "bg-gradient-to-r from-[#241c10]/90 via-[#362a18]/68 to-transparent",
+    heroGlowClass: "from-amber-700/20 via-stone-700/12 to-transparent",
+    pillClass: "bg-amber-950/5 text-amber-950 border-amber-800/30",
   },
 };
 
@@ -511,7 +511,6 @@ function matchesSAHolidayWindow(
   const holidayUtc = new Date(
     Date.UTC(year, holidayMonth - 1, holidayDay, 12, 0, 0)
   );
-  // SA Public Holidays Act: Sunday public holiday shifts observation to Monday as well
   const extraObservedDay = holidayUtc.getUTCDay() === 0 ? 1 : 0;
   const startMs = holidayUtc.getTime() - daysBefore * 86400000;
   const endMs =

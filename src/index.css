@@ -6,491 +6,463 @@
 @tailwind utilities;
 
 @layer base {
+  /* Default grounded Portuguese Artisan Bakery palette (Light Mode) */
   :root {
-    --background: 340 65% 97.4%;
-    --foreground: 336 38% 14%;
+    --background: 36 28% 97.6%;
+    --foreground: 24 32% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 336 38% 14%;
+    --card-foreground: 24 32% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 336 38% 14%;
+    --popover-foreground: 24 32% 14%;
 
-    --primary: 338 74% 49%;
+    --primary: 30 65% 36%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 148 44% 90%;
-    --secondary-foreground: 152 46% 18%;
+    --secondary: 36 24% 92.5%;
+    --secondary-foreground: 24 32% 18%;
 
-    --muted: 340 38% 94%;
-    --muted-foreground: 336 18% 40%;
+    --muted: 35 20% 93.5%;
+    --muted-foreground: 24 14% 40%;
 
-    --accent: 152 54% 34%;
+    --accent: 150 30% 31%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 36% 86%;
-    --input: 340 36% 86%;
-    --ring: 338 74% 49%;
+    --border: 34 18% 86.5%;
+    --input: 34 18% 86.5%;
+    --ring: 30 65% 36%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --cream: 345 65% 97%;
-    --cream-dark: 340 42% 92%;
-    --amber: 40 95% 54%;
-    --amber-light: 340 78% 72%;
-    --amber-glow: 340 85% 82%;
-    --espresso: 336 36% 15%;
-    --espresso-light: 336 28% 26%;
-    --burgundy: 350 70% 35%;
-    --burgundy-light: 350 60% 50%;
-    --gold: 43 96% 52%;
+    /* Custom bakery tokens */
+    --cream: 38 33% 97%;
+    --cream-dark: 35 24% 91.5%;
+    --amber: 36 82% 46%;
+    --amber-light: 36 68% 64%;
+    --amber-glow: 38 72% 78%;
+    --espresso: 24 34% 14%;
+    --espresso-light: 24 24% 25%;
+    --burgundy: 354 46% 32%;
+    --burgundy-light: 354 38% 45%;
+    --gold: 39 82% 46%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(338 74% 49% / 0.92), hsl(28 88% 52% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(342 70% 97.5%), hsl(148 42% 94%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(342 60% 97%));
+    --gradient-hero: linear-gradient(135deg, hsl(24 36% 16% / 0.9), hsl(30 58% 30% / 0.82));
+    --gradient-warm: linear-gradient(180deg, hsl(36 30% 97.8%), hsl(35 24% 94.5%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(36 28% 97.5%));
 
-    /* Shadows */
-    --shadow-soft: 0 4px 22px -4px hsl(var(--primary) / 0.12);
-    --shadow-elevated: 0 10px 34px -8px hsl(var(--primary) / 0.2);
-    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.26);
+    /* Subtle, refined shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(24 30% 14% / 0.08);
+    --shadow-elevated: 0 10px 30px -8px hsl(24 30% 14% / 0.14);
+    --shadow-glow: 0 0 32px hsl(var(--primary) / 0.18);
 
     /* Fonts */
     --font-heading: 'Playfair Display', serif;
     --font-body: 'Inter', sans-serif;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 336 38% 14%;
-    --sidebar-primary: 338 74% 49%;
+    --sidebar-foreground: 24 32% 14%;
+    --sidebar-primary: 30 65% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 148 44% 90%;
-    --sidebar-accent-foreground: 152 46% 18%;
-    --sidebar-border: 340 36% 86%;
-    --sidebar-ring: 338 74% 49%;
+    --sidebar-accent: 36 24% 93%;
+    --sidebar-accent-foreground: 24 32% 18%;
+    --sidebar-border: 34 18% 86.5%;
+    --sidebar-ring: 30 65% 36%;
   }
 
-  /* ==================== SPRING: BRIGHT BLOSSOM ROSE, JACARANDA & GARDEN SAGE ==================== */
+  /* ==================== SPRING: BOTANICAL OLIVE-SAGE & GOLDEN WHEAT ==================== */
   html[data-season="spring"] {
-    --background: 340 65% 97.4%;
-    --foreground: 336 38% 14%;
+    --background: 38 26% 97.6%;
+    --foreground: 25 28% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 336 38% 14%;
+    --card-foreground: 25 28% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 336 38% 14%;
+    --popover-foreground: 25 28% 14%;
 
-    --primary: 338 74% 49%;
+    --primary: 150 32% 29%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 148 44% 90%;
-    --secondary-foreground: 152 46% 18%;
+    --secondary: 146 18% 92.5%;
+    --secondary-foreground: 150 34% 18%;
 
-    --muted: 340 38% 94%;
-    --muted-foreground: 336 18% 40%;
+    --muted: 38 18% 93.8%;
+    --muted-foreground: 28 12% 40%;
 
-    --accent: 152 54% 34%;
+    --accent: 33 65% 40%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 340 36% 86%;
-    --input: 340 36% 86%;
-    --ring: 338 74% 49%;
+    --border: 36 17% 86.5%;
+    --input: 36 17% 86.5%;
+    --ring: 150 32% 29%;
 
-    --cream: 345 65% 97%;
-    --cream-dark: 340 42% 92%;
-    --amber: 40 95% 54%;
-    --amber-light: 340 78% 72%;
-    --amber-glow: 340 85% 82%;
-    --espresso: 336 36% 15%;
-    --espresso-light: 336 28% 26%;
-    --gold: 43 96% 52%;
+    --cream: 38 28% 97.2%;
+    --cream-dark: 38 20% 91.8%;
+    --amber: 36 78% 45%;
+    --gold: 39 80% 45%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(338 74% 49% / 0.92), hsl(28 88% 52% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(342 70% 97.5%), hsl(148 42% 94%));
+    --gradient-hero: linear-gradient(135deg, hsl(150 34% 24% / 0.9), hsl(33 62% 36% / 0.82));
+    --gradient-warm: linear-gradient(180deg, hsl(38 28% 97.8%), hsl(146 16% 95%));
   }
 
-  /* ==================== SUMMER: SUNLIT CITRUS TANGERINE, GOLDEN NATA & COASTAL SKY ==================== */
+  /* ==================== SUMMER: GOLDEN NATA CUSTARD & ROASTED AMBER ==================== */
   html[data-season="summer"] {
-    --background: 46 85% 96.6%;
-    --foreground: 26 48% 13%;
+    --background: 39 30% 97.6%;
+    --foreground: 24 34% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 26 48% 13%;
+    --card-foreground: 24 34% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 26 48% 13%;
+    --popover-foreground: 24 34% 14%;
 
-    --primary: 26 92% 46%;
+    --primary: 30 70% 37%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 199 70% 90%;
-    --secondary-foreground: 202 65% 18%;
+    --secondary: 39 32% 92%;
+    --secondary-foreground: 26 38% 18%;
 
-    --muted: 45 50% 92.5%;
-    --muted-foreground: 28 22% 40%;
+    --muted: 38 22% 93.5%;
+    --muted-foreground: 26 15% 40%;
 
-    --accent: 199 82% 37%;
+    --accent: 202 48% 34%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 42 46% 84%;
-    --input: 42 46% 84%;
-    --ring: 26 92% 46%;
+    --border: 36 20% 86%;
+    --input: 36 20% 86%;
+    --ring: 30 70% 37%;
 
-    --cream: 46 85% 97%;
-    --cream-dark: 42 54% 91%;
-    --amber: 43 97% 52%;
-    --amber-light: 38 92% 68%;
-    --amber-glow: 43 96% 78%;
-    --espresso: 26 48% 14%;
-    --espresso-light: 26 38% 26%;
-    --gold: 45 98% 50%;
+    --cream: 40 34% 97.2%;
+    --cream-dark: 38 24% 91.5%;
+    --amber: 38 84% 46%;
+    --gold: 41 86% 46%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(26 92% 46% / 0.92), hsl(43 96% 50% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(46 88% 97%), hsl(199 55% 94%));
+    --gradient-hero: linear-gradient(135deg, hsl(28 65% 30% / 0.9), hsl(38 76% 40% / 0.82));
+    --gradient-warm: linear-gradient(180deg, hsl(40 32% 97.8%), hsl(38 26% 94.5%));
   }
 
-  /* ==================== FESTIVE SUMMER: CRANBERRY RUBY, EVERGREEN PINE & CHAMPAGNE GOLD ==================== */
-  html[data-season="festive_summer"] {
-    --background: 40 68% 96.8%;
-    --foreground: 350 42% 13%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 350 42% 13%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 350 42% 13%;
-
-    --primary: 350 76% 43%;
-    --primary-foreground: 40 60% 98%;
-
-    --secondary: 152 42% 89%;
-    --secondary-foreground: 154 50% 16%;
-
-    --muted: 40 38% 93%;
-    --muted-foreground: 350 18% 41%;
-
-    --accent: 154 56% 29%;
-    --accent-foreground: 0 0% 100%;
-
-    --border: 38 42% 84%;
-    --input: 38 42% 84%;
-    --ring: 350 76% 43%;
-
-    --cream: 40 70% 97%;
-    --cream-dark: 38 46% 91%;
-    --amber: 43 94% 51%;
-    --amber-light: 43 88% 68%;
-    --amber-glow: 43 92% 78%;
-    --espresso: 350 42% 14%;
-    --espresso-light: 350 32% 25%;
-    --gold: 43 96% 50%;
-
-    --gradient-hero: linear-gradient(135deg, hsl(350 76% 43% / 0.92), hsl(40 88% 48% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(40 70% 97%), hsl(350 40% 94%));
-  }
-
-  /* ==================== AUTUMN: SPICED TERRACOTTA COPPER, HARVEST GOLD & MULBERRY ==================== */
+  /* ==================== AUTUMN: TOASTED CINNAMON, BRIOCHE COPPER & ESPRESSO ==================== */
   html[data-season="autumn"] {
-    --background: 26 68% 96.4%;
-    --foreground: 20 48% 13%;
+    --background: 34 26% 97.4%;
+    --foreground: 20 34% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 48% 13%;
+    --card-foreground: 20 34% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 48% 13%;
+    --popover-foreground: 20 34% 14%;
 
-    --primary: 15 80% 44%;
+    --primary: 20 60% 35%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 38 66% 89%;
-    --secondary-foreground: 22 50% 18%;
+    --secondary: 34 26% 92%;
+    --secondary-foreground: 20 36% 18%;
 
-    --muted: 28 40% 92.5%;
-    --muted-foreground: 20 22% 40%;
+    --muted: 32 18% 93.5%;
+    --muted-foreground: 20 14% 40%;
 
-    --accent: 334 54% 38%;
+    --accent: 34 64% 39%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 24 42% 84%;
-    --input: 24 42% 84%;
-    --ring: 15 80% 44%;
+    --border: 30 18% 86%;
+    --input: 30 18% 86%;
+    --ring: 20 60% 35%;
 
-    --cream: 30 65% 96.5%;
-    --cream-dark: 26 44% 90.5%;
-    --amber: 30 90% 50%;
-    --amber-light: 28 80% 66%;
-    --amber-glow: 30 85% 76%;
-    --espresso: 18 48% 13%;
-    --espresso-light: 18 38% 24%;
-    --gold: 38 92% 49%;
+    --cream: 34 28% 97%;
+    --cream-dark: 30 22% 91.2%;
+    --amber: 32 78% 45%;
+    --gold: 37 80% 45%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(15 80% 44% / 0.92), hsl(36 86% 48% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(28 70% 96.8%), hsl(20 48% 93%));
+    --gradient-hero: linear-gradient(135deg, hsl(18 56% 28% / 0.92), hsl(32 64% 36% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(34 28% 97.6%), hsl(30 22% 94.2%));
   }
 
-  /* ==================== WINTER: CRISP AZULEJO COBALT, PORCELAIN FROST & WARM CINNAMON ==================== */
+  /* ==================== WINTER: PORTUGUESE AZULEJO NAVY & WARM HEARTH BRASS ==================== */
   html[data-season="winter"] {
-    --background: 210 50% 97%;
-    --foreground: 216 45% 14%;
+    --background: 36 20% 97.6%;
+    --foreground: 215 32% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 216 45% 14%;
+    --card-foreground: 215 32% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 216 45% 14%;
+    --popover-foreground: 215 32% 15%;
 
-    --primary: 214 72% 43%;
+    --primary: 215 50% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 208 56% 90.5%;
-    --secondary-foreground: 216 48% 19%;
+    --secondary: 214 24% 92.5%;
+    --secondary-foreground: 215 36% 18%;
 
-    --muted: 210 36% 93%;
-    --muted-foreground: 215 20% 42%;
+    --muted: 214 16% 93.8%;
+    --muted-foreground: 215 14% 41%;
 
-    --accent: 25 84% 46%;
+    --accent: 30 64% 39%;
     --accent-foreground: 0 0% 100%;
 
-    --border: 212 36% 85%;
-    --input: 212 36% 85%;
-    --ring: 214 72% 43%;
+    --border: 214 16% 86.5%;
+    --input: 214 16% 86.5%;
+    --ring: 215 50% 32%;
 
-    --cream: 210 48% 97.5%;
-    --cream-dark: 210 34% 92%;
-    --amber: 34 92% 52%;
-    --amber-light: 34 84% 67%;
-    --amber-glow: 36 88% 78%;
-    --espresso: 216 46% 14%;
-    --espresso-light: 216 34% 25%;
-    --gold: 38 92% 50%;
+    --cream: 36 22% 97.4%;
+    --cream-dark: 214 16% 92%;
+    --amber: 34 78% 46%;
+    --gold: 38 80% 46%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(214 72% 43% / 0.92), hsl(28 84% 48% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(210 52% 97.2%), hsl(38 55% 95%));
+    --gradient-hero: linear-gradient(135deg, hsl(215 52% 25% / 0.92), hsl(30 60% 36% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(36 22% 97.8%), hsl(214 20% 95%));
   }
 
-  /* ==================== FREEDOM DAY (27 APR): SA RAINBOW NATION EMERALD, PROTEA GOLD & ROYAL BLUE ==================== */
+  /* ==================== FREEDOM DAY (27 APR): SA HERITAGE FOREST GREEN & GOLD ==================== */
   html[data-season="freedom_day"] {
-    --background: 150 48% 96.8%;
-    --foreground: 156 48% 12%;
+    --background: 38 24% 97.6%;
+    --foreground: 156 30% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 156 48% 12%;
+    --card-foreground: 156 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 156 48% 12%;
-    --primary: 158 100% 24%;
+    --popover-foreground: 156 30% 14%;
+    --primary: 156 56% 24%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 43 92% 88%;
-    --secondary-foreground: 156 50% 15%;
-    --muted: 150 32% 92.5%;
-    --muted-foreground: 156 20% 38%;
-    --accent: 4 74% 52%;
+    --secondary: 40 28% 92%;
+    --secondary-foreground: 156 34% 17%;
+    --muted: 38 18% 93.8%;
+    --muted-foreground: 156 12% 40%;
+    --accent: 36 74% 40%;
     --accent-foreground: 0 0% 100%;
-    --border: 152 32% 83%;
-    --input: 152 32% 83%;
-    --ring: 158 100% 24%;
-    --cream: 150 48% 97%;
-    --cream-dark: 43 60% 90%;
-    --amber: 42 100% 52%;
-    --gold: 42 100% 50%;
-    --gradient-hero: linear-gradient(135deg, hsl(158 100% 24% / 0.92), hsl(42 96% 48% / 0.85));
-    --gradient-warm: linear-gradient(180deg, hsl(150 50% 97%), hsl(44 70% 94%));
+    --border: 38 16% 86.5%;
+    --input: 38 16% 86.5%;
+    --ring: 156 56% 24%;
+    --cream: 38 26% 97.4%;
+    --cream-dark: 38 20% 91.5%;
+    --amber: 40 84% 46%;
+    --gold: 41 86% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(156 58% 21% / 0.92), hsl(38 72% 38% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(38 26% 97.8%), hsl(152 16% 95%));
   }
 
-  /* ==================== HERITAGE DAY (24 SEP): NDEBELE OCHRE GOLD, TERRACOTTA & EMERALD ==================== */
+  /* ==================== HERITAGE DAY (24 SEP): ARTISAN OCHRE, KAROO CLAY & SAGE ==================== */
   html[data-season="heritage_day"] {
-    --background: 36 78% 96.5%;
-    --foreground: 24 52% 13%;
+    --background: 36 28% 97.5%;
+    --foreground: 24 34% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 24 52% 13%;
+    --card-foreground: 24 34% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 24 52% 13%;
-    --primary: 28 90% 40%;
+    --popover-foreground: 24 34% 14%;
+    --primary: 26 66% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 154 45% 89%;
-    --secondary-foreground: 24 50% 16%;
-    --muted: 36 45% 92%;
-    --muted-foreground: 24 24% 39%;
-    --accent: 158 64% 30%;
+    --secondary: 36 26% 92%;
+    --secondary-foreground: 24 36% 17%;
+    --muted: 35 18% 93.5%;
+    --muted-foreground: 24 14% 40%;
+    --accent: 154 40% 28%;
     --accent-foreground: 0 0% 100%;
-    --border: 34 44% 83%;
-    --input: 34 44% 83%;
-    --ring: 28 90% 40%;
-    --cream: 38 76% 97%;
-    --cream-dark: 34 52% 90%;
-    --amber: 38 96% 50%;
-    --gold: 41 96% 49%;
-    --gradient-hero: linear-gradient(135deg, hsl(28 90% 40% / 0.92), hsl(4 76% 48% / 0.85));
-    --gradient-warm: linear-gradient(180deg, hsl(38 80% 96.8%), hsl(154 40% 94%));
+    --border: 34 18% 86%;
+    --input: 34 18% 86%;
+    --ring: 26 66% 35%;
+    --cream: 36 30% 97.2%;
+    --cream-dark: 34 22% 91.5%;
+    --amber: 36 82% 45%;
+    --gold: 40 84% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(26 64% 28% / 0.92), hsl(154 42% 26% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(36 30% 97.6%), hsl(34 22% 94.5%));
   }
 
-  /* ==================== WOMEN'S DAY (9 AUG) & MOTHER'S DAY: KING PROTEA BERRY, ORCHID & SAGE ==================== */
+  /* ==================== WOMEN'S DAY (9 AUG) & MOTHER'S DAY: WARM TERRACOTTA PROTEA & ANTIQUE GOLD ==================== */
   html[data-season="womens_day"],
   html[data-season="mothers_day"] {
-    --background: 332 68% 97.2%;
-    --foreground: 330 42% 14%;
+    --background: 36 26% 97.6%;
+    --foreground: 22 30% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 330 42% 14%;
+    --card-foreground: 22 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 330 42% 14%;
-    --primary: 330 78% 44%;
+    --popover-foreground: 22 30% 14%;
+    --primary: 16 46% 36%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 292 48% 91%;
-    --secondary-foreground: 330 45% 18%;
-    --muted: 332 38% 93.5%;
-    --muted-foreground: 330 18% 40%;
-    --accent: 152 48% 34%;
+    --secondary: 36 24% 92.5%;
+    --secondary-foreground: 22 32% 18%;
+    --muted: 35 18% 93.8%;
+    --muted-foreground: 22 12% 40%;
+    --accent: 150 30% 30%;
     --accent-foreground: 0 0% 100%;
-    --border: 332 38% 85%;
-    --input: 332 38% 85%;
-    --ring: 330 78% 44%;
-    --cream: 334 68% 97.5%;
-    --cream-dark: 330 44% 91.5%;
-    --amber: 38 94% 54%;
-    --gold: 42 95% 52%;
-    --gradient-hero: linear-gradient(135deg, hsl(330 78% 44% / 0.92), hsl(292 64% 48% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(334 70% 97.5%), hsl(292 45% 95%));
+    --border: 34 17% 86.5%;
+    --input: 34 17% 86.5%;
+    --ring: 16 46% 36%;
+    --cream: 36 28% 97.4%;
+    --cream-dark: 34 20% 91.8%;
+    --amber: 36 78% 46%;
+    --gold: 40 80% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(16 46% 30% / 0.92), hsl(36 62% 38% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(36 28% 97.8%), hsl(34 22% 94.8%));
   }
 
-  /* ==================== YOUTH DAY (16 JUN): SUNRISE FLAME ORANGE & ELECTRIC COBALT ==================== */
+  /* ==================== YOUTH DAY (16 JUN): ROASTED AMBER & DEEP SLATE NAVY ==================== */
   html[data-season="youth_day"] {
-    --background: 34 80% 96.8%;
-    --foreground: 220 45% 14%;
+    --background: 36 26% 97.6%;
+    --foreground: 216 30% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 220 45% 14%;
+    --card-foreground: 216 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 45% 14%;
-    --primary: 24 94% 46%;
+    --popover-foreground: 216 30% 14%;
+    --primary: 28 68% 37%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 68% 90%;
-    --secondary-foreground: 220 50% 18%;
-    --muted: 34 45% 92.5%;
-    --muted-foreground: 220 20% 40%;
-    --accent: 217 82% 46%;
+    --secondary: 214 22% 92.5%;
+    --secondary-foreground: 216 34% 18%;
+    --muted: 36 18% 93.8%;
+    --muted-foreground: 216 14% 40%;
+    --accent: 215 48% 34%;
     --accent-foreground: 0 0% 100%;
-    --border: 34 44% 84%;
-    --input: 34 44% 84%;
-    --ring: 24 94% 46%;
-    --cream: 36 80% 97%;
-    --cream-dark: 214 45% 91%;
-    --amber: 38 96% 52%;
-    --gold: 43 96% 50%;
-    --gradient-hero: linear-gradient(135deg, hsl(24 94% 46% / 0.92), hsl(217 82% 46% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(36 82% 97%), hsl(214 55% 94.5%));
+    --border: 35 17% 86.5%;
+    --input: 35 17% 86.5%;
+    --ring: 28 68% 37%;
+    --cream: 36 28% 97.4%;
+    --cream-dark: 35 20% 91.8%;
+    --amber: 36 82% 46%;
+    --gold: 40 84% 46%;
+    --gradient-hero: linear-gradient(135deg, hsl(28 66% 31% / 0.92), hsl(215 48% 30% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(36 28% 97.8%), hsl(214 18% 95%));
   }
 
-  /* ==================== MANDELA DAY (18 JUL) & NEW YEAR: UBUNTU SUNSHINE GOLD & PEACE OLIVE ==================== */
+  /* ==================== MANDELA DAY (18 JUL) & NEW YEAR: UBUNTU HARVEST GOLD & OLIVE ==================== */
   html[data-season="mandela_day"],
   html[data-season="new_year"] {
-    --background: 45 85% 96.6%;
-    --foreground: 32 48% 13%;
+    --background: 39 28% 97.6%;
+    --foreground: 28 32% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 32 48% 13%;
+    --card-foreground: 28 32% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 32 48% 13%;
-    --primary: 38 92% 40%;
+    --popover-foreground: 28 32% 14%;
+    --primary: 35 70% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 146 46% 89%;
-    --secondary-foreground: 150 48% 16%;
-    --muted: 45 48% 92.5%;
-    --muted-foreground: 32 22% 39%;
-    --accent: 152 58% 31%;
+    --secondary: 40 26% 92%;
+    --secondary-foreground: 28 34% 17%;
+    --muted: 38 18% 93.8%;
+    --muted-foreground: 28 14% 40%;
+    --accent: 150 34% 29%;
     --accent-foreground: 0 0% 100%;
-    --border: 43 46% 83%;
-    --input: 43 46% 83%;
-    --ring: 38 92% 40%;
-    --cream: 46 85% 97%;
-    --cream-dark: 43 52% 90.5%;
-    --amber: 43 96% 50%;
-    --gold: 45 98% 48%;
-    --gradient-hero: linear-gradient(135deg, hsl(38 92% 40% / 0.92), hsl(152 58% 31% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(46 88% 97%), hsl(146 42% 94%));
+    --border: 38 18% 86.5%;
+    --input: 38 18% 86.5%;
+    --ring: 35 70% 35%;
+    --cream: 40 30% 97.4%;
+    --cream-dark: 38 22% 91.5%;
+    --amber: 39 84% 45%;
+    --gold: 42 86% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(34 68% 29% / 0.92), hsl(150 36% 27% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(40 30% 97.8%), hsl(38 22% 94.8%));
   }
 
-  /* ==================== HUMAN RIGHTS DAY (21 MAR) & RECONCILIATION DAY (16 DEC): HARMONY TEAL & GOLD ==================== */
+  /* ==================== HUMAN RIGHTS DAY (21 MAR) & RECONCILIATION DAY (16 DEC): SLATE TEAL & WHEAT ==================== */
   html[data-season="human_rights_day"],
   html[data-season="reconciliation_day"] {
-    --background: 184 52% 96.8%;
-    --foreground: 192 48% 13%;
+    --background: 38 22% 97.6%;
+    --foreground: 192 32% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 192 48% 13%;
+    --card-foreground: 192 32% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 192 48% 13%;
-    --primary: 178 76% 31%;
+    --popover-foreground: 192 32% 14%;
+    --primary: 184 46% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 44 76% 89%;
-    --secondary-foreground: 192 48% 16%;
-    --muted: 184 34% 92.5%;
-    --muted-foreground: 192 20% 40%;
-    --accent: 38 90% 45%;
+    --secondary: 184 18% 92.5%;
+    --secondary-foreground: 192 34% 17%;
+    --muted: 38 16% 93.8%;
+    --muted-foreground: 192 14% 40%;
+    --accent: 35 66% 39%;
     --accent-foreground: 0 0% 100%;
-    --border: 184 34% 84%;
-    --input: 184 34% 84%;
-    --ring: 178 76% 31%;
-    --cream: 184 52% 97.2%;
-    --cream-dark: 184 36% 91%;
-    --amber: 41 95% 50%;
-    --gold: 43 96% 49%;
-    --gradient-hero: linear-gradient(135deg, hsl(178 76% 31% / 0.92), hsl(38 90% 45% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(184 55% 97%), hsl(44 65% 94.5%));
+    --border: 38 16% 86.5%;
+    --input: 38 16% 86.5%;
+    --ring: 184 46% 28%;
+    --cream: 38 24% 97.4%;
+    --cream-dark: 184 14% 92%;
+    --amber: 38 80% 45%;
+    --gold: 41 82% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(184 48% 24% / 0.92), hsl(35 64% 36% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(38 24% 97.8%), hsl(184 16% 95%));
   }
 
-  /* ==================== WORKERS' DAY (1 MAY) & VALENTINE'S (14 FEB): CRIMSON CRAFT & WARM GOLD ==================== */
+  /* ==================== WORKERS' DAY (1 MAY) & VALENTINE'S (14 FEB): DEEP PORTO BURGUNDY & COCOA GOLD ==================== */
   html[data-season="workers_day"],
   html[data-season="valentines"] {
-    --background: 352 68% 97.2%;
-    --foreground: 350 44% 13%;
+    --background: 36 24% 97.6%;
+    --foreground: 20 30% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 350 44% 13%;
+    --card-foreground: 20 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 350 44% 13%;
-    --primary: 348 80% 45%;
+    --popover-foreground: 20 30% 14%;
+    --primary: 354 46% 32%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 38 78% 90%;
-    --secondary-foreground: 350 46% 17%;
-    --muted: 352 38% 93%;
-    --muted-foreground: 350 18% 40%;
-    --accent: 28 88% 46%;
+    --secondary: 36 24% 92.5%;
+    --secondary-foreground: 20 32% 17%;
+    --muted: 35 18% 93.8%;
+    --muted-foreground: 20 12% 40%;
+    --accent: 32 62% 38%;
     --accent-foreground: 0 0% 100%;
-    --border: 352 36% 85%;
-    --input: 352 36% 85%;
-    --ring: 348 80% 45%;
-    --cream: 352 68% 97.5%;
-    --cream-dark: 350 40% 91.5%;
-    --amber: 38 95% 52%;
-    --gold: 42 96% 50%;
-    --gradient-hero: linear-gradient(135deg, hsl(348 80% 45% / 0.92), hsl(28 88% 46% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(352 70% 97.4%), hsl(38 65% 94.5%));
+    --border: 34 17% 86.5%;
+    --input: 34 17% 86.5%;
+    --ring: 354 46% 32%;
+    --cream: 36 26% 97.4%;
+    --cream-dark: 34 20% 91.8%;
+    --amber: 36 78% 45%;
+    --gold: 40 82% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(354 48% 26% / 0.92), hsl(28 58% 34% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(36 26% 97.8%), hsl(34 20% 94.8%));
   }
 
-  /* ==================== EASTER & FAMILY DAY: FOLAR AMETHYST, MEADOW LAVENDER & HONEY GOLD ==================== */
+  /* ==================== EASTER & FAMILY DAY: SPICED FOLAR BRONZE, HONEY & OLIVE ==================== */
   html[data-season="easter"] {
-    --background: 268 62% 97.4%;
-    --foreground: 266 42% 14%;
+    --background: 38 28% 97.6%;
+    --foreground: 24 32% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 266 42% 14%;
+    --card-foreground: 24 32% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 266 42% 14%;
-    --primary: 264 70% 50%;
+    --popover-foreground: 24 32% 14%;
+    --primary: 28 58% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 45 86% 90%;
-    --secondary-foreground: 266 44% 18%;
-    --muted: 268 36% 93.5%;
-    --muted-foreground: 266 18% 41%;
-    --accent: 38 92% 48%;
+    --secondary: 39 28% 92.5%;
+    --secondary-foreground: 24 34% 18%;
+    --muted: 38 18% 93.8%;
+    --muted-foreground: 24 14% 40%;
+    --accent: 150 32% 30%;
     --accent-foreground: 0 0% 100%;
-    --border: 268 34% 85.5%;
-    --input: 268 34% 85.5%;
-    --ring: 264 70% 50%;
-    --cream: 268 60% 97.6%;
-    --cream-dark: 268 38% 92%;
-    --amber: 42 95% 52%;
-    --gold: 44 96% 50%;
-    --gradient-hero: linear-gradient(135deg, hsl(264 70% 50% / 0.92), hsl(38 92% 48% / 0.84));
-    --gradient-warm: linear-gradient(180deg, hsl(268 62% 97.5%), hsl(45 70% 95%));
+    --border: 36 18% 86.5%;
+    --input: 36 18% 86.5%;
+    --ring: 28 58% 35%;
+    --cream: 38 30% 97.4%;
+    --cream-dark: 36 22% 91.8%;
+    --amber: 38 82% 45%;
+    --gold: 41 84% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(28 56% 28% / 0.92), hsl(150 32% 28% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(38 30% 97.8%), hsl(36 22% 94.8%));
+  }
+
+  /* ==================== FESTIVE SEASON: EVERGREEN PINE, DEEP CRANBERRY & CHAMPAGNE GOLD ==================== */
+  html[data-season="festive_summer"] {
+    --background: 38 26% 97.6%;
+    --foreground: 24 30% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 30% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 30% 14%;
+    --primary: 154 42% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 38 26% 92.5%;
+    --secondary-foreground: 154 38% 17%;
+    --muted: 38 18% 93.8%;
+    --muted-foreground: 24 14% 40%;
+    --accent: 354 48% 35%;
+    --accent-foreground: 0 0% 100%;
+    --border: 36 18% 86.5%;
+    --input: 36 18% 86.5%;
+    --ring: 154 42% 25%;
+    --cream: 38 28% 97.4%;
+    --cream-dark: 36 22% 91.8%;
+    --amber: 39 82% 45%;
+    --gold: 41 86% 45%;
+    --gradient-hero: linear-gradient(135deg, hsl(154 44% 21% / 0.92), hsl(354 46% 31% / 0.84));
+    --gradient-warm: linear-gradient(180deg, hsl(38 28% 97.8%), hsl(36 22% 94.8%));
   }
 }
 
@@ -552,12 +524,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.45);
+  background: hsl(var(--primary) / 0.4);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.7);
+  background: hsl(var(--primary) / 0.65);
 }
 
 @keyframes ping {
@@ -576,28 +548,16 @@ html {
     transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-16px) rotate(6deg);
-  }
-}
-
-@keyframes petal-drift {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  33% {
-    transform: translate3d(12px, -16px, 0) rotate(14deg);
-  }
-  66% {
-    transform: translate3d(-10px, -7px, 0) rotate(-10deg);
+    transform: translateY(-10px) rotate(3deg);
   }
 }
 
 @keyframes gentle-sway {
   0%, 100% {
-    transform: rotate(-2.5deg) scale(1);
+    transform: rotate(-1.5deg) scale(1);
   }
   50% {
-    transform: rotate(2.5deg) scale(1.025);
+    transform: rotate(1.5deg) scale(1.015);
   }
 }
 
