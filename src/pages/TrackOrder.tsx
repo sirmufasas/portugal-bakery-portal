@@ -42,6 +42,8 @@ interface Order {
   specialInstructions?: string;
   deliveryMethod?: string;  // ✅ ADDED
   address?: string;          // ✅ ADDED
+  customerLat?: number | null;
+  customerLng?: number | null;
   phone?: string;            // ✅ ADDED
   deliveryProvider?: string | null;
   deliveryService?: string | null;
@@ -599,6 +601,12 @@ const TrackOrder = () => {
                         orderNumber={foundOrder.orderNumber}
                         status={foundOrder.status}
                         customerAddress={foundOrder.address || "Johannesburg"}
+                        customerCoords={
+                          typeof foundOrder.customerLat === "number" &&
+                          typeof foundOrder.customerLng === "number"
+                            ? [foundOrder.customerLat, foundOrder.customerLng]
+                            : null
+                        }
                         deliveryMethod={foundOrder.deliveryMethod === "pickup" ? "pickup" : "delivery"}
                         deliveryProvider={foundOrder.deliveryProvider || "own_delivery"}
                         deliveryServiceName={foundOrder.deliveryService || getProviderMeta(foundOrder.deliveryProvider).name}

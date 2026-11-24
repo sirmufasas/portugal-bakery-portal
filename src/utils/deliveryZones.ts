@@ -3,15 +3,19 @@
 export interface DeliveryZone {
   zoneNumber: number;
   name: string;
+  maxKm: number;
   fee: number;
   suburbs: string[];
 }
+
+export const BAKERY_ORIGIN_COORDS: [number, number] = [-26.2425, 28.0558];
 
 // Delivery zones radiated from Portugal Bakery (245 Johannesburg Rd, La Rochelle, Johannesburg South, 2190)
 export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     zoneNumber: 1,
     name: "Zone 1 - Local (0-5km)",
+    maxKm: 5,
     fee: 150,
     suburbs: [
       "rosettenville", "la rochelle", "turffontein", "malvern", "denver",
@@ -23,6 +27,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     zoneNumber: 2,
     name: "Zone 2 - Near (5-10km)",
+    maxKm: 10,
     fee: 200,
     suburbs: [
       "alberton", "meyerton", "germiston", "city deep", "kensington",
@@ -36,6 +41,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     zoneNumber: 3,
     name: "Zone 3 - Medium (10-15km)",
+    maxKm: 15,
     fee: 350,
     suburbs: [
       "benoni", "boksburg", "brakpan", "springs", "edenvale", "bedfordview",
@@ -53,6 +59,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     zoneNumber: 4,
     name: "Zone 4 - Far (15-20km)",
+    maxKm: 20,
     fee: 400,
     suburbs: [
       "sandton", "randburg", "rosebank", "hyde park", "dunkeld", "illovo",
@@ -69,6 +76,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     zoneNumber: 5,
     name: "Zone 5 - Extended (20-30km)",
+    maxKm: 30,
     fee: 450,
     suburbs: [
       "midrand", "kempton park", "isando", "rhodesfield", "bardene", "birchleigh",
@@ -85,6 +93,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     zoneNumber: 6,
     name: "Zone 6 - Very Far (30km+)",
+    maxKm: Infinity,
     fee: 500,
     suburbs: [
       "pretoria", "centurion", "krugersdorp", "randfontein", "westonaria",
@@ -97,6 +106,20 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
     ]
   }
 ];
+
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const s =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(a[0])) *
+      Math.cos(toRad(b[0])) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  return 2 * R * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
 
 function normalizeSuburb(suburb: string): string {
   return suburb
@@ -127,12 +150,36 @@ export function findDeliveryZone(address: string): DeliveryZone | null {
   return matchingZones.length > 0 ? matchingZones[0] : null;
 }
 
-export function calculateZoneDetails(address: string): {
+export function calculateZoneDetails(
+  address: string,
+  coords?: [number, number] | null
+): {
   fee: number;
   zone: string;
   found: boolean;
   zoneNumber: number;
 } {
+  if (
+    coords &&
+    Number.isFinite(coords[0]) &&
+    Number.isFinite(coords[1]) &&
+    coords[0] < -22 &&
+    coords[0] > -35 &&
+    coords[1] > 16 &&
+    coords[1] < 33
+  ) {
+    const estRoadKm = haversineKm(BAKERY_ORIGIN_COORDS, coords) * 1.24;
+    const matchedZone =
+      DELIVERY_ZONES.find((z) => estRoadKm <= z.maxKm) ||
+      DELIVERY_ZONES[DELIVERY_ZONES.length - 1];
+    return {
+      fee: matchedZone.fee,
+      zone: matchedZone.name,
+      found: true,
+      zoneNumber: matchedZone.zoneNumber,
+    };
+  }
+
   const allMatches = findAllMatchingZones(address);
   if (allMatches.length === 0) {
     return {
@@ -151,13 +198,21 @@ export function calculateZoneDetails(address: string): {
   };
 }
 
-export function calculateDeliveryFee(address: string): {
+export function calculateDeliveryFee(
+  address: string,
+  coords?: [number, number] | null
+): {
   fee: number;
   zone: string;
   found: boolean;
   multipleMatches?: boolean;
   allMatches?: DeliveryZone[];
 } {
+  if (coords) {
+    const res = calculateZoneDetails(address, coords);
+    return { fee: res.fee, zone: res.zone, found: res.found };
+  }
+
   const allMatches = findAllMatchingZones(address);
 
   if (allMatches.length === 0) {

@@ -27,6 +27,8 @@ export interface InitializeCheckoutPayload {
   customerEmail: string;
   customerPhone: string;
   customerAddress: string;
+  customerLat?: number | null;
+  customerLng?: number | null;
   shippingAddress: string;
   specialInstructions: string;
   deliveryMethod: "delivery" | "pickup";

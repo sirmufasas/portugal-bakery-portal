@@ -17,6 +17,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import packageImg from "@/assets/package.jpg";
 import { DeliveryProviderLogo } from "@/components/delivery/DeliveryProviderLogo";
 import { OrderTrackingMap } from "@/components/OrderTrackingMap";
+import { DeliveryAddressPicker } from "@/components/order/DeliveryAddressPicker";
 import {
   buildLocalQuotesFallback,
   DeliveryQuoteOption,
@@ -49,6 +50,9 @@ const Order = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [customerCoords, setCustomerCoords] = useState<[number, number] | null>(null);
+  const [unitDetails, setUnitDetails] = useState("");
+  const [fullscreenMapOpen, setFullscreenMapOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryZone, setDeliveryZone] = useState("");
@@ -86,6 +90,10 @@ const Order = () => {
       if (draft.customerEmail) setCustomerEmail(draft.customerEmail);
       if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
       if (draft.customerAddress) setCustomerAddress(draft.customerAddress);
+      if (Array.isArray(draft.customerCoords) && draft.customerCoords.length === 2) {
+        setCustomerCoords([Number(draft.customerCoords[0]), Number(draft.customerCoords[1])]);
+      }
+      if (draft.unitDetails) setUnitDetails(draft.unitDetails);
       if (draft.specialInstructions) setSpecialInstructions(draft.specialInstructions);
       if (draft.deliveryMethod) setDeliveryMethod(draft.deliveryMethod);
       if (typeof draft.deliveryFee === "number") setDeliveryFee(draft.deliveryFee);
@@ -181,20 +189,26 @@ const Order = () => {
     };
   }, [searchParams, token]);
 
-  const handleCalculateDelivery = async () => {
-    if (!customerAddress.trim()) {
-      toast({
-        title: "Address required",
-        description: "Please enter your delivery address first",
-        variant: "destructive"
-      });
+  const fetchQuotesForAddress = async (
+    targetAddress: string,
+    targetCoords: [number, number] | null,
+    options?: { silent?: boolean; preserveProviderId?: string | null }
+  ) => {
+    if (!targetAddress.trim()) {
+      if (!options?.silent) {
+        toast({
+          title: "Address required",
+          description: "Please enter or select your delivery address first",
+          variant: "destructive"
+        });
+      }
       return;
     }
 
     setCalculatingDelivery(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const authToken = localStorage.getItem("token");
       let quotes: DeliveryQuoteOption[] = [];
 
       try {
@@ -202,10 +216,12 @@ const Order = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
           },
           body: JSON.stringify({
-            address: customerAddress,
+            address: targetAddress,
+            latitude: targetCoords ? targetCoords[0] : undefined,
+            longitude: targetCoords ? targetCoords[1] : undefined,
             items: cart.map(item => ({ name: item.name })),
             subtotal: total
           })
@@ -214,56 +230,73 @@ const Order = () => {
         if (res.ok) {
           const data = await res.json();
           const serverQuotes: DeliveryQuoteOption[] = data.quotes || [];
-          // If the backend is still running an older build that only returns own_delivery,
-          // supplement with the full SA provider rate-card quotes until backend deploy finishes.
           if (serverQuotes.length <= 1) {
-            const fallbackQuotes = buildLocalQuotesFallback(customerAddress);
+            const fallbackQuotes = buildLocalQuotesFallback(targetAddress, targetCoords);
             const serverMap = new Map(serverQuotes.map((q) => [q.providerId, q]));
             quotes = fallbackQuotes.map((fq) => serverMap.get(fq.providerId) || fq);
           } else {
             quotes = serverQuotes;
           }
         } else {
-          quotes = buildLocalQuotesFallback(customerAddress);
+          quotes = buildLocalQuotesFallback(targetAddress, targetCoords);
         }
       } catch {
-        // Graceful client fallback if backend server is waking up
-        quotes = buildLocalQuotesFallback(customerAddress);
+        quotes = buildLocalQuotesFallback(targetAddress, targetCoords);
       }
 
       setDeliveryQuotes(quotes);
+
+      // If customer already chose a courier (e.g. Uber Package) and adjusted the pin/address,
+      // smoothly update that courier's quote & zone for the new coordinates!
+      if (options?.preserveProviderId) {
+        const updatedSameProvider = quotes.find(
+          (q) => q.providerId === options.preserveProviderId
+        );
+        if (updatedSameProvider) {
+          selectDeliveryQuote(updatedSameProvider);
+          return;
+        } else {
+          setDeliveryCalculated(false);
+          setSelectedProviderId(null);
+        }
+      }
+
       setQuoteFilter("all");
 
       if (quotes.length === 0) {
-        toast({
-          title: "No delivery options available",
-          description: "We couldn't find a delivery option for this address. Please contact us to confirm delivery.",
-          variant: "destructive"
-        });
+        if (!options?.silent) {
+          toast({
+            title: "No delivery options available",
+            description: "We couldn't find a delivery option for this address. Please contact us to confirm delivery.",
+            variant: "destructive"
+          });
+        }
         return;
       }
 
       if (quotes.length === 1) {
         selectDeliveryQuote(quotes[0]);
-        toast({
-          title: "Delivery fee calculated!",
-          description: `${quotes[0].providerName} (${quotes[0].zone || "Gauteng"}) - R${quotes[0].fee}`,
-        });
-      } else {
+      } else if (!options?.silent) {
         toast({
           title: `${quotes.length} SA delivery services available!`,
           description: "Choose from Uber, Bolt, inDrive, Yassir, Mr D, Couriers, Lockers & Bakery Delivery.",
         });
       }
     } catch (err) {
-      toast({
-        title: "Couldn't calculate delivery",
-        description: err instanceof Error ? err.message : "Please try again.",
-        variant: "destructive"
-      });
+      if (!options?.silent) {
+        toast({
+          title: "Couldn't calculate delivery",
+          description: err instanceof Error ? err.message : "Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setCalculatingDelivery(false);
     }
+  };
+
+  const handleCalculateDelivery = () => {
+    fetchQuotesForAddress(customerAddress, customerCoords);
   };
 
   const selectDeliveryQuote = (quote: DeliveryQuoteOption) => {
@@ -375,6 +408,8 @@ const Order = () => {
           customerEmail,
           customerPhone,
           customerAddress,
+          customerCoords,
+          unitDetails,
           specialInstructions,
           deliveryMethod,
           deliveryFee,
@@ -394,6 +429,12 @@ const Order = () => {
   const handleVerifiedYocoOrder = (orderData: any) => {
     if (orderData.deliveryMethod) setDeliveryMethod(orderData.deliveryMethod);
     if (orderData.address) setCustomerAddress(orderData.address);
+    if (
+      typeof orderData.customerLat === "number" &&
+      typeof orderData.customerLng === "number"
+    ) {
+      setCustomerCoords([orderData.customerLat, orderData.customerLng]);
+    }
     if (orderData.deliveryProvider) setSelectedProviderId(orderData.deliveryProvider);
     if (orderData.deliveryService) setSelectedProviderName(orderData.deliveryService);
     if (orderData.customerEmail) setCustomerEmail(orderData.customerEmail);
@@ -521,6 +562,7 @@ const Order = () => {
               orderNumber={orderId}
               status="confirmed"
               customerAddress={customerAddress || "Johannesburg"}
+              customerCoords={customerCoords}
               deliveryMethod={deliveryMethod}
               deliveryProvider={selectedProviderId || "own_delivery"}
               deliveryServiceName={selectedProviderName || chosenProvider.name}
@@ -746,25 +788,29 @@ const Order = () => {
                     </div>
 
                     {deliveryMethod === "delivery" && (
-                      <div>
-                        <Label htmlFor="customerAddress" className="mb-2 block">Delivery Address</Label>
-
-                        <Textarea
-                          id="customerAddress"
-                          placeholder="Street address, Suburb, Johannesburg"
-                          value={customerAddress}
-                          onChange={(e) => {
-                            setCustomerAddress(e.target.value);
+                      <div className="space-y-3">
+                        <DeliveryAddressPicker
+                          address={customerAddress}
+                          coords={customerCoords}
+                          unitDetails={unitDetails}
+                          onUnitDetailsChange={setUnitDetails}
+                          onAddressTyped={(rawText) => {
+                            setCustomerAddress(rawText);
+                            setCustomerCoords(null);
                             if (deliveryCalculated || deliveryQuotes.length > 0) {
                               resetDeliverySelection();
                             }
                           }}
-                          className="bg-background text-foreground min-h-[80px] resize-none"
-                          rows={3}
+                          onLocationVerified={({ address: verifiedAddr, coords: verifiedCoords }) => {
+                            setCustomerAddress(verifiedAddr);
+                            setCustomerCoords(verifiedCoords);
+                            fetchQuotesForAddress(verifiedAddr, verifiedCoords, {
+                              silent: true,
+                              preserveProviderId: selectedProviderId,
+                            });
+                          }}
+                          onOpenFullscreenMap={() => setFullscreenMapOpen(true)}
                         />
-                        <p className="text-xs text-muted-foreground mt-1 mb-3">
-                          💡 Tip: Include your suburb name for accurate delivery quotes (e.g., "123 Main St, Rosettenville, Johannesburg")
-                        </p>
 
                         {!deliveryCalculated && deliveryQuotes.length === 0 && (
                           <Button
@@ -865,7 +911,7 @@ const Order = () => {
                                               {quote.description || meta.description}
                                             </p>
                                             {etaText && (
-                                              <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mt-0.5">
+                                              <p className="text-[11px] font-medium text-amber-700 mt-0.5">
                                                 ⏱ Est. {etaText}
                                               </p>
                                             )}
@@ -895,72 +941,91 @@ const Order = () => {
                         )}
 
                         {deliveryCalculated && (
-                          <div className="mt-3 space-y-3">
-                            <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-900 space-y-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                  <DeliveryProviderLogo
-                                    providerId={selectedProviderId}
-                                    alt={selectedProviderName || getProviderMeta(selectedProviderId).name}
-                                    size="md"
-                                  />
-                                  <div>
-                                    <p className="font-semibold text-green-900 dark:text-green-100 text-sm">
-                                      {selectedProviderName || getProviderMeta(selectedProviderId).name} —{" "}
-                                      {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
-                                    </p>
-                                    <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
-                                      {deliveryZone}
-                                    </p>
-                                  </div>
+                          <div className="p-4 bg-green-50 rounded-xl border border-green-200 space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <DeliveryProviderLogo
+                                  providerId={selectedProviderId}
+                                  alt={selectedProviderName || getProviderMeta(selectedProviderId).name}
+                                  size="md"
+                                />
+                                <div>
+                                  <p className="font-semibold text-green-900 text-sm">
+                                    {selectedProviderName || getProviderMeta(selectedProviderId).name} —{" "}
+                                    {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
+                                  </p>
+                                  <p className="text-xs text-green-700 mt-0.5">
+                                    {deliveryZone}
+                                  </p>
                                 </div>
-                                {deliveryQuotes.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setDeliveryCalculated(false);
-                                      setSelectedProviderId(null);
-                                    }}
-                                    className="text-xs shrink-0"
-                                  >
-                                    Change Service
-                                  </Button>
-                                )}
                               </div>
-
-                              {(selectedProviderId === "pudo" || selectedProviderId === "pargo") && (
-                                <div className="pt-2 border-t border-green-200 dark:border-green-900">
-                                  <Label htmlFor="preferredPickupPoint" className="text-xs text-green-900 dark:text-green-100">
-                                    Preferred {selectedProviderId === "pudo" ? "PUDO Locker" : "Pargo Store"} (optional)
-                                  </Label>
-                                  <Input
-                                    id="preferredPickupPoint"
-                                    placeholder={
-                                      selectedProviderId === "pudo"
-                                        ? "e.g. PUDO Locker @ The Glen Shopping Centre"
-                                        : "e.g. Clicks Comaro Crossing / Spar Rosettenville"
-                                    }
-                                    value={preferredPickupPoint}
-                                    onChange={(e) => setPreferredPickupPoint(e.target.value)}
-                                    className="mt-1 bg-background text-foreground text-xs h-8"
-                                  />
-                                </div>
+                              {deliveryQuotes.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDeliveryCalculated(false);
+                                    setSelectedProviderId(null);
+                                  }}
+                                  className="text-xs shrink-0"
+                                >
+                                  Change Service
+                                </Button>
                               )}
                             </div>
 
-                            {/* Live Route & Distance Preview for Chosen Delivery Service */}
-                            <OrderTrackingMap
-                              compact
-                              status="pending"
-                              customerAddress={customerAddress}
-                              deliveryMethod="delivery"
-                              deliveryProvider={selectedProviderId || "own_delivery"}
-                              deliveryServiceName={selectedProviderName || getProviderMeta(selectedProviderId).name}
-                              pickupLocation={preferredPickupPoint}
-                            />
+                            {(selectedProviderId === "pudo" || selectedProviderId === "pargo") && (
+                              <div className="pt-2 border-t border-green-200">
+                                <Label htmlFor="preferredPickupPoint" className="text-xs text-green-900">
+                                  Preferred {selectedProviderId === "pudo" ? "PUDO Locker" : "Pargo Store"} (optional)
+                                </Label>
+                                <Input
+                                  id="preferredPickupPoint"
+                                  placeholder={
+                                    selectedProviderId === "pudo"
+                                      ? "e.g. PUDO Locker @ The Glen Shopping Centre"
+                                      : "e.g. Clicks Comaro Crossing / Spar Rosettenville"
+                                  }
+                                  value={preferredPickupPoint}
+                                  onChange={(e) => setPreferredPickupPoint(e.target.value)}
+                                  className="mt-1 bg-background text-foreground text-xs h-8"
+                                />
+                              </div>
+                            )}
                           </div>
+                        )}
+
+                        {/* Interactive Street Map with Draggable Pin, Live GPS & Full-Screen Road View */}
+                        {(Boolean(customerAddress.trim()) ||
+                          customerCoords !== null ||
+                          fullscreenMapOpen ||
+                          deliveryCalculated) && (
+                          <OrderTrackingMap
+                            compact
+                            status="pending"
+                            editablePin
+                            customerAddress={customerAddress || "La Rochelle, Johannesburg"}
+                            customerCoords={customerCoords}
+                            fullscreenOpen={fullscreenMapOpen}
+                            onFullscreenOpenChange={setFullscreenMapOpen}
+                            onLocationChange={({ lat, lng, address: pinnedAddress }) => {
+                              const nextCoords: [number, number] = [lat, lng];
+                              setCustomerAddress(pinnedAddress);
+                              setCustomerCoords(nextCoords);
+                              fetchQuotesForAddress(pinnedAddress, nextCoords, {
+                                silent: true,
+                                preserveProviderId: selectedProviderId,
+                              });
+                            }}
+                            deliveryMethod="delivery"
+                            deliveryProvider={selectedProviderId || "own_delivery"}
+                            deliveryServiceName={
+                              selectedProviderName ||
+                              getProviderMeta(selectedProviderId).name
+                            }
+                            pickupLocation={preferredPickupPoint}
+                          />
                         )}
                       </div>
                     )}
@@ -1143,10 +1208,24 @@ const Order = () => {
                 customerEmail,
                 customerPhone,
                 customerAddress:
-                  deliveryMethod === "delivery" ? customerAddress : "",
+                  deliveryMethod === "delivery"
+                    ? unitDetails.trim()
+                      ? `${unitDetails.trim()}, ${customerAddress}`
+                      : customerAddress
+                    : "",
+                customerLat:
+                  deliveryMethod === "delivery" && customerCoords
+                    ? customerCoords[0]
+                    : null,
+                customerLng:
+                  deliveryMethod === "delivery" && customerCoords
+                    ? customerCoords[1]
+                    : null,
                 shippingAddress:
                   deliveryMethod === "delivery"
-                    ? customerAddress
+                    ? unitDetails.trim()
+                      ? `${unitDetails.trim()}, ${customerAddress}`
+                      : customerAddress
                     : "Store Pickup - 245 Johannesburg Road, La Rochelle",
                 specialInstructions: preferredPickupPoint.trim()
                   ? `${specialInstructions ? specialInstructions + " | " : ""}Preferred Locker/Pickup Point: ${preferredPickupPoint.trim()}`

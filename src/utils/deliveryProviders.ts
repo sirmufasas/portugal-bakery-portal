@@ -270,8 +270,11 @@ export function formatEtaLabel(min?: number, max?: number): string {
  * so checkout still displays full SA options if the backend is waking up or
  * returning a pre-migration single-provider list.
  */
-export function buildLocalQuotesFallback(address: string): DeliveryQuoteOption[] {
-  const { zone, zoneNumber } = calculateZoneDetails(address);
+export function buildLocalQuotesFallback(
+  address: string,
+  coords?: [number, number] | null
+): DeliveryQuoteOption[] {
+  const { zone, zoneNumber } = calculateZoneDetails(address, coords);
 
   const results: DeliveryQuoteOption[] = SA_DELIVERY_PROVIDERS.filter(
     (p) => p.enabledByDefault !== false && (!p.maxZone || zoneNumber <= p.maxZone)
